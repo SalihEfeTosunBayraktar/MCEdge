@@ -1,0 +1,52 @@
+{
+  "$comment": "Element types and fields these templates generate; see src/engines/coverage.ts.",
+  "generates": {
+    "item": [
+      "animation"
+    ],
+    "block": [
+      "soundOnStep",
+      "noteBlockInstrument",
+      "aiPathNodeType",
+      "leavesParticleChance",
+      "leavesParticleType=|minecraft:angry_villager|minecraft:bubble|minecraft:campfire_cosy_smoke|minecraft:cloud|minecraft:crit|minecraft:damage_indicator|minecraft:dolphin|minecraft:dripping_water|minecraft:enchant|minecraft:end_rod|minecraft:explosion|minecraft:falling_water|minecraft:firework|minecraft:flame|minecraft:happy_villager|minecraft:heart|minecraft:lava|minecraft:note|minecraft:poof|minecraft:portal|minecraft:rain|minecraft:smoke|minecraft:snowflake|minecraft:soul|minecraft:soul_fire_flame|minecraft:splash|minecraft:witch",
+      "blockBase=Sign|HangingSign",
+      "signEntityTexture",
+      "signGUITexture"
+    ],
+    "recipe": [
+      "recipeType",
+      "brewingInputStack",
+      "brewingIngredientStack",
+      "brewingReturnStack"
+    ],
+    "tool": [
+      "toolType=Fishing rod"
+    ],
+    "key_binding": [
+      "keyBindingCategoryKey"
+    ],
+    "dimension": [
+      "skyType",
+      "hasClouds",
+      "cloudHeight",
+      "useCustomEffects",
+      "airColor",
+      "sunHeightAffectsFog",
+      "hasFog"
+    ],
+    "item_extension": [
+      "item",
+      "enableFuel",
+      "fuelPower",
+      "compostLayerChance"
+    ],
+    "plant": [
+      "soundOnStep",
+      "aiPathNodeType"
+    ],
+    "overlay": [
+      "overlayTarget=AbstractCommandBlock|AbstractContainer|AbstractEditSign|AbstractFurnace|AbstractGameRules|AbstractMountInventory|AbstractRecipeBook|AbstractReport|AccessibilityOnboarding|AccessibilityOptions|AddServer|Advancements|Alert|Anvil|Beacon|BlastFurnace|BookSign|BrewingStand|ButtonListDialog|CartographyTable|Chat|ChatOptions|ChatReport|ChatSelection|Chest|CodeOfConduct|CommandBlock|Confirm|ConfirmBackup|ConfirmExperimentalFeatures|ConfirmOpenLink|Connecting|Controls|Crafter|Crafting|CreateBuffetWorld|CreateFlatWorld|CreateWorld|Creative|CreditsAndAttribution|CustomizeSkin|DatapackFailure|Death|DebugOptions|Dialog|DialogListDialog|DirtMessage|Disconnected|Dispenser|EditBook|EditGamerules|EditMinecartCommandBlock|EditSign|EditStructure|EditWorld|Enchantment|Error|Experiments|FileFixerAborted|FileFixerProgress|FlatPresets|FontOptions|FriendsListConfirm|FriendsOverlay|Furnace|GPUWarning|GamemodeSelection|GenericWaiting|Grindstone|HangingSignEdit|Hopper|HorseInventory|InWorldGameRules|IngameMenu|Inventory|ItemCombiner|Jigsaw|KeyBinds|Language|Lectern|Loom|MainMenu|MemoryError|Merchant|MouseSettings|MultiButtonDialog|Multiplayer|MultiplayerWarning|NameReport|NautilusInventory|OnlineOptions|OptimizeWorld|Options|OptionsSounds|Pack|PrivacyConfirmLink|ReadBook|Realms|RecoverWorldData|ReportPlayer|ReportReasonSelection|Restrictions|ServerLinks|ServerList|ServerReconfig|Settings|ShulkerBox|SimpleDialog|SkinReport|SleepInMultiplayer|SmithingTable|Smoker|SocialInteractions|Stats|Stonecutter|SymlinkWarning|TelemetryInfo|TestBlockEdit|TestInstanceBlockEdit|UnsupportedGraphicsWarning|VideoSettings|WaitingForResponse|Warning|Win|Working|WorldLoadProgress|WorldOptions|WorldSelection"
+    ]
+  }
+}

@@ -1,0 +1,542 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "recipe",
+  "folder": "recipes",
+  "name": "Recipe",
+  "icon": "recipe",
+  "langKey": null,
+  "mcreator": "recipe",
+  "description": "Crafting (shaped or shapeless), smelting, blasting, smoking, campfire, stonecutting, smithing and brewing recipes.",
+  "pages": [
+    {
+      "id": "recipe",
+      "title": "Recipe",
+      "groups": [
+        {
+          "title": "Type and identity",
+          "fields": [
+            {
+              "key": "recipeType",
+              "type": "select",
+              "label": "Recipe type",
+              "default": "Crafting",
+              "options": [
+                {
+                  "value": "Crafting",
+                  "label": "Crafting"
+                },
+                {
+                  "value": "Smelting",
+                  "label": "Smelting"
+                },
+                {
+                  "value": "Blasting",
+                  "label": "Blasting"
+                },
+                {
+                  "value": "Smoking",
+                  "label": "Smoking"
+                },
+                {
+                  "value": "Stone cutting",
+                  "label": "Stone cutting"
+                },
+                {
+                  "value": "Campfire cooking",
+                  "label": "Campfire cooking"
+                },
+                {
+                  "value": "Smithing",
+                  "label": "Smithing"
+                },
+                {
+                  "value": "Brewing",
+                  "label": "Brewing"
+                }
+              ],
+              "mcreator": "recipeType"
+            },
+            {
+              "key": "name",
+              "type": "text",
+              "label": "Recipe id",
+              "default": "",
+              "mcreator": "name",
+              "pattern": "^[a-z0-9_/.-]*$",
+              "help": "Registry path of the recipe; defaults to the element name. Reusing a vanilla id overrides it.",
+              "showIf": {
+                "key": "recipeType",
+                "in": [
+                  "Crafting",
+                  "Smelting",
+                  "Blasting",
+                  "Smoking",
+                  "Campfire cooking",
+                  "Stone cutting",
+                  "Smithing"
+                ]
+              }
+            },
+            {
+              "key": "namespace",
+              "type": "select",
+              "label": "Namespace",
+              "default": "mod",
+              "options": [
+                {
+                  "value": "mod",
+                  "label": "This mod"
+                },
+                {
+                  "value": "minecraft",
+                  "label": "Minecraft"
+                }
+              ],
+              "mcreator": "namespace",
+              "showIf": {
+                "key": "recipeType",
+                "in": [
+                  "Crafting",
+                  "Smelting",
+                  "Blasting",
+                  "Smoking",
+                  "Campfire cooking",
+                  "Stone cutting",
+                  "Smithing"
+                ]
+              }
+            },
+            {
+              "key": "group",
+              "type": "text",
+              "label": "Recipe book group",
+              "default": "",
+              "mcreator": "group",
+              "help": "Recipes with the same group are shown together.",
+              "showIf": {
+                "key": "recipeType",
+                "in": [
+                  "Crafting",
+                  "Smelting",
+                  "Blasting",
+                  "Smoking",
+                  "Campfire cooking"
+                ]
+              }
+            },
+            {
+              "key": "unlockingItems",
+              "type": "list",
+              "label": "Unlocked by obtaining",
+              "default": [],
+              "fields": [
+                {
+                  "key": "item",
+                  "type": "item",
+                  "label": "Item or block",
+                  "default": "",
+                  "allowTags": true
+                }
+              ],
+              "mcreator": "unlockingItems",
+              "showIf": {
+                "key": "recipeType",
+                "in": [
+                  "Crafting",
+                  "Smelting",
+                  "Blasting",
+                  "Smoking",
+                  "Campfire cooking",
+                  "Stone cutting",
+                  "Smithing"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "title": "Crafting",
+          "fields": [
+            {
+              "key": "recipeShapeless",
+              "type": "boolean",
+              "label": "Shapeless",
+              "default": false,
+              "mcreator": "recipeShapeless",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Crafting"
+              }
+            },
+            {
+              "key": "craftingBookCategory",
+              "type": "select",
+              "label": "Recipe book tab",
+              "default": "MISC",
+              "options": [
+                {
+                  "value": "MISC",
+                  "label": "Misc"
+                },
+                {
+                  "value": "BUILDING",
+                  "label": "Building"
+                },
+                {
+                  "value": "REDSTONE",
+                  "label": "Redstone"
+                },
+                {
+                  "value": "EQUIPMENT",
+                  "label": "Equipment"
+                }
+              ],
+              "mcreator": "craftingBookCategory",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Crafting"
+              }
+            },
+            {
+              "key": "recipeSlots",
+              "type": "recipe_grid",
+              "label": "Ingredients",
+              "default": [
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                ""
+              ],
+              "size": 3,
+              "allowTags": true,
+              "mcreator": "recipeSlots",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Crafting"
+              }
+            },
+            {
+              "key": "recipeReturnStack",
+              "type": "item",
+              "label": "Result",
+              "default": "",
+              "mcreator": "recipeReturnStack",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Crafting"
+              }
+            },
+            {
+              "key": "recipeRetstackSize",
+              "type": "integer",
+              "label": "Result count",
+              "default": 1,
+              "min": 1,
+              "max": 99,
+              "step": 1,
+              "mcreator": "recipeRetstackSize",
+              "showIf": {
+                "key": "recipeType",
+                "in": [
+                  "Crafting",
+                  "Stone cutting"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "title": "Cooking",
+          "fields": [
+            {
+              "key": "smeltingInputStack",
+              "type": "item",
+              "label": "Input",
+              "default": "",
+              "allowTags": true,
+              "mcreator": "smeltingInputStack",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Smelting"
+              }
+            },
+            {
+              "key": "smeltingReturnStack",
+              "type": "item",
+              "label": "Result",
+              "default": "",
+              "mcreator": "smeltingReturnStack",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Smelting"
+              }
+            },
+            {
+              "key": "blastingInputStack",
+              "type": "item",
+              "label": "Input",
+              "default": "",
+              "allowTags": true,
+              "mcreator": "blastingInputStack",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Blasting"
+              }
+            },
+            {
+              "key": "blastingReturnStack",
+              "type": "item",
+              "label": "Result",
+              "default": "",
+              "mcreator": "blastingReturnStack",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Blasting"
+              }
+            },
+            {
+              "key": "smokingInputStack",
+              "type": "item",
+              "label": "Input",
+              "default": "",
+              "allowTags": true,
+              "mcreator": "smokingInputStack",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Smoking"
+              }
+            },
+            {
+              "key": "smokingReturnStack",
+              "type": "item",
+              "label": "Result",
+              "default": "",
+              "mcreator": "smokingReturnStack",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Smoking"
+              }
+            },
+            {
+              "key": "campfireCookingInputStack",
+              "type": "item",
+              "label": "Input",
+              "default": "",
+              "allowTags": true,
+              "mcreator": "campfireCookingInputStack",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Campfire cooking"
+              }
+            },
+            {
+              "key": "campfireCookingReturnStack",
+              "type": "item",
+              "label": "Result",
+              "default": "",
+              "mcreator": "campfireCookingReturnStack",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Campfire cooking"
+              }
+            },
+            {
+              "key": "xpReward",
+              "type": "number",
+              "label": "Experience reward",
+              "default": 1,
+              "min": 0,
+              "max": 256,
+              "step": 0.1,
+              "mcreator": "xpReward",
+              "showIf": {
+                "key": "recipeType",
+                "in": [
+                  "Smelting",
+                  "Blasting",
+                  "Smoking",
+                  "Campfire cooking"
+                ]
+              }
+            },
+            {
+              "key": "cookingTime",
+              "type": "integer",
+              "label": "Cooking time (ticks)",
+              "default": 200,
+              "min": 0,
+              "max": 1000000,
+              "step": 1,
+              "mcreator": "cookingTime",
+              "showIf": {
+                "key": "recipeType",
+                "in": [
+                  "Smelting",
+                  "Blasting",
+                  "Smoking",
+                  "Campfire cooking"
+                ]
+              },
+              "help": "Vanilla uses 200 for smelting, 600 for campfires, and 100 for blasting/smoking before 26.3."
+            },
+            {
+              "key": "cookingBookCategory",
+              "type": "select",
+              "label": "Recipe book tab",
+              "default": "MISC",
+              "options": [
+                {
+                  "value": "MISC",
+                  "label": "Misc"
+                },
+                {
+                  "value": "FOOD",
+                  "label": "Food"
+                },
+                {
+                  "value": "BLOCKS",
+                  "label": "Blocks"
+                }
+              ],
+              "mcreator": "cookingBookCategory",
+              "showIf": {
+                "key": "recipeType",
+                "in": [
+                  "Smelting",
+                  "Blasting",
+                  "Smoking",
+                  "Campfire cooking"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "title": "Stonecutting",
+          "fields": [
+            {
+              "key": "stoneCuttingInputStack",
+              "type": "item",
+              "label": "Input",
+              "default": "",
+              "allowTags": true,
+              "mcreator": "stoneCuttingInputStack",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Stone cutting"
+              }
+            },
+            {
+              "key": "stoneCuttingReturnStack",
+              "type": "item",
+              "label": "Result",
+              "default": "",
+              "mcreator": "stoneCuttingReturnStack",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Stone cutting"
+              }
+            }
+          ]
+        },
+        {
+          "title": "Smithing",
+          "fields": [
+            {
+              "key": "smithingInputTemplateStack",
+              "type": "item",
+              "label": "Template",
+              "default": "",
+              "allowTags": true,
+              "mcreator": "smithingInputTemplateStack",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Smithing"
+              }
+            },
+            {
+              "key": "smithingInputStack",
+              "type": "item",
+              "label": "Base item",
+              "default": "",
+              "allowTags": true,
+              "mcreator": "smithingInputStack",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Smithing"
+              }
+            },
+            {
+              "key": "smithingInputAdditionStack",
+              "type": "item",
+              "label": "Addition",
+              "default": "",
+              "allowTags": true,
+              "mcreator": "smithingInputAdditionStack",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Smithing"
+              }
+            },
+            {
+              "key": "smithingReturnStack",
+              "type": "item",
+              "label": "Result",
+              "default": "",
+              "mcreator": "smithingReturnStack",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Smithing"
+              }
+            }
+          ]
+        },
+        {
+          "title": "Brewing",
+          "fields": [
+            {
+              "key": "brewingInputStack",
+              "type": "item",
+              "label": "Bottle input",
+              "default": "",
+              "allowTags": true,
+              "mcreator": "brewingInputStack",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Brewing"
+              }
+            },
+            {
+              "key": "brewingIngredientStack",
+              "type": "item",
+              "label": "Ingredient",
+              "default": "",
+              "allowTags": true,
+              "mcreator": "brewingIngredientStack",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Brewing"
+              }
+            },
+            {
+              "key": "brewingReturnStack",
+              "type": "item",
+              "label": "Result",
+              "default": "",
+              "mcreator": "brewingReturnStack",
+              "showIf": {
+                "key": "recipeType",
+                "equals": "Brewing"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

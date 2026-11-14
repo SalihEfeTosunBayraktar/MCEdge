@@ -1,0 +1,10 @@
+forceload add 0 0 15 15
+setworldspawn 8 100 8
+gamerule spawnRadius 0
+time set noon
+gamerule doDaylightCycle false
+fill 0 99 0 15 99 15 minecraft:glass
+fill 0 100 0 15 110 15 minecraft:air
+fill 5 100 5 11 104 11 wavethree:ruby_water
+@wait 3
+stop

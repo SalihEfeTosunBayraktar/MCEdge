@@ -1,0 +1,16 @@
+{
+  "usage": "usage: mcedge build <project-dir> [--target <engine-id>|all] [--no-gradle]\n       mcedge engines\n       mcedge mcp <project-dir>",
+  "unknownTarget": "unknown target \"{target}\"; available: {available}",
+  "invalidProject": "project is invalid:",
+  "projectWarnings": "project has warnings (the build goes on):",
+  "generated": "[{target}] generated -> {dir}",
+  "skipped": "[{target}] skipped {element}: {reason}",
+  "warning": "[{target}] not generated: {message}",
+  "building": "[{target}] building with Gradle {gradle} on JDK {jdk}...",
+  "built": "[{target}] OK -> {jar}",
+  "buildFailed": "[{target}] FAILED (exit {code}), log: {log}",
+  "summary": "{ok}/{total} targets built",
+  "notAProject": "not an MCEdge project (no mcedge.json): {dir}",
+  "engineLine": "{id}\t{name}\t{dir}",
+  "unknownGameRule": "game rule \"{rule}\" is not a Minecraft rule and no game_rule element has it as its ruleName or id (camelCase and snake_case both match); ignore this only when the rule comes from another mod"
+}

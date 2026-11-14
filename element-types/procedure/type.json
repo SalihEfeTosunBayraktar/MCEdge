@@ -1,0 +1,398 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "procedure",
+  "folder": "procedures",
+  "name": "Procedure",
+  "icon": "procedure",
+  "langKey": null,
+  "mcreator": "procedure",
+  "description": "Visual block program that runs from a global event or is called by other elements.",
+  "pages": [
+    {
+      "id": "procedure",
+      "title": "Procedure",
+      "groups": [
+        {
+          "title": "Settings",
+          "fields": [
+            {
+              "key": "globalTrigger",
+              "type": "select",
+              "label": "Global trigger",
+              "default": "no_ext_trigger",
+              "mcreator": "procedurexml#event_trigger.trigger",
+              "options": [
+                {
+                  "value": "no_ext_trigger",
+                  "label": "None (called by elements or other procedures)"
+                },
+                {
+                  "value": "block_break",
+                  "label": "Block break"
+                },
+                {
+                  "value": "block_multiplace",
+                  "label": "Block multiplace"
+                },
+                {
+                  "value": "block_place",
+                  "label": "Block place"
+                },
+                {
+                  "value": "bonemeal_used",
+                  "label": "Bonemeal used"
+                },
+                {
+                  "value": "bucket_filled",
+                  "label": "Bucket filled"
+                },
+                {
+                  "value": "chat_sent",
+                  "label": "Chat sent"
+                },
+                {
+                  "value": "command_executed",
+                  "label": "Command executed"
+                },
+                {
+                  "value": "crop_attempts_growth",
+                  "label": "Crop attempts growth"
+                },
+                {
+                  "value": "entity_attacked",
+                  "label": "Entity attacked"
+                },
+                {
+                  "value": "entity_blocks",
+                  "label": "Entity blocks"
+                },
+                {
+                  "value": "entity_change_equipment",
+                  "label": "Entity change equipment"
+                },
+                {
+                  "value": "entity_dies",
+                  "label": "Entity dies"
+                },
+                {
+                  "value": "entity_dropxp",
+                  "label": "Entity dropxp"
+                },
+                {
+                  "value": "entity_falls",
+                  "label": "Entity falls"
+                },
+                {
+                  "value": "entity_grief",
+                  "label": "Entity grief"
+                },
+                {
+                  "value": "entity_healed",
+                  "label": "Entity healed"
+                },
+                {
+                  "value": "entity_item_pickup",
+                  "label": "Entity item pickup"
+                },
+                {
+                  "value": "entity_joins_world",
+                  "label": "Entity joins world"
+                },
+                {
+                  "value": "entity_jumps",
+                  "label": "Entity jumps"
+                },
+                {
+                  "value": "entity_pickupxp",
+                  "label": "Entity pickupxp"
+                },
+                {
+                  "value": "entity_pre_hurt",
+                  "label": "Entity pre hurt"
+                },
+                {
+                  "value": "entity_sets_attack_target",
+                  "label": "Entity sets attack target"
+                },
+                {
+                  "value": "entity_spawns",
+                  "label": "Entity spawns"
+                },
+                {
+                  "value": "entity_struck_by_lightning",
+                  "label": "Entity struck by lightning"
+                },
+                {
+                  "value": "entity_switch_hand",
+                  "label": "Entity switch hand"
+                },
+                {
+                  "value": "entity_tamed",
+                  "label": "Entity tamed"
+                },
+                {
+                  "value": "entity_ticks",
+                  "label": "Entity ticks"
+                },
+                {
+                  "value": "entity_travels_to_dimension",
+                  "label": "Entity travels to dimension"
+                },
+                {
+                  "value": "entity_uses_totem",
+                  "label": "Entity uses totem"
+                },
+                {
+                  "value": "explosion_occurs",
+                  "label": "Explosion occurs"
+                },
+                {
+                  "value": "farmland_trampled",
+                  "label": "Farmland trampled"
+                },
+                {
+                  "value": "gem_dropped",
+                  "label": "Gem dropped"
+                },
+                {
+                  "value": "gem_expired",
+                  "label": "Gem expired"
+                },
+                {
+                  "value": "item_crafted",
+                  "label": "Item crafted"
+                },
+                {
+                  "value": "item_destroyed",
+                  "label": "Item destroyed"
+                },
+                {
+                  "value": "item_smelted",
+                  "label": "Item smelted"
+                },
+                {
+                  "value": "minecraft_world_loaded",
+                  "label": "Minecraft world loaded"
+                },
+                {
+                  "value": "minecraft_world_unloaded",
+                  "label": "Minecraft world unloaded"
+                },
+                {
+                  "value": "mod_clientload",
+                  "label": "Mod clientload"
+                },
+                {
+                  "value": "mod_load",
+                  "label": "Mod load"
+                },
+                {
+                  "value": "mod_serverload",
+                  "label": "Mod serverload"
+                },
+                {
+                  "value": "world_load",
+                  "label": "World load"
+                },
+                {
+                  "value": "world_unload",
+                  "label": "World unload"
+                },
+                {
+                  "value": "player_completes_advancement",
+                  "label": "Player completes advancement"
+                },
+                {
+                  "value": "player_critical_hit",
+                  "label": "Player critical hit"
+                },
+                {
+                  "value": "player_fishes_item",
+                  "label": "Player fishes item"
+                },
+                {
+                  "value": "player_in_bed",
+                  "label": "Player in bed"
+                },
+                {
+                  "value": "player_left_click_air",
+                  "label": "Player left click air"
+                },
+                {
+                  "value": "player_left_click_block",
+                  "label": "Player left click block"
+                },
+                {
+                  "value": "player_log_in",
+                  "label": "Player log in"
+                },
+                {
+                  "value": "player_log_out",
+                  "label": "Player log out"
+                },
+                {
+                  "value": "player_respawn",
+                  "label": "Player respawn"
+                },
+                {
+                  "value": "player_right_click_block",
+                  "label": "Player right click block"
+                },
+                {
+                  "value": "player_right_click_empty_hand",
+                  "label": "Player right click empty hand"
+                },
+                {
+                  "value": "player_right_click_entity",
+                  "label": "Player right click entity"
+                },
+                {
+                  "value": "player_right_click_item",
+                  "label": "Player right click item"
+                },
+                {
+                  "value": "player_ticks",
+                  "label": "Player ticks"
+                },
+                {
+                  "value": "player_use_hoe",
+                  "label": "Player use hoe"
+                },
+                {
+                  "value": "player_useitem_finish",
+                  "label": "Player useitem finish"
+                },
+                {
+                  "value": "player_useitem_start",
+                  "label": "Player useitem start"
+                },
+                {
+                  "value": "player_useitem_stop",
+                  "label": "Player useitem stop"
+                },
+                {
+                  "value": "player_wakes_up",
+                  "label": "Player wakes up"
+                },
+                {
+                  "value": "player_xp_change",
+                  "label": "Player xp change"
+                },
+                {
+                  "value": "player_xp_level_change",
+                  "label": "Player xp level change"
+                },
+                {
+                  "value": "sapling_glow",
+                  "label": "Sapling glow"
+                },
+                {
+                  "value": "village_siege",
+                  "label": "Village siege"
+                },
+                {
+                  "value": "world_ticks",
+                  "label": "World ticks"
+                },
+                {
+                  "value": "server_ticks",
+                  "label": "Server ticks"
+                }
+              ],
+              "help": "Game event that runs the procedure. The event provides its dependencies; blocks needing others show a warning."
+            },
+            {
+              "key": "returnType",
+              "type": "select",
+              "label": "Return type",
+              "default": "none",
+              "mcreator": "procedurexml#return",
+              "options": [
+                {
+                  "value": "none",
+                  "label": "None"
+                },
+                {
+                  "value": "logic",
+                  "label": "Logic"
+                },
+                {
+                  "value": "number",
+                  "label": "Number"
+                },
+                {
+                  "value": "string",
+                  "label": "String"
+                },
+                {
+                  "value": "itemstack",
+                  "label": "Itemstack"
+                },
+                {
+                  "value": "blockstate",
+                  "label": "Blockstate"
+                },
+                {
+                  "value": "entity",
+                  "label": "Entity"
+                },
+                {
+                  "value": "direction",
+                  "label": "Direction"
+                },
+                {
+                  "value": "damagesource",
+                  "label": "Damagesource"
+                },
+                {
+                  "value": "actionresulttype",
+                  "label": "Actionresulttype"
+                },
+                {
+                  "value": "vector",
+                  "label": "Vector"
+                }
+              ],
+              "help": "Type of the value the procedure returns with its Return blocks; element fields that read a value need it."
+            },
+            {
+              "key": "skipDependencyNullCheck",
+              "type": "boolean",
+              "label": "Skip missing-dependency checks",
+              "default": false,
+              "mcreator": "skipDependencyNullCheck",
+              "help": "Does not abort when a required dependency is missing."
+            }
+          ]
+        },
+        {
+          "title": "Program",
+          "fields": [
+            {
+              "key": "program",
+              "type": "blockly",
+              "label": "Blocks",
+              "help": "The block program, stored as JSON (see docs/ELEMENT-TYPES.md, Procedures).",
+              "default": {
+                "format": 1,
+                "variables": [],
+                "stacks": [
+                  {
+                    "x": 40,
+                    "y": 40,
+                    "blocks": [
+                      {
+                        "block": "start"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "mcreator": "procedurexml"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

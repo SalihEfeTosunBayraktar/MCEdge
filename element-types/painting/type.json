@@ -1,0 +1,67 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "painting",
+  "folder": "paintings",
+  "name": "Painting",
+  "icon": "image",
+  "langKey": "painting",
+  "mcreator": "painting",
+  "description": "A placeable painting variant with its own artwork.",
+  "pages": [
+    {
+      "id": "properties",
+      "title": "Properties",
+      "groups": [
+        {
+          "title": "Painting",
+          "fields": [
+            {
+              "key": "texture",
+              "type": "texture",
+              "label": "Artwork",
+              "default": "",
+              "textureKind": "painting",
+              "mcreator": "texture",
+              "required": true
+            },
+            {
+              "key": "title",
+              "type": "text",
+              "label": "Title",
+              "default": "",
+              "mcreator": "title"
+            },
+            {
+              "key": "author",
+              "type": "text",
+              "label": "Author",
+              "default": "",
+              "mcreator": "author"
+            },
+            {
+              "key": "width",
+              "type": "integer",
+              "label": "Width (pixels)",
+              "default": 16,
+              "min": 16,
+              "max": 256,
+              "step": 16,
+              "mcreator": "width",
+              "help": "Multiples of 16; 16 pixels is one block."
+            },
+            {
+              "key": "height",
+              "type": "integer",
+              "label": "Height (pixels)",
+              "default": 16,
+              "min": 16,
+              "max": 256,
+              "step": 16,
+              "mcreator": "height"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

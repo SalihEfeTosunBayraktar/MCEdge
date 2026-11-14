@@ -1,0 +1,221 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "enchantment",
+  "folder": "enchantments",
+  "name": "Enchantment",
+  "description": "A new enchantment with its levels, supported items and data driven effects.",
+  "icon": "sparkles",
+  "langKey": "enchantment",
+  "mcreator": "enchantment",
+  "pages": [
+    {
+      "id": "properties",
+      "title": "Properties",
+      "groups": [
+        {
+          "title": "Enchantment",
+          "fields": [
+            {
+              "key": "name",
+              "type": "text",
+              "label": "Name",
+              "help": "Name shown on enchanted items.",
+              "default": "",
+              "required": true,
+              "mcreator": "name"
+            },
+            {
+              "key": "weight",
+              "type": "integer",
+              "label": "Weight",
+              "help": "How often it appears in enchanting tables and loot; higher is more common.",
+              "default": 10,
+              "min": 1,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "weight"
+            },
+            {
+              "key": "maxLevel",
+              "type": "integer",
+              "label": "Max level",
+              "help": "Highest level it can reach.",
+              "default": 4,
+              "min": 1,
+              "max": 255,
+              "step": 1,
+              "mcreator": "maxLevel"
+            },
+            {
+              "key": "supportedItems",
+              "type": "list",
+              "label": "Supported items",
+              "help": "Items or one item tag that can carry it, e.g. #minecraft:enchantable/sword.",
+              "default": [],
+              "required": true,
+              "fields": [
+                {
+                  "key": "item",
+                  "type": "item",
+                  "label": "Item",
+                  "default": "",
+                  "allowTags": true
+                }
+              ],
+              "mcreator": "supportedItems"
+            },
+            {
+              "key": "supportedSlots",
+              "type": "select",
+              "label": "Active slot",
+              "help": "Slot the item must be in for the effects to apply.",
+              "default": "any",
+              "options": [
+                {
+                  "value": "any",
+                  "label": "Any slot"
+                },
+                {
+                  "value": "mainhand",
+                  "label": "Main hand"
+                },
+                {
+                  "value": "offhand",
+                  "label": "Off hand"
+                },
+                {
+                  "value": "hand",
+                  "label": "Either hand"
+                },
+                {
+                  "value": "feet",
+                  "label": "Feet"
+                },
+                {
+                  "value": "legs",
+                  "label": "Legs"
+                },
+                {
+                  "value": "chest",
+                  "label": "Chest"
+                },
+                {
+                  "value": "head",
+                  "label": "Head"
+                },
+                {
+                  "value": "armor",
+                  "label": "Any armor slot"
+                },
+                {
+                  "value": "body",
+                  "label": "Body (animal armor)"
+                },
+                {
+                  "value": "saddle",
+                  "label": "Saddle"
+                }
+              ],
+              "mcreator": "supportedSlots"
+            },
+            {
+              "key": "incompatibleEnchantments",
+              "type": "list",
+              "label": "Incompatible enchantments",
+              "help": "Enchantments (or one tag) that cannot be combined with this one.",
+              "default": [],
+              "fields": [
+                {
+                  "key": "enchantment",
+                  "type": "enchantment",
+                  "label": "Enchantment",
+                  "default": "",
+                  "allowTags": true
+                }
+              ],
+              "mcreator": "incompatibleEnchantments"
+            },
+            {
+              "key": "anvilCost",
+              "type": "integer",
+              "label": "Anvil cost",
+              "help": "Base level cost when combined in an anvil.",
+              "default": 1,
+              "min": 1,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "anvilCost"
+            },
+            {
+              "key": "damageModifier",
+              "type": "integer",
+              "label": "Damage bonus",
+              "help": "Flat extra attack damage per level.",
+              "default": 0,
+              "min": 0,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "damageModifier"
+            }
+          ]
+        },
+        {
+          "title": "Availability",
+          "fields": [
+            {
+              "key": "isTreasureEnchantment",
+              "type": "boolean",
+              "label": "Treasure only",
+              "help": "Cannot be rolled on an enchanting table.",
+              "default": false,
+              "mcreator": "isTreasureEnchantment"
+            },
+            {
+              "key": "isCurse",
+              "type": "boolean",
+              "label": "Curse",
+              "help": "Marks it as a curse (red name, not removable by grindstone).",
+              "default": false,
+              "mcreator": "isCurse"
+            },
+            {
+              "key": "canGenerateInLootTables",
+              "type": "boolean",
+              "label": "Found in loot",
+              "help": "Can appear on randomly enchanted loot.",
+              "default": true,
+              "mcreator": "canGenerateInLootTables"
+            },
+            {
+              "key": "canVillagerTrade",
+              "type": "boolean",
+              "label": "Sold by villagers",
+              "help": "Can appear in librarian trades.",
+              "default": true,
+              "mcreator": "canVillagerTrade"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "effects",
+      "title": "Effects",
+      "groups": [
+        {
+          "title": "Effects",
+          "fields": [
+            {
+              "key": "effectsxml",
+              "type": "blockly",
+              "label": "Enchantment effects",
+              "help": "Blocks describing what the enchantment does (data driven enchantment effects).",
+              "default": "<xml xmlns=\"https://developers.google.com/blockly/xml\"><block type=\"enchantment_effects_start\" deletable=\"false\" x=\"40\" y=\"80\"></block></xml>",
+              "mcreator": "effectsxml"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

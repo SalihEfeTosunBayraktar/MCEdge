@@ -1,0 +1,10 @@
+forceload add 0 0
+setblock 0 100 5 wavethree:ruby_water
+setblock 6 100 5 wavethree:ember
+summon minecraft:pig 0 100 5 {NoAI:1b}
+@wait 8
+execute if block 0 99 5 wavethree:ruby_water run say water-flows
+execute if block 6 99 5 wavethree:ember run say ember-flows
+execute if entity @e[type=minecraft:pig] run say pig-alive
+@wait 2
+stop

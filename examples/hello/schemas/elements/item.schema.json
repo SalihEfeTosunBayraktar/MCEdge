@@ -1,0 +1,459 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mcedge/elements/item.schema.json",
+  "title": "MCEdge Item element",
+  "description": "A general purpose item: materials, food, music discs, ranged weapons and items with their own inventory.",
+  "type": "object",
+  "required": [
+    "id"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "title": {
+      "type": "string"
+    },
+    "texture": {
+      "title": "Texture",
+      "type": "string"
+    },
+    "model": {
+      "title": "Model",
+      "description": "Built-in models are Normal, Tool and Ranged item.",
+      "type": "string"
+    },
+    "guiTexture": {
+      "title": "Inventory texture",
+      "description": "Optional separate icon used in inventories when a custom model is used.",
+      "type": "string"
+    },
+    "glowCondition": {
+      "title": "Enchanted glint",
+      "type": "boolean"
+    },
+    "glowConditionProcedure": {
+      "title": "Enchanted glint (procedure)",
+      "description": "When set, this procedure decides the value instead of the checkbox.",
+      "type": "string"
+    },
+    "specialInformation": {
+      "title": "Tooltip lines",
+      "description": "One tooltip line per row.",
+      "type": "string"
+    },
+    "specialInformationProcedure": {
+      "title": "Tooltip lines (procedure)",
+      "description": "When set, this procedure returns the tooltip lines instead.",
+      "type": "string"
+    },
+    "customProperties": {
+      "title": "Custom properties",
+      "description": "Named numeric properties computed by procedures; states below switch the model based on them.",
+      "type": "object",
+      "additionalProperties": {
+        "title": "Value procedure",
+        "type": "string"
+      }
+    },
+    "states": {
+      "title": "Model states",
+      "description": "Alternative models/textures used when all listed property values match.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stateMap": {
+            "title": "When properties equal",
+            "type": "object",
+            "additionalProperties": {
+              "title": "Value",
+              "type": "number"
+            }
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "texture": {
+            "title": "Texture",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "animations": {
+      "title": "Animations",
+      "description": "Only applies when the item uses a Java model.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "animation": {
+            "title": "Animation",
+            "description": "Animation id; only used with Java models.",
+            "type": "string"
+          },
+          "speed": {
+            "title": "Speed",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "condition": {
+            "title": "Play condition",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "name": {
+      "title": "Display name",
+      "type": "string"
+    },
+    "rarity": {
+      "title": "Rarity",
+      "description": "Colors the item name.",
+      "enum": [
+        "COMMON",
+        "UNCOMMON",
+        "RARE",
+        "EPIC"
+      ]
+    },
+    "creativeTabs": {
+      "title": "Creative tabs",
+      "description": "Creative inventory tabs that list this element. Tabs defined in this mod are offered as well.",
+      "type": "array",
+      "items": {}
+    },
+    "stackSize": {
+      "title": "Max stack size",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 99
+    },
+    "enchantability": {
+      "title": "Enchantability",
+      "type": "integer",
+      "minimum": -100,
+      "maximum": 128000
+    },
+    "toolType": {
+      "title": "Block breaking speed",
+      "description": "Mining speed multiplier when used on blocks.",
+      "type": "number",
+      "minimum": -100,
+      "maximum": 128000
+    },
+    "damageCount": {
+      "title": "Durability",
+      "description": "0 means the item does not take damage.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 128000
+    },
+    "repairItems": {
+      "title": "Repair items",
+      "description": "Only used when durability is above 0.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "title": "Item or block",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "immuneToFire": {
+      "title": "Immune to fire and lava",
+      "type": "boolean"
+    },
+    "isPiglinCurrency": {
+      "title": "Piglins accept it for bartering",
+      "type": "boolean"
+    },
+    "destroyAnyBlock": {
+      "title": "Can harvest any block",
+      "type": "boolean"
+    },
+    "animation": {
+      "title": "Use animation",
+      "enum": [
+        "none",
+        "eat",
+        "drink",
+        "block",
+        "bow",
+        "trident",
+        "crossbow",
+        "spyglass",
+        "toot_horn",
+        "brush",
+        "bundle",
+        "spear"
+      ]
+    },
+    "useDuration": {
+      "title": "Use duration (ticks)",
+      "description": "How long the item can be used. Food usually uses 32.",
+      "type": "integer",
+      "minimum": -100,
+      "maximum": 128000
+    },
+    "useSound": {
+      "title": "Eating or drinking sound",
+      "description": "Sound played while the item is used. Empty keeps the vanilla sound of the use animation.",
+      "type": "string"
+    },
+    "isFood": {
+      "title": "Is food",
+      "description": "Makes the item edible. Switching it on typically sets the use animation to eat and duration to 32.",
+      "type": "boolean"
+    },
+    "nutritionalValue": {
+      "title": "Hunger restored",
+      "type": "integer",
+      "minimum": -1000,
+      "maximum": 1000
+    },
+    "saturation": {
+      "title": "Saturation",
+      "type": "number",
+      "minimum": -1000,
+      "maximum": 1000
+    },
+    "eatResultItem": {
+      "title": "Item left after eating",
+      "type": "string"
+    },
+    "isMeat": {
+      "title": "Is meat (wolves eat it)",
+      "type": "boolean"
+    },
+    "isAlwaysEdible": {
+      "title": "Edible when not hungry",
+      "type": "boolean"
+    },
+    "enableRanged": {
+      "title": "Shoots projectiles",
+      "type": "boolean"
+    },
+    "projectile": {
+      "title": "Projectile",
+      "description": "Arrow-type projectile or a projectile element from this mod.",
+      "type": "string"
+    },
+    "projectileDisableAmmoCheck": {
+      "title": "No ammo needed",
+      "type": "boolean"
+    },
+    "shootConstantly": {
+      "title": "Shoot continuously while held",
+      "type": "boolean"
+    },
+    "rangedItemChargesPower": {
+      "title": "Charge power like a bow",
+      "description": "Ignored when shooting continuously.",
+      "type": "boolean"
+    },
+    "rangedUseCondition": {
+      "title": "Can shoot condition",
+      "type": "string"
+    },
+    "onRangedItemUsed": {
+      "title": "When shot",
+      "type": "string"
+    },
+    "guiBoundTo": {
+      "title": "Bound GUI",
+      "description": "GUI element of this mod that acts as the item inventory. Empty for none.",
+      "type": "string"
+    },
+    "openGUIOnRightClick": {
+      "title": "Open GUI on right-click",
+      "type": "boolean"
+    },
+    "openGUIOnRightClickProcedure": {
+      "title": "Open GUI on right-click (procedure)",
+      "description": "When set, this procedure decides the value instead of the checkbox.",
+      "type": "string"
+    },
+    "inventorySize": {
+      "title": "Inventory slots",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 256
+    },
+    "inventoryStackSize": {
+      "title": "Inventory max stack size",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1024
+    },
+    "isMusicDisc": {
+      "title": "Is a music disc",
+      "type": "boolean"
+    },
+    "musicDiscMusic": {
+      "title": "Disc sound",
+      "type": "string"
+    },
+    "musicDiscDescription": {
+      "title": "Disc description",
+      "type": "string"
+    },
+    "musicDiscLengthInTicks": {
+      "title": "Track length (ticks)",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 72000
+    },
+    "musicDiscAnalogOutput": {
+      "title": "Comparator signal",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 15
+    },
+    "providedBannerPatterns": {
+      "title": "Banner patterns provided",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "title": "Banner pattern element",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "enableMeleeDamage": {
+      "title": "Custom melee damage",
+      "type": "boolean"
+    },
+    "damageVsEntity": {
+      "title": "Attack damage",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 128000
+    },
+    "attackSpeed": {
+      "title": "Attack speed",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 128000
+    },
+    "stayInGridWhenCrafting": {
+      "title": "Stays in the crafting grid",
+      "type": "boolean"
+    },
+    "damageOnCrafting": {
+      "title": "Loses durability when crafting",
+      "type": "boolean"
+    },
+    "recipeRemainder": {
+      "title": "Leftover item after crafting",
+      "type": "string"
+    },
+    "attributeModifiers": {
+      "title": "Attribute modifiers",
+      "description": "Changes entity attributes while this is active.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "equipmentSlot": {
+            "title": "Active in slot",
+            "enum": [
+              "any",
+              "mainhand",
+              "offhand",
+              "hand",
+              "feet",
+              "legs",
+              "chest",
+              "head",
+              "armor",
+              "body",
+              "saddle"
+            ]
+          },
+          "attribute": {
+            "title": "Attribute",
+            "type": "string"
+          },
+          "amount": {
+            "title": "Amount",
+            "type": "number",
+            "minimum": -1024,
+            "maximum": 1024
+          },
+          "operation": {
+            "title": "Operation",
+            "enum": [
+              "ADD_VALUE",
+              "ADD_MULTIPLIED_BASE",
+              "ADD_MULTIPLIED_TOTAL"
+            ]
+          }
+        }
+      }
+    },
+    "onRightClickedInAir": {
+      "title": "Right-clicked in the air",
+      "type": "string"
+    },
+    "onRightClickedOnBlock": {
+      "title": "Right-clicked on a block",
+      "description": "May return an interaction result; returning nothing keeps the default.",
+      "type": "string"
+    },
+    "onCrafted": {
+      "title": "Crafted or smelted",
+      "type": "string"
+    },
+    "onEntityHitWith": {
+      "title": "Entity hit with this",
+      "type": "string"
+    },
+    "onItemInInventoryTick": {
+      "title": "Every tick in inventory",
+      "type": "string"
+    },
+    "onItemInUseTick": {
+      "title": "Every tick while held",
+      "type": "string"
+    },
+    "onStoppedUsing": {
+      "title": "Stopped using",
+      "type": "string"
+    },
+    "onEntitySwing": {
+      "title": "Entity swings it",
+      "type": "string"
+    },
+    "onDroppedByPlayer": {
+      "title": "Dropped by a player",
+      "type": "string"
+    },
+    "onFinishUsingItem": {
+      "title": "Finished using",
+      "type": "string"
+    },
+    "everyTickWhileUsing": {
+      "title": "Every tick while using",
+      "type": "string"
+    },
+    "onItemEntityDestroyed": {
+      "title": "Dropped item destroyed",
+      "type": "string"
+    }
+  }
+}

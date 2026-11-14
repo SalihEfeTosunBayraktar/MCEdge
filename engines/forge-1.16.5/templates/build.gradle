@@ -1,0 +1,37 @@
+plugins {
+    id 'net.minecraftforge.gradle' version '5.1.+'
+}
+
+version = '{{mod.version}}'
+group = '{{mod.package}}'
+archivesBaseName = '{{mod.id}}'
+
+java.toolchain.languageVersion = JavaLanguageVersion.of({{java}})
+
+minecraft {
+    mappings channel: 'official', version: '{{minecraft}}'
+    runs {
+        client {
+            workingDirectory project.file('run')
+            mods { {{mod.id}} { source sourceSets.main } }
+        }
+        server {
+            workingDirectory project.file('run')
+            args 'nogui'
+            mods { {{mod.id}} { source sourceSets.main } }
+        }
+    }
+}
+
+{{#if integrationRepositories}}repositories {
+{{#each integrationRepositories}}    maven { url = '{{url}}' }
+{{/each}}}
+
+{{/if}}dependencies {
+    minecraft 'net.minecraftforge:forge:{{minecraft}}-{{versions.forge}}'
+{{#each integrationGradle}}    {{line}}
+{{/each}}}
+
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+
+jar.finalizedBy('reobfJar')

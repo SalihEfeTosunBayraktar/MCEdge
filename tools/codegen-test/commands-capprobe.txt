@@ -1,0 +1,10 @@
+@wait 5
+forceload add 0 0
+@wait 1
+setblock 2 100 0 minecraft:air
+setblock 2 100 0 wavethree:ruby_chest
+capprobe
+@wait 2
+stop
+@wait 15
+@kill

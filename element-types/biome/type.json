@@ -1,0 +1,960 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "biome",
+  "folder": "biomes",
+  "name": "Biome",
+  "description": "A biome with its blocks, climate, colors, features, structures and mob spawns.",
+  "icon": "trees",
+  "langKey": "biome",
+  "mcreator": "biome",
+  "pages": [
+    {
+      "id": "general",
+      "title": "General",
+      "groups": [
+        {
+          "title": "Biome",
+          "fields": [
+            {
+              "key": "name",
+              "type": "text",
+              "label": "Name",
+              "help": "Biome name shown on the debug screen and in locate results.",
+              "default": "",
+              "required": true,
+              "mcreator": "name"
+            },
+            {
+              "key": "rainingPossibility",
+              "type": "number",
+              "label": "Downfall",
+              "help": "How wet the biome is; affects grass and foliage color.",
+              "default": 0.5,
+              "min": 0,
+              "max": 1,
+              "step": 0.1,
+              "mcreator": "rainingPossibility"
+            },
+            {
+              "key": "temperature",
+              "type": "number",
+              "label": "Temperature",
+              "help": "Controls snow versus rain and grass color.",
+              "default": 0.5,
+              "min": -1,
+              "max": 2,
+              "step": 0.1,
+              "mcreator": "temperature"
+            }
+          ]
+        },
+        {
+          "title": "Colors",
+          "fields": [
+            {
+              "key": "airColor",
+              "type": "color",
+              "label": "Sky color",
+              "help": "Leave empty for the vanilla color.",
+              "default": "",
+              "mcreator": "airColor"
+            },
+            {
+              "key": "fogColor",
+              "type": "color",
+              "label": "Fog color",
+              "help": "Leave empty for the vanilla color.",
+              "default": "",
+              "mcreator": "fogColor"
+            },
+            {
+              "key": "grassColor",
+              "type": "color",
+              "label": "Grass color",
+              "help": "Leave empty to compute from climate.",
+              "default": "",
+              "mcreator": "grassColor"
+            },
+            {
+              "key": "foliageColor",
+              "type": "color",
+              "label": "Foliage color",
+              "help": "Leave empty to compute from climate.",
+              "default": "",
+              "mcreator": "foliageColor"
+            },
+            {
+              "key": "dryFoliageColor",
+              "type": "color",
+              "label": "Dry foliage color",
+              "help": "Color of dry foliage such as leaf litter. Leave empty for default.",
+              "default": "",
+              "mcreator": "dryFoliageColor"
+            },
+            {
+              "key": "waterColor",
+              "type": "color",
+              "label": "Water color",
+              "help": "Leave empty for the vanilla color.",
+              "default": "",
+              "mcreator": "waterColor"
+            },
+            {
+              "key": "waterFogColor",
+              "type": "color",
+              "label": "Underwater fog color",
+              "help": "Leave empty for the vanilla color.",
+              "default": "",
+              "mcreator": "waterFogColor"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "generation",
+      "title": "Generation",
+      "groups": [
+        {
+          "title": "Blocks",
+          "fields": [
+            {
+              "key": "groundBlock",
+              "type": "block",
+              "label": "Surface block",
+              "help": "Top layer, like grass in plains.",
+              "default": "minecraft:grass_block",
+              "required": true,
+              "mcreator": "groundBlock"
+            },
+            {
+              "key": "undergroundBlock",
+              "type": "block",
+              "label": "Subsurface block",
+              "help": "Layer under the surface, like dirt.",
+              "default": "minecraft:dirt",
+              "required": true,
+              "mcreator": "undergroundBlock"
+            },
+            {
+              "key": "underwaterBlock",
+              "type": "block",
+              "label": "Underwater block",
+              "help": "Floor under water. Leave empty to reuse the subsurface block.",
+              "default": "",
+              "mcreator": "underwaterBlock"
+            }
+          ]
+        },
+        {
+          "title": "Climate parameters",
+          "fields": [
+            {
+              "key": "genTemperature",
+              "type": "range",
+              "label": "Temperature range",
+              "help": "Noise range where this biome is picked. Overlaps with other biomes decide how often it appears.",
+              "default": {
+                "min": -0.5,
+                "max": 0.5
+              },
+              "min": -2,
+              "max": 2,
+              "step": 0.0001,
+              "mcreator": "genTemperature"
+            },
+            {
+              "key": "genHumidity",
+              "type": "range",
+              "label": "Humidity range",
+              "default": {
+                "min": -0.5,
+                "max": 0.5
+              },
+              "min": -2,
+              "max": 2,
+              "step": 0.0001,
+              "mcreator": "genHumidity"
+            },
+            {
+              "key": "genContinentalness",
+              "type": "range",
+              "label": "Continentalness range",
+              "help": "Low values are oceans, high values are inland.",
+              "default": {
+                "min": 0.3,
+                "max": 1
+              },
+              "min": -2,
+              "max": 2,
+              "step": 0.0001,
+              "mcreator": "genContinentalness"
+            },
+            {
+              "key": "genErosion",
+              "type": "range",
+              "label": "Erosion range",
+              "help": "Low values give mountains, high values flat land.",
+              "default": {
+                "min": -0.5,
+                "max": 0.5
+              },
+              "min": -2,
+              "max": 2,
+              "step": 0.0001,
+              "mcreator": "genErosion"
+            },
+            {
+              "key": "genWeirdness",
+              "type": "range",
+              "label": "Weirdness range",
+              "default": {
+                "min": -1,
+                "max": 1
+              },
+              "min": -2,
+              "max": 2,
+              "step": 0.0001,
+              "mcreator": "genWeirdness"
+            }
+          ]
+        },
+        {
+          "title": "Dimensions",
+          "fields": [
+            {
+              "key": "spawnBiome",
+              "type": "boolean",
+              "label": "Generate in the Overworld",
+              "help": "Add the biome to the Overworld surface.",
+              "default": true,
+              "mcreator": "spawnBiome"
+            },
+            {
+              "key": "spawnInCaves",
+              "type": "boolean",
+              "label": "Generate as cave biome",
+              "help": "Add the biome underground in the Overworld.",
+              "default": false,
+              "mcreator": "spawnInCaves"
+            },
+            {
+              "key": "genDepth",
+              "type": "range",
+              "label": "Cave depth range",
+              "help": "Depth band used for cave placement.",
+              "default": {
+                "min": 0.2,
+                "max": 0.9
+              },
+              "min": 0,
+              "max": 1.5,
+              "step": 0.0001,
+              "showIf": {
+                "key": "spawnInCaves",
+                "equals": true
+              },
+              "mcreator": "genDepth"
+            },
+            {
+              "key": "spawnBiomeNether",
+              "type": "boolean",
+              "label": "Generate in the Nether",
+              "help": "Add the biome to the Nether.",
+              "default": false,
+              "mcreator": "spawnBiomeNether"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "features",
+      "title": "Features",
+      "groups": [
+        {
+          "title": "Vanilla features",
+          "fields": [
+            {
+              "key": "defaultFeatures",
+              "type": "multiselect",
+              "label": "Default features",
+              "help": "Vanilla decoration sets added to the biome.",
+              "default": [
+                "Caves",
+                "Ores",
+                "FrozenTopLayer"
+              ],
+              "options": [
+                {
+                  "value": "Caves",
+                  "label": "Caves"
+                },
+                {
+                  "value": "Ores",
+                  "label": "Ores"
+                },
+                {
+                  "value": "MonsterRooms",
+                  "label": "Monster Rooms"
+                },
+                {
+                  "value": "FrozenTopLayer",
+                  "label": "Frozen Top Layer"
+                },
+                {
+                  "value": "ForestGrass",
+                  "label": "Forest Grass"
+                },
+                {
+                  "value": "ForestFlowers",
+                  "label": "Forest Flowers"
+                },
+                {
+                  "value": "AmethystGeodes",
+                  "label": "Amethyst Geodes"
+                },
+                {
+                  "value": "Bamboo",
+                  "label": "Bamboo"
+                },
+                {
+                  "value": "DeadBushes",
+                  "label": "Dead Bushes"
+                },
+                {
+                  "value": "DesertFeatures",
+                  "label": "Desert Features"
+                },
+                {
+                  "value": "Dripstone",
+                  "label": "Dripstone"
+                },
+                {
+                  "value": "ExtraEmeraldOre",
+                  "label": "Extra Emerald Ore"
+                },
+                {
+                  "value": "ExtraGoldOre",
+                  "label": "Extra Gold Ore"
+                },
+                {
+                  "value": "Fossils",
+                  "label": "Fossils"
+                },
+                {
+                  "value": "Icebergs",
+                  "label": "Icebergs"
+                },
+                {
+                  "value": "InfestedStone",
+                  "label": "Infested Stone"
+                },
+                {
+                  "value": "JungleGrass",
+                  "label": "Jungle Grass"
+                },
+                {
+                  "value": "JungleTreeForest",
+                  "label": "Jungle Tree Forest"
+                },
+                {
+                  "value": "LushCavesDecoration",
+                  "label": "Lush Caves Decoration"
+                },
+                {
+                  "value": "MeadowVegetation",
+                  "label": "Meadow Vegetation"
+                },
+                {
+                  "value": "PlainsTallGrass",
+                  "label": "Plains Tall Grass"
+                },
+                {
+                  "value": "ReedsAndPumpkins",
+                  "label": "Reeds And Pumpkins"
+                },
+                {
+                  "value": "SavannaTrees",
+                  "label": "Savanna Trees"
+                },
+                {
+                  "value": "SwampVegetation",
+                  "label": "Swamp Vegetation"
+                },
+                {
+                  "value": "TaigaGrassAndMushrooms",
+                  "label": "Taiga Grass And Mushrooms"
+                },
+                {
+                  "value": "TaigaLargeFerns",
+                  "label": "Taiga Large Ferns"
+                },
+                {
+                  "value": "TaigaRocks",
+                  "label": "Taiga Rocks"
+                },
+                {
+                  "value": "TallSeagrassLush",
+                  "label": "Tall Seagrass Lush"
+                }
+              ],
+              "mcreator": "defaultFeatures"
+            }
+          ]
+        },
+        {
+          "title": "Trees",
+          "fields": [
+            {
+              "key": "treesPerChunk",
+              "type": "integer",
+              "label": "Trees per chunk",
+              "help": "0 disables trees.",
+              "default": 1,
+              "min": 0,
+              "max": 64,
+              "step": 1,
+              "mcreator": "treesPerChunk"
+            },
+            {
+              "key": "treeType",
+              "type": "select",
+              "label": "Tree source",
+              "help": "Use a vanilla tree shape or build trees from your own blocks.",
+              "default": 0,
+              "options": [
+                {
+                  "value": 0,
+                  "label": "Vanilla trees"
+                },
+                {
+                  "value": 1,
+                  "label": "Custom trees"
+                }
+              ],
+              "mcreator": "treeType"
+            },
+            {
+              "key": "vanillaTreeType",
+              "type": "select",
+              "label": "Tree shape",
+              "help": "Shape of the trees.",
+              "default": "Default",
+              "options": [
+                {
+                  "value": "Default",
+                  "label": "Default"
+                },
+                {
+                  "value": "Big trees",
+                  "label": "Big trees"
+                },
+                {
+                  "value": "Birch trees",
+                  "label": "Birch trees"
+                },
+                {
+                  "value": "Savanna trees",
+                  "label": "Savanna trees"
+                },
+                {
+                  "value": "Mega pine trees",
+                  "label": "Mega pine trees"
+                },
+                {
+                  "value": "Mega spruce trees",
+                  "label": "Mega spruce trees"
+                }
+              ],
+              "mcreator": "vanillaTreeType"
+            },
+            {
+              "key": "minHeight",
+              "type": "integer",
+              "label": "Minimum tree height",
+              "default": 7,
+              "min": 0,
+              "max": 32,
+              "step": 1,
+              "showIf": {
+                "key": "treeType",
+                "equals": 1
+              },
+              "mcreator": "minHeight"
+            },
+            {
+              "key": "treeStem",
+              "type": "block",
+              "label": "Trunk block",
+              "default": "",
+              "required": true,
+              "showIf": {
+                "key": "treeType",
+                "equals": 1
+              },
+              "mcreator": "treeStem"
+            },
+            {
+              "key": "treeBranch",
+              "type": "block",
+              "label": "Leaves block",
+              "default": "",
+              "required": true,
+              "showIf": {
+                "key": "treeType",
+                "equals": 1
+              },
+              "mcreator": "treeBranch"
+            },
+            {
+              "key": "treeVines",
+              "type": "block",
+              "label": "Vines block",
+              "help": "Optional.",
+              "default": "",
+              "showIf": {
+                "key": "treeType",
+                "equals": 1
+              },
+              "mcreator": "treeVines"
+            },
+            {
+              "key": "treeFruits",
+              "type": "block",
+              "label": "Fruit block",
+              "help": "Optional block hanging from the leaves.",
+              "default": "",
+              "showIf": {
+                "key": "treeType",
+                "equals": 1
+              },
+              "mcreator": "treeFruits"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "structures",
+      "title": "Structures",
+      "groups": [
+        {
+          "title": "Vanilla structures",
+          "fields": [
+            {
+              "key": "spawnStronghold",
+              "type": "boolean",
+              "label": "Strongholds",
+              "default": true,
+              "mcreator": "spawnStronghold"
+            },
+            {
+              "key": "spawnMineshaft",
+              "type": "boolean",
+              "label": "Mineshafts",
+              "default": true,
+              "mcreator": "spawnMineshaft"
+            },
+            {
+              "key": "spawnMineshaftMesa",
+              "type": "boolean",
+              "label": "Badlands mineshafts",
+              "default": false,
+              "mcreator": "spawnMineshaftMesa"
+            },
+            {
+              "key": "spawnPillagerOutpost",
+              "type": "boolean",
+              "label": "Pillager outposts",
+              "default": true,
+              "mcreator": "spawnPillagerOutpost"
+            },
+            {
+              "key": "spawnWoodlandMansion",
+              "type": "boolean",
+              "label": "Woodland mansions",
+              "default": false,
+              "mcreator": "spawnWoodlandMansion"
+            },
+            {
+              "key": "spawnJungleTemple",
+              "type": "boolean",
+              "label": "Jungle temples",
+              "default": false,
+              "mcreator": "spawnJungleTemple"
+            },
+            {
+              "key": "spawnDesertPyramid",
+              "type": "boolean",
+              "label": "Desert pyramids",
+              "default": false,
+              "mcreator": "spawnDesertPyramid"
+            },
+            {
+              "key": "spawnSwampHut",
+              "type": "boolean",
+              "label": "Swamp huts",
+              "default": false,
+              "mcreator": "spawnSwampHut"
+            },
+            {
+              "key": "spawnIgloo",
+              "type": "boolean",
+              "label": "Igloos",
+              "default": false,
+              "mcreator": "spawnIgloo"
+            },
+            {
+              "key": "spawnOceanMonument",
+              "type": "boolean",
+              "label": "Ocean monuments",
+              "default": false,
+              "mcreator": "spawnOceanMonument"
+            },
+            {
+              "key": "spawnShipwreck",
+              "type": "boolean",
+              "label": "Shipwrecks",
+              "default": false,
+              "mcreator": "spawnShipwreck"
+            },
+            {
+              "key": "spawnShipwreckBeached",
+              "type": "boolean",
+              "label": "Beached shipwrecks",
+              "default": false,
+              "mcreator": "spawnShipwreckBeached"
+            },
+            {
+              "key": "spawnBuriedTreasure",
+              "type": "boolean",
+              "label": "Buried treasure",
+              "default": false,
+              "mcreator": "spawnBuriedTreasure"
+            },
+            {
+              "key": "spawnNetherBridge",
+              "type": "boolean",
+              "label": "Nether fortresses",
+              "default": false,
+              "mcreator": "spawnNetherBridge"
+            },
+            {
+              "key": "spawnNetherFossil",
+              "type": "boolean",
+              "label": "Nether fossils",
+              "default": false,
+              "mcreator": "spawnNetherFossil"
+            },
+            {
+              "key": "spawnBastionRemnant",
+              "type": "boolean",
+              "label": "Bastion remnants",
+              "default": false,
+              "mcreator": "spawnBastionRemnant"
+            },
+            {
+              "key": "spawnEndCity",
+              "type": "boolean",
+              "label": "End cities",
+              "default": false,
+              "mcreator": "spawnEndCity"
+            },
+            {
+              "key": "villageType",
+              "type": "select",
+              "label": "Villages",
+              "help": "Village style that can generate.",
+              "default": "none",
+              "options": [
+                {
+                  "value": "none",
+                  "label": "None"
+                },
+                {
+                  "value": "desert",
+                  "label": "Desert"
+                },
+                {
+                  "value": "plains",
+                  "label": "Plains"
+                },
+                {
+                  "value": "savanna",
+                  "label": "Savanna"
+                },
+                {
+                  "value": "snowy",
+                  "label": "Snowy"
+                },
+                {
+                  "value": "taiga",
+                  "label": "Taiga"
+                }
+              ],
+              "mcreator": "villageType"
+            },
+            {
+              "key": "oceanRuinType",
+              "type": "select",
+              "label": "Ocean ruins",
+              "default": "NONE",
+              "options": [
+                {
+                  "value": "NONE",
+                  "label": "None"
+                },
+                {
+                  "value": "COLD",
+                  "label": "Cold"
+                },
+                {
+                  "value": "WARM",
+                  "label": "Warm"
+                }
+              ],
+              "mcreator": "oceanRuinType"
+            },
+            {
+              "key": "spawnRuinedPortal",
+              "type": "select",
+              "label": "Ruined portals",
+              "default": "NONE",
+              "options": [
+                {
+                  "value": "NONE",
+                  "label": "None"
+                },
+                {
+                  "value": "STANDARD",
+                  "label": "Standard"
+                },
+                {
+                  "value": "DESERT",
+                  "label": "Desert"
+                },
+                {
+                  "value": "JUNGLE",
+                  "label": "Jungle"
+                },
+                {
+                  "value": "SWAMP",
+                  "label": "Swamp"
+                },
+                {
+                  "value": "MOUNTAIN",
+                  "label": "Mountain"
+                },
+                {
+                  "value": "OCEAN",
+                  "label": "Ocean"
+                },
+                {
+                  "value": "NETHER",
+                  "label": "Nether"
+                }
+              ],
+              "mcreator": "spawnRuinedPortal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "spawning",
+      "title": "Entity spawning",
+      "groups": [
+        {
+          "title": "Spawns",
+          "fields": [
+            {
+              "key": "spawnEntries",
+              "type": "list",
+              "label": "Spawn entries",
+              "help": "Entities that naturally spawn in this biome.",
+              "default": [],
+              "fields": [
+                {
+                  "key": "entity",
+                  "type": "entity",
+                  "label": "Entity",
+                  "default": "",
+                  "required": true,
+                  "mcreator": "entity"
+                },
+                {
+                  "key": "minGroup",
+                  "type": "integer",
+                  "label": "Min group size",
+                  "default": 4,
+                  "min": 1,
+                  "max": 128,
+                  "step": 1,
+                  "mcreator": "minGroup"
+                },
+                {
+                  "key": "maxGroup",
+                  "type": "integer",
+                  "label": "Max group size",
+                  "default": 4,
+                  "min": 1,
+                  "max": 128,
+                  "step": 1,
+                  "mcreator": "maxGroup"
+                },
+                {
+                  "key": "weight",
+                  "type": "integer",
+                  "label": "Weight",
+                  "help": "Higher is more common.",
+                  "default": 20,
+                  "min": 1,
+                  "max": 1000,
+                  "step": 1,
+                  "mcreator": "weight"
+                },
+                {
+                  "key": "spawnType",
+                  "type": "select",
+                  "label": "Spawn group",
+                  "default": "monster",
+                  "options": [
+                    {
+                      "value": "monster",
+                      "label": "Monster"
+                    },
+                    {
+                      "value": "creature",
+                      "label": "Creature"
+                    },
+                    {
+                      "value": "ambient",
+                      "label": "Ambient"
+                    },
+                    {
+                      "value": "undergroundWaterCreature",
+                      "label": "Underground water creature"
+                    },
+                    {
+                      "value": "waterCreature",
+                      "label": "Water creature"
+                    },
+                    {
+                      "value": "waterAmbient",
+                      "label": "Water ambient"
+                    },
+                    {
+                      "value": "misc",
+                      "label": "Misc"
+                    },
+                    {
+                      "value": "axolotls",
+                      "label": "Axolotls"
+                    }
+                  ],
+                  "mcreator": "spawnType"
+                }
+              ],
+              "mcreator": "spawnEntries"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "effects",
+      "title": "Effects",
+      "groups": [
+        {
+          "title": "Sounds",
+          "fields": [
+            {
+              "key": "music",
+              "type": "sound",
+              "label": "Music",
+              "help": "Background music while in the biome.",
+              "default": "",
+              "mcreator": "music"
+            },
+            {
+              "key": "ambientSound",
+              "type": "sound",
+              "label": "Ambient loop",
+              "help": "Looping ambient sound.",
+              "default": "",
+              "mcreator": "ambientSound"
+            },
+            {
+              "key": "additionsSound",
+              "type": "sound",
+              "label": "Random additions",
+              "help": "Short sounds played at random.",
+              "default": "",
+              "mcreator": "additionsSound"
+            },
+            {
+              "key": "moodSound",
+              "type": "sound",
+              "label": "Mood sound",
+              "help": "Cave-style sound played in dark places.",
+              "default": "",
+              "mcreator": "moodSound"
+            },
+            {
+              "key": "moodSoundDelay",
+              "type": "integer",
+              "label": "Mood sound delay",
+              "help": "Ticks between mood sounds.",
+              "default": 6000,
+              "min": 1,
+              "max": 30000,
+              "step": 1,
+              "mcreator": "moodSoundDelay"
+            }
+          ]
+        },
+        {
+          "title": "Particles",
+          "fields": [
+            {
+              "key": "spawnParticles",
+              "type": "boolean",
+              "label": "Ambient particles",
+              "help": "Float particles in the air.",
+              "default": false,
+              "mcreator": "spawnParticles"
+            },
+            {
+              "key": "particleToSpawn",
+              "type": "particle",
+              "label": "Particle",
+              "default": "",
+              "required": true,
+              "showIf": {
+                "key": "spawnParticles",
+                "equals": true
+              },
+              "mcreator": "particleToSpawn"
+            },
+            {
+              "key": "particlesProbability",
+              "type": "number",
+              "label": "Particle density",
+              "help": "Chance in percent per tick.",
+              "default": 0.5,
+              "min": 0,
+              "max": 100,
+              "step": 0.1,
+              "showIf": {
+                "key": "spawnParticles",
+                "equals": true
+              },
+              "mcreator": "particlesProbability"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

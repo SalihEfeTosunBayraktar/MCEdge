@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mcedge/elements/creative_tab.schema.json",
+  "title": "MCEdge Creative tab element",
+  "description": "A creative inventory tab for this mod's items and blocks.",
+  "type": "object",
+  "required": [
+    "id"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "title": {
+      "type": "string"
+    },
+    "name": {
+      "title": "Tab title",
+      "type": "string"
+    },
+    "icon": {
+      "title": "Icon item",
+      "type": "string"
+    },
+    "showSearch": {
+      "title": "Has a search bar",
+      "type": "boolean"
+    },
+    "hideTitle": {
+      "title": "Hide the title",
+      "type": "boolean"
+    },
+    "order": {
+      "title": "Items in order",
+      "description": "The mod's items and blocks in this tab, in the order the tab shows them. Drag a row to move it; Ctrl+click and Shift+click select several rows to move together, and a section folds with its arrow. Sections and spacers start a new row and leave empty slots on 1.16.5; newer versions keep only the order.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "element",
+              "section",
+              "spacer"
+            ]
+          },
+          "type": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "slots": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 8
+          }
+        }
+      }
+    }
+  }
+}

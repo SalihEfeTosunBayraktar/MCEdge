@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schemas/engine.schema.json",
+  "id": "forge-1.16.5",
+  "apiVersion": 1,
+  "name": "Forge 1.16.5",
+  "minecraft": "1.16.5",
+  "loader": "forge",
+  "java": 8,
+  "gradle": {
+    "version": "7.6.4",
+    "jdk": 8
+  },
+  "layers": [
+    "@common",
+    "@assets-1.16.5",
+    "templates"
+  ],
+  "versions": {
+    "forge": "36.2.39",
+    "packFormat": "6"
+  },
+  "creativeTabs": {
+    "BUILDING_BLOCKS": "TAB_BUILDING_BLOCKS",
+    "DECORATIONS": "TAB_DECORATIONS",
+    "REDSTONE": "TAB_REDSTONE",
+    "FOOD": "TAB_FOOD",
+    "TOOLS": "TAB_TOOLS",
+    "COMBAT": "TAB_COMBAT",
+    "MATERIALS": "TAB_MATERIALS",
+    "MISC": "TAB_MISC",
+    "TRANSPORTATION": "TAB_TRANSPORTATION",
+    "BREWING": "TAB_BREWING"
+  },
+  "api": {}
+}

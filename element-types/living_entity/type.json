@@ -1,0 +1,1907 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "living_entity",
+  "folder": "living_entities",
+  "name": "Living entity",
+  "icon": "entity",
+  "langKey": "entity",
+  "mcreator": "livingentity",
+  "description": "A mob or creature with model, stats, AI goals, sounds and natural spawning.",
+  "pages": [
+    {
+      "id": "visual",
+      "title": "Visual",
+      "groups": [
+        {
+          "title": "Model",
+          "fields": [
+            {
+              "key": "mobName",
+              "type": "text",
+              "label": "Display name",
+              "default": "",
+              "mcreator": "mobName",
+              "required": true
+            },
+            {
+              "key": "mobModelName",
+              "type": "model",
+              "label": "Model",
+              "default": "Biped",
+              "modelKinds": [
+                "builtin",
+                "java"
+              ],
+              "mcreator": "mobModelName",
+              "help": "Built-in: Biped, Chicken, Cod, Cow, Creeper, Ghast, Ocelot, Pig, Piglin, Salmon, Silverfish, Slime, Spider, Villager, Witch; or a Java model from this mod."
+            },
+            {
+              "key": "mobModelTexture",
+              "type": "texture",
+              "label": "Texture",
+              "default": "",
+              "textureKind": "entity",
+              "required": true,
+              "mcreator": "mobModelTexture"
+            },
+            {
+              "key": "transparentModelCondition",
+              "type": "boolean",
+              "label": "Translucent model",
+              "default": false,
+              "mcreator": "transparentModelCondition.fixedValue"
+            },
+            {
+              "key": "transparentModelConditionProcedure",
+              "type": "procedure",
+              "label": "Translucent model (procedure)",
+              "default": "",
+              "trigger": "entity_model_transparent",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity"
+              ],
+              "mcreator": "transparentModelCondition.name",
+              "returns": "logic",
+              "help": "When set, this procedure decides the value instead of the checkbox."
+            },
+            {
+              "key": "isShakingCondition",
+              "type": "boolean",
+              "label": "Shaking (like zombie villager conversion)",
+              "default": false,
+              "mcreator": "isShakingCondition.fixedValue"
+            },
+            {
+              "key": "isShakingConditionProcedure",
+              "type": "procedure",
+              "label": "Shaking (like zombie villager conversion) (procedure)",
+              "default": "",
+              "trigger": "entity_shaking",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity"
+              ],
+              "mcreator": "isShakingCondition.name",
+              "returns": "logic",
+              "help": "When set, this procedure decides the value instead of the checkbox."
+            },
+            {
+              "key": "visualScale",
+              "type": "number",
+              "label": "Visual scale",
+              "default": 1,
+              "min": 0.01,
+              "max": 1024,
+              "step": 0.01,
+              "mcreator": "visualScale.fixedValue"
+            },
+            {
+              "key": "visualScaleProcedure",
+              "type": "procedure",
+              "label": "Visual scale (procedure)",
+              "default": "",
+              "trigger": "entity_visual_scale",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity"
+              ],
+              "mcreator": "visualScale.name",
+              "returns": "number",
+              "help": "When set, this procedure computes the value instead of the fixed number."
+            }
+          ]
+        },
+        {
+          "title": "Bounding box",
+          "fields": [
+            {
+              "key": "modelWidth",
+              "type": "number",
+              "label": "Width",
+              "default": 0.6,
+              "min": 0,
+              "max": 16,
+              "step": 0.1,
+              "mcreator": "modelWidth"
+            },
+            {
+              "key": "modelHeight",
+              "type": "number",
+              "label": "Height",
+              "default": 1.8,
+              "min": 0,
+              "max": 16,
+              "step": 0.1,
+              "mcreator": "modelHeight"
+            },
+            {
+              "key": "modelShadowSize",
+              "type": "number",
+              "label": "Shadow radius",
+              "default": 0.5,
+              "min": 0,
+              "max": 16,
+              "step": 0.1,
+              "mcreator": "modelShadowSize"
+            },
+            {
+              "key": "mountedYOffset",
+              "type": "number",
+              "label": "Rider height offset",
+              "default": 0,
+              "min": -1024,
+              "max": 1024,
+              "step": 0.1,
+              "mcreator": "mountedYOffset"
+            },
+            {
+              "key": "boundingBoxScale",
+              "type": "number",
+              "label": "Hitbox scale",
+              "default": 1,
+              "min": 0.01,
+              "max": 1024,
+              "step": 0.01,
+              "mcreator": "boundingBoxScale.fixedValue"
+            },
+            {
+              "key": "boundingBoxScaleProcedure",
+              "type": "procedure",
+              "label": "Hitbox scale (procedure)",
+              "default": "",
+              "trigger": "entity_hitbox_scale",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity"
+              ],
+              "mcreator": "boundingBoxScale.name",
+              "returns": "number",
+              "help": "When set, this procedure computes the value instead of the fixed number."
+            },
+            {
+              "key": "solidBoundingBox",
+              "type": "boolean",
+              "label": "Solid hitbox (others can stand on it)",
+              "default": false,
+              "mcreator": "solidBoundingBox.fixedValue"
+            },
+            {
+              "key": "solidBoundingBoxProcedure",
+              "type": "procedure",
+              "label": "Solid hitbox (others can stand on it) (procedure)",
+              "default": "",
+              "trigger": "entity_solid_box",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity"
+              ],
+              "mcreator": "solidBoundingBox.name",
+              "returns": "logic",
+              "help": "When set, this procedure decides the value instead of the checkbox."
+            }
+          ]
+        },
+        {
+          "title": "Spawn egg",
+          "fields": [
+            {
+              "key": "hasSpawnEgg",
+              "type": "boolean",
+              "label": "Has a spawn egg",
+              "default": true,
+              "mcreator": "hasSpawnEgg"
+            },
+            {
+              "key": "spawnEggBaseColor",
+              "type": "color",
+              "label": "Egg base color",
+              "default": "#ffffff",
+              "mcreator": "spawnEggBaseColor",
+              "showIf": {
+                "key": "hasSpawnEgg",
+                "equals": true
+              }
+            },
+            {
+              "key": "spawnEggDotColor",
+              "type": "color",
+              "label": "Egg spot color",
+              "default": "#000000",
+              "mcreator": "spawnEggDotColor",
+              "showIf": {
+                "key": "hasSpawnEgg",
+                "equals": true
+              }
+            },
+            {
+              "key": "spawnEggTexture",
+              "type": "texture",
+              "label": "Custom egg texture",
+              "default": "",
+              "textureKind": "item",
+              "mcreator": "spawnEggTexture",
+              "showIf": {
+                "key": "hasSpawnEgg",
+                "equals": true
+              },
+              "help": "Optional; replaces the colored egg."
+            },
+            {
+              "key": "creativeTabs",
+              "type": "multiselect",
+              "elementTypes": [
+                "creative_tab"
+              ],
+              "label": "Creative tabs",
+              "default": [
+                "MISC"
+              ],
+              "mcreator": "creativeTabs",
+              "options": [
+                {
+                  "value": "BUILDING_BLOCKS",
+                  "label": "Building blocks"
+                },
+                {
+                  "value": "DECORATIONS",
+                  "label": "Natural blocks"
+                },
+                {
+                  "value": "REDSTONE",
+                  "label": "Redstone"
+                },
+                {
+                  "value": "FOOD",
+                  "label": "Food and drinks"
+                },
+                {
+                  "value": "TOOLS",
+                  "label": "Tools and utilities"
+                },
+                {
+                  "value": "COMBAT",
+                  "label": "Combat"
+                },
+                {
+                  "value": "MATERIALS",
+                  "label": "Ingredients"
+                },
+                {
+                  "value": "MISC",
+                  "label": "Spawn eggs"
+                },
+                {
+                  "value": "TRANSPORTATION",
+                  "label": "Functional blocks"
+                },
+                {
+                  "value": "BREWING",
+                  "label": "Colored blocks"
+                },
+                {
+                  "value": "OP_BLOCKS",
+                  "label": "Operator items"
+                }
+              ],
+              "help": "Creative inventory tabs that list this element. Tabs defined in this mod are offered as well.",
+              "showIf": {
+                "key": "hasSpawnEgg",
+                "equals": true
+              }
+            }
+          ]
+        },
+        {
+          "title": "Boss and label",
+          "fields": [
+            {
+              "key": "isBoss",
+              "type": "boolean",
+              "label": "Is a boss (shows a boss bar)",
+              "default": false,
+              "mcreator": "isBoss"
+            },
+            {
+              "key": "bossBarColor",
+              "type": "select",
+              "label": "Boss bar color",
+              "default": "PINK",
+              "options": [
+                {
+                  "value": "PINK",
+                  "label": "Pink"
+                },
+                {
+                  "value": "BLUE",
+                  "label": "Blue"
+                },
+                {
+                  "value": "RED",
+                  "label": "Red"
+                },
+                {
+                  "value": "GREEN",
+                  "label": "Green"
+                },
+                {
+                  "value": "YELLOW",
+                  "label": "Yellow"
+                },
+                {
+                  "value": "PURPLE",
+                  "label": "Purple"
+                },
+                {
+                  "value": "WHITE",
+                  "label": "White"
+                }
+              ],
+              "mcreator": "bossBarColor",
+              "showIf": {
+                "key": "isBoss",
+                "equals": true
+              }
+            },
+            {
+              "key": "bossBarType",
+              "type": "select",
+              "label": "Boss bar style",
+              "default": "PROGRESS",
+              "options": [
+                {
+                  "value": "PROGRESS",
+                  "label": "Progress"
+                },
+                {
+                  "value": "NOTCHED_6",
+                  "label": "Notched 6"
+                },
+                {
+                  "value": "NOTCHED_10",
+                  "label": "Notched 10"
+                },
+                {
+                  "value": "NOTCHED_12",
+                  "label": "Notched 12"
+                },
+                {
+                  "value": "NOTCHED_20",
+                  "label": "Notched 20"
+                }
+              ],
+              "mcreator": "bossBarType",
+              "showIf": {
+                "key": "isBoss",
+                "equals": true
+              }
+            },
+            {
+              "key": "mobLabel",
+              "type": "text",
+              "label": "Name tag label",
+              "default": "",
+              "mcreator": "mobLabel",
+              "help": "Optional text always shown above the entity."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "entity_data",
+      "title": "Entity data",
+      "groups": [
+        {
+          "title": "Synced data",
+          "fields": [
+            {
+              "key": "entityDataEntries",
+              "type": "list",
+              "label": "Data entries",
+              "default": [],
+              "fields": [
+                {
+                  "key": "name",
+                  "type": "text",
+                  "label": "Name",
+                  "default": "",
+                  "pattern": "^[a-z0-9_]+$"
+                },
+                {
+                  "key": "type",
+                  "type": "select",
+                  "label": "Type",
+                  "default": "number",
+                  "options": [
+                    {
+                      "value": "number",
+                      "label": "Number"
+                    },
+                    {
+                      "value": "logic",
+                      "label": "Logic"
+                    },
+                    {
+                      "value": "string",
+                      "label": "String"
+                    }
+                  ]
+                },
+                {
+                  "key": "defaultValue",
+                  "type": "text",
+                  "label": "Default value",
+                  "default": "0"
+                }
+              ],
+              "mcreator": "entityDataEntries",
+              "help": "Values stored on each entity and synced to clients; usable by procedures, layers and animations."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "model_layers",
+      "title": "Model layers",
+      "groups": [
+        {
+          "title": "Layers",
+          "fields": [
+            {
+              "key": "modelLayers",
+              "type": "list",
+              "label": "Extra render layers",
+              "default": [],
+              "fields": [
+                {
+                  "key": "model",
+                  "type": "model",
+                  "label": "Model",
+                  "default": "Default",
+                  "modelKinds": [
+                    "builtin",
+                    "java"
+                  ]
+                },
+                {
+                  "key": "texture",
+                  "type": "texture",
+                  "label": "Texture",
+                  "default": "",
+                  "textureKind": "entity"
+                },
+                {
+                  "key": "disableHurtOverlay",
+                  "type": "boolean",
+                  "label": "No red hurt tint",
+                  "default": false
+                },
+                {
+                  "key": "glow",
+                  "type": "boolean",
+                  "label": "Glowing (full bright)",
+                  "default": false
+                },
+                {
+                  "key": "condition",
+                  "type": "procedure",
+                  "label": "Display condition",
+                  "default": "",
+                  "trigger": "entity_layer_condition",
+                  "dependencies": [
+                    "x",
+                    "y",
+                    "z",
+                    "world",
+                    "entity"
+                  ],
+                  "returns": "logic"
+                },
+                {
+                  "key": "syncedDataCondition",
+                  "type": "text",
+                  "label": "Or entity data condition",
+                  "default": "",
+                  "help": "Name of a logic entity data entry; used instead of the procedure."
+                }
+              ],
+              "mcreator": "modelLayers"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "animations",
+      "title": "Animations",
+      "groups": [
+        {
+          "title": "Model animations",
+          "fields": [
+            {
+              "key": "animations",
+              "type": "list",
+              "label": "Animations",
+              "default": [],
+              "fields": [
+                {
+                  "key": "animation",
+                  "type": "text",
+                  "label": "Animation",
+                  "default": ""
+                },
+                {
+                  "key": "speed",
+                  "type": "number",
+                  "label": "Speed",
+                  "default": 1,
+                  "min": 0,
+                  "max": 100,
+                  "step": 0.1
+                },
+                {
+                  "key": "walking",
+                  "type": "boolean",
+                  "label": "Walking animation",
+                  "default": false
+                },
+                {
+                  "key": "amplitude",
+                  "type": "number",
+                  "label": "Walk amplitude",
+                  "default": 1,
+                  "min": 0,
+                  "max": 1000,
+                  "step": 0.1,
+                  "showIf": {
+                    "key": "walking",
+                    "equals": true
+                  }
+                },
+                {
+                  "key": "condition",
+                  "type": "procedure",
+                  "label": "Play condition",
+                  "default": "",
+                  "trigger": "entity_animation_condition",
+                  "dependencies": [
+                    "x",
+                    "y",
+                    "z",
+                    "world",
+                    "entity"
+                  ],
+                  "returns": "logic"
+                },
+                {
+                  "key": "syncedDataCondition",
+                  "type": "text",
+                  "label": "Or entity data condition",
+                  "default": ""
+                }
+              ],
+              "mcreator": "animations",
+              "help": "Only applies to Java models."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "behaviour",
+      "title": "Behavior",
+      "groups": [
+        {
+          "title": "Type and stats",
+          "fields": [
+            {
+              "key": "mobBehaviourType",
+              "type": "select",
+              "label": "Behavior type",
+              "default": "Mob",
+              "options": [
+                {
+                  "value": "Mob",
+                  "label": "Mob"
+                },
+                {
+                  "value": "Creature",
+                  "label": "Creature"
+                },
+                {
+                  "value": "Raider",
+                  "label": "Raider"
+                }
+              ],
+              "mcreator": "mobBehaviourType",
+              "help": "Mob is hostile-style, Creature is passive-style, Raider joins raids."
+            },
+            {
+              "key": "mobCreatureType",
+              "type": "select",
+              "label": "Creature category",
+              "default": "UNDEFINED",
+              "options": [
+                {
+                  "value": "UNDEFINED",
+                  "label": "Undefined"
+                },
+                {
+                  "value": "UNDEAD",
+                  "label": "Undead"
+                },
+                {
+                  "value": "ARTHROPOD",
+                  "label": "Arthropod"
+                },
+                {
+                  "value": "ILLAGER",
+                  "label": "Illager"
+                },
+                {
+                  "value": "WATER",
+                  "label": "Water"
+                }
+              ],
+              "mcreator": "mobCreatureType"
+            },
+            {
+              "key": "mobDrop",
+              "type": "item",
+              "label": "Drop on death",
+              "default": "",
+              "mcreator": "mobDrop"
+            },
+            {
+              "key": "health",
+              "type": "integer",
+              "label": "Health",
+              "default": 10,
+              "min": 0,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "health"
+            },
+            {
+              "key": "xpAmount",
+              "type": "integer",
+              "label": "Experience dropped",
+              "default": 0,
+              "min": 0,
+              "max": 100000,
+              "step": 1,
+              "mcreator": "xpAmount"
+            },
+            {
+              "key": "movementSpeed",
+              "type": "number",
+              "label": "Movement speed",
+              "default": 0.3,
+              "min": 0,
+              "max": 50,
+              "step": 0.1,
+              "mcreator": "movementSpeed"
+            },
+            {
+              "key": "stepHeight",
+              "type": "number",
+              "label": "Step height",
+              "default": 0.6,
+              "min": 0,
+              "max": 255,
+              "step": 0.1,
+              "mcreator": "stepHeight"
+            },
+            {
+              "key": "followRange",
+              "type": "integer",
+              "label": "Follow range",
+              "default": 16,
+              "min": 0,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "followRange"
+            },
+            {
+              "key": "trackingRange",
+              "type": "integer",
+              "label": "Client tracking range",
+              "default": 64,
+              "min": 0,
+              "max": 2048,
+              "step": 1,
+              "mcreator": "trackingRange"
+            },
+            {
+              "key": "attackStrength",
+              "type": "integer",
+              "label": "Attack damage",
+              "default": 3,
+              "min": 0,
+              "max": 10000,
+              "step": 1,
+              "mcreator": "attackStrength"
+            },
+            {
+              "key": "armorBaseValue",
+              "type": "number",
+              "label": "Armor",
+              "default": 0,
+              "min": 0,
+              "max": 100,
+              "step": 0.1,
+              "mcreator": "armorBaseValue"
+            },
+            {
+              "key": "attackKnockback",
+              "type": "number",
+              "label": "Attack knockback",
+              "default": 0,
+              "min": 0,
+              "max": 1000,
+              "step": 0.1,
+              "mcreator": "attackKnockback"
+            },
+            {
+              "key": "knockbackResistance",
+              "type": "number",
+              "label": "Knockback resistance",
+              "default": 0,
+              "min": 0,
+              "max": 1000,
+              "step": 0.1,
+              "mcreator": "knockbackResistance"
+            }
+          ]
+        },
+        {
+          "title": "Movement",
+          "fields": [
+            {
+              "key": "ridable",
+              "type": "boolean",
+              "label": "Can be ridden",
+              "default": false,
+              "mcreator": "ridable"
+            },
+            {
+              "key": "canControlForward",
+              "type": "boolean",
+              "label": "Rider controls forward movement",
+              "default": false,
+              "mcreator": "canControlForward",
+              "showIf": {
+                "key": "ridable",
+                "equals": true
+              }
+            },
+            {
+              "key": "canControlStrafe",
+              "type": "boolean",
+              "label": "Rider controls sideways movement",
+              "default": false,
+              "mcreator": "canControlStrafe",
+              "showIf": {
+                "key": "ridable",
+                "equals": true
+              }
+            },
+            {
+              "key": "waterMob",
+              "type": "boolean",
+              "label": "Water entity",
+              "default": false,
+              "mcreator": "waterMob"
+            },
+            {
+              "key": "breatheUnderwater",
+              "type": "boolean",
+              "label": "Breathes underwater",
+              "default": false,
+              "mcreator": "breatheUnderwater.fixedValue"
+            },
+            {
+              "key": "breatheUnderwaterProcedure",
+              "type": "procedure",
+              "label": "Breathes underwater (procedure)",
+              "default": "",
+              "trigger": "entity_breathe_underwater",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity"
+              ],
+              "mcreator": "breatheUnderwater.name",
+              "returns": "logic",
+              "help": "When set, this procedure decides the value instead of the checkbox."
+            },
+            {
+              "key": "pushedByFluids",
+              "type": "boolean",
+              "label": "Pushed by fluids",
+              "default": true,
+              "mcreator": "pushedByFluids.fixedValue"
+            },
+            {
+              "key": "pushedByFluidsProcedure",
+              "type": "procedure",
+              "label": "Pushed by fluids (procedure)",
+              "default": "",
+              "trigger": "entity_pushed_by_fluids",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity"
+              ],
+              "mcreator": "pushedByFluids.name",
+              "returns": "logic",
+              "help": "When set, this procedure decides the value instead of the checkbox."
+            },
+            {
+              "key": "flyingMob",
+              "type": "boolean",
+              "label": "Flying entity",
+              "default": false,
+              "mcreator": "flyingMob"
+            },
+            {
+              "key": "disableCollisions",
+              "type": "boolean",
+              "label": "No collision with other entities",
+              "default": false,
+              "mcreator": "disableCollisions"
+            }
+          ]
+        },
+        {
+          "title": "Equipment",
+          "fields": [
+            {
+              "key": "equipmentMainHand",
+              "type": "item",
+              "label": "Main hand",
+              "default": "",
+              "mcreator": "equipmentMainHand"
+            },
+            {
+              "key": "equipmentOffHand",
+              "type": "item",
+              "label": "Off hand",
+              "default": "",
+              "mcreator": "equipmentOffHand"
+            },
+            {
+              "key": "equipmentHelmet",
+              "type": "item",
+              "label": "Head",
+              "default": "",
+              "mcreator": "equipmentHelmet"
+            },
+            {
+              "key": "equipmentBody",
+              "type": "item",
+              "label": "Chest",
+              "default": "",
+              "mcreator": "equipmentBody"
+            },
+            {
+              "key": "equipmentLeggings",
+              "type": "item",
+              "label": "Legs",
+              "default": "",
+              "mcreator": "equipmentLeggings"
+            },
+            {
+              "key": "equipmentBoots",
+              "type": "item",
+              "label": "Feet",
+              "default": "",
+              "mcreator": "equipmentBoots"
+            }
+          ]
+        },
+        {
+          "title": "Immunities",
+          "fields": [
+            {
+              "key": "immuneToFire",
+              "type": "boolean",
+              "label": "Immune to fire",
+              "default": false,
+              "mcreator": "immuneToFire"
+            },
+            {
+              "key": "immuneToArrows",
+              "type": "boolean",
+              "label": "Immune to arrows",
+              "default": false,
+              "mcreator": "immuneToArrows"
+            },
+            {
+              "key": "immuneToFallDamage",
+              "type": "boolean",
+              "label": "Immune to fall damage",
+              "default": false,
+              "mcreator": "immuneToFallDamage"
+            },
+            {
+              "key": "immuneToCactus",
+              "type": "boolean",
+              "label": "Immune to cactus",
+              "default": false,
+              "mcreator": "immuneToCactus"
+            },
+            {
+              "key": "immuneToDrowning",
+              "type": "boolean",
+              "label": "Immune to drowning",
+              "default": false,
+              "mcreator": "immuneToDrowning"
+            },
+            {
+              "key": "immuneToLightning",
+              "type": "boolean",
+              "label": "Immune to lightning",
+              "default": false,
+              "mcreator": "immuneToLightning"
+            },
+            {
+              "key": "immuneToPotions",
+              "type": "boolean",
+              "label": "Immune to potions",
+              "default": false,
+              "mcreator": "immuneToPotions"
+            },
+            {
+              "key": "immuneToPlayer",
+              "type": "boolean",
+              "label": "Immune to players",
+              "default": false,
+              "mcreator": "immuneToPlayer"
+            },
+            {
+              "key": "immuneToExplosion",
+              "type": "boolean",
+              "label": "Immune to explosions",
+              "default": false,
+              "mcreator": "immuneToExplosion"
+            },
+            {
+              "key": "immuneToAnvil",
+              "type": "boolean",
+              "label": "Immune to falling anvils",
+              "default": false,
+              "mcreator": "immuneToAnvil"
+            },
+            {
+              "key": "immuneToTrident",
+              "type": "boolean",
+              "label": "Immune to tridents",
+              "default": false,
+              "mcreator": "immuneToTrident"
+            },
+            {
+              "key": "immuneToDragonBreath",
+              "type": "boolean",
+              "label": "Immune to dragon breath",
+              "default": false,
+              "mcreator": "immuneToDragonBreath"
+            },
+            {
+              "key": "immuneToWither",
+              "type": "boolean",
+              "label": "Immune to wither",
+              "default": false,
+              "mcreator": "immuneToWither"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sound",
+      "title": "Sounds",
+      "groups": [
+        {
+          "title": "Sounds",
+          "fields": [
+            {
+              "key": "livingSound",
+              "type": "sound",
+              "label": "Ambient sound",
+              "default": "",
+              "mcreator": "livingSound"
+            },
+            {
+              "key": "stepSound",
+              "type": "sound",
+              "label": "Step sound",
+              "default": "",
+              "mcreator": "stepSound"
+            },
+            {
+              "key": "hurtSound",
+              "type": "sound",
+              "label": "Hurt sound",
+              "default": "minecraft:entity.generic.hurt",
+              "mcreator": "hurtSound"
+            },
+            {
+              "key": "deathSound",
+              "type": "sound",
+              "label": "Death sound",
+              "default": "minecraft:entity.generic.death",
+              "mcreator": "deathSound"
+            },
+            {
+              "key": "raidCelebrationSound",
+              "type": "sound",
+              "label": "Raid celebration sound",
+              "default": "",
+              "mcreator": "raidCelebrationSound",
+              "showIf": {
+                "key": "mobBehaviourType",
+                "equals": "Raider"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "inventory",
+      "title": "Inventory",
+      "groups": [
+        {
+          "title": "Inventory",
+          "fields": [
+            {
+              "key": "guiBoundTo",
+              "type": "element",
+              "elementTypes": [
+                "gui"
+              ],
+              "label": "Bound GUI",
+              "default": "",
+              "mcreator": "guiBoundTo",
+              "help": "GUI element of this mod used as the entity inventory. Empty for none."
+            },
+            {
+              "key": "inventorySize",
+              "type": "integer",
+              "label": "Inventory slots",
+              "default": 9,
+              "min": 0,
+              "max": 256,
+              "step": 1,
+              "mcreator": "inventorySize"
+            },
+            {
+              "key": "inventoryStackSize",
+              "type": "integer",
+              "label": "Inventory max stack size",
+              "default": 99,
+              "min": 1,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "inventoryStackSize"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vibration",
+      "title": "Vibrations",
+      "groups": [
+        {
+          "title": "Vibration sensing",
+          "fields": [
+            {
+              "key": "sensitiveToVibration",
+              "type": "boolean",
+              "label": "Senses vibrations (like the warden)",
+              "default": false,
+              "mcreator": "sensitiveToVibration"
+            },
+            {
+              "key": "vibrationalEvents",
+              "type": "list",
+              "label": "Game events it reacts to",
+              "default": [],
+              "fields": [
+                {
+                  "key": "event",
+                  "type": "text",
+                  "label": "Game event",
+                  "default": ""
+                }
+              ],
+              "mcreator": "vibrationalEvents",
+              "showIf": {
+                "key": "sensitiveToVibration",
+                "equals": true
+              }
+            },
+            {
+              "key": "vibrationSensitivityRadius",
+              "type": "integer",
+              "label": "Listening radius",
+              "default": 7,
+              "min": 0,
+              "max": 2147483647,
+              "step": 1,
+              "mcreator": "vibrationSensitivityRadius.fixedValue",
+              "showIf": {
+                "key": "sensitiveToVibration",
+                "equals": true
+              }
+            },
+            {
+              "key": "vibrationSensitivityRadiusProcedure",
+              "type": "procedure",
+              "label": "Listening radius (procedure)",
+              "default": "",
+              "trigger": "entity_vibration_radius",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity"
+              ],
+              "mcreator": "vibrationSensitivityRadius.name",
+              "returns": "number",
+              "help": "When set, this procedure computes the value instead of the fixed number.",
+              "showIf": {
+                "key": "sensitiveToVibration",
+                "equals": true
+              }
+            },
+            {
+              "key": "canReceiveVibrationCondition",
+              "type": "procedure",
+              "label": "Can receive vibration",
+              "default": "",
+              "trigger": "entity_vibration_condition",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "sourceentity",
+                "vibrationX",
+                "vibrationY",
+                "vibrationZ"
+              ],
+              "mcreator": "canReceiveVibrationCondition",
+              "returns": "logic",
+              "showIf": {
+                "key": "sensitiveToVibration",
+                "equals": true
+              }
+            },
+            {
+              "key": "onReceivedVibration",
+              "type": "procedure",
+              "label": "Vibration received",
+              "default": "",
+              "trigger": "entity_vibration_received",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "sourceentity",
+                "immediatesourceentity",
+                "vibrationX",
+                "vibrationY",
+                "vibrationZ",
+                "distance"
+              ],
+              "mcreator": "onReceivedVibration",
+              "showIf": {
+                "key": "sensitiveToVibration",
+                "equals": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "triggers",
+      "title": "Triggers",
+      "groups": [
+        {
+          "title": "Events",
+          "fields": [
+            {
+              "key": "onStruckByLightning",
+              "type": "procedure",
+              "label": "Struck by lightning",
+              "default": "",
+              "trigger": "entity_struck_by_lightning",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity"
+              ],
+              "mcreator": "onStruckByLightning"
+            },
+            {
+              "key": "whenMobFalls",
+              "type": "procedure",
+              "label": "Falls",
+              "default": "",
+              "trigger": "entity_falls",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "damagesource"
+              ],
+              "mcreator": "whenMobFalls"
+            },
+            {
+              "key": "whenMobDies",
+              "type": "procedure",
+              "label": "Dies",
+              "default": "",
+              "trigger": "entity_dies",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "sourceentity",
+                "immediatesourceentity",
+                "damagesource"
+              ],
+              "mcreator": "whenMobDies"
+            },
+            {
+              "key": "whenMobIsHurt",
+              "type": "procedure",
+              "label": "Hurt",
+              "default": "",
+              "trigger": "entity_hurt",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "sourceentity",
+                "immediatesourceentity",
+                "damagesource",
+                "amount"
+              ],
+              "mcreator": "whenMobIsHurt",
+              "returns": "logic",
+              "help": "Returning false cancels the damage; returning nothing keeps it."
+            },
+            {
+              "key": "onRightClickedOn",
+              "type": "procedure",
+              "label": "Right-clicked",
+              "default": "",
+              "trigger": "entity_right_clicked",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "sourceentity",
+                "itemstack"
+              ],
+              "mcreator": "onRightClickedOn",
+              "returns": "actionresulttype"
+            },
+            {
+              "key": "whenThisMobKillsAnother",
+              "type": "procedure",
+              "label": "Kills another entity",
+              "default": "",
+              "trigger": "entity_kills",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "sourceentity",
+                "immediatesourceentity",
+                "damagesource"
+              ],
+              "mcreator": "whenThisMobKillsAnother"
+            },
+            {
+              "key": "onMobTickUpdate",
+              "type": "procedure",
+              "label": "Every tick",
+              "default": "",
+              "trigger": "entity_tick",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity"
+              ],
+              "mcreator": "onMobTickUpdate"
+            },
+            {
+              "key": "onPlayerCollidesWith",
+              "type": "procedure",
+              "label": "Player collides with it",
+              "default": "",
+              "trigger": "entity_player_collides",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "sourceentity"
+              ],
+              "mcreator": "onPlayerCollidesWith"
+            },
+            {
+              "key": "onInitialSpawn",
+              "type": "procedure",
+              "label": "First spawned",
+              "default": "",
+              "trigger": "entity_initial_spawn",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity"
+              ],
+              "mcreator": "onInitialSpawn"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ai",
+      "title": "AI and goals",
+      "groups": [
+        {
+          "title": "AI",
+          "fields": [
+            {
+              "key": "hasAI",
+              "type": "boolean",
+              "label": "Has AI",
+              "default": true,
+              "mcreator": "hasAI"
+            },
+            {
+              "key": "aiBase",
+              "type": "select",
+              "label": "Base AI from",
+              "default": "(none)",
+              "options": [
+                {
+                  "value": "(none)",
+                  "label": "(none)"
+                },
+                {
+                  "value": "Bat",
+                  "label": "Bat"
+                },
+                {
+                  "value": "Blaze",
+                  "label": "Blaze"
+                },
+                {
+                  "value": "Chicken",
+                  "label": "Chicken"
+                },
+                {
+                  "value": "Cow",
+                  "label": "Cow"
+                },
+                {
+                  "value": "Creeper",
+                  "label": "Creeper"
+                },
+                {
+                  "value": "Enderman",
+                  "label": "Enderman"
+                },
+                {
+                  "value": "Horse",
+                  "label": "Horse"
+                },
+                {
+                  "value": "IronGolem",
+                  "label": "Irongolem"
+                },
+                {
+                  "value": "MagmaCube",
+                  "label": "Magmacube"
+                },
+                {
+                  "value": "Ocelot",
+                  "label": "Ocelot"
+                },
+                {
+                  "value": "Pig",
+                  "label": "Pig"
+                },
+                {
+                  "value": "Skeleton",
+                  "label": "Skeleton"
+                },
+                {
+                  "value": "Slime",
+                  "label": "Slime"
+                },
+                {
+                  "value": "Spider",
+                  "label": "Spider"
+                },
+                {
+                  "value": "Squid",
+                  "label": "Squid"
+                },
+                {
+                  "value": "Villager",
+                  "label": "Villager"
+                },
+                {
+                  "value": "Witch",
+                  "label": "Witch"
+                },
+                {
+                  "value": "Wolf",
+                  "label": "Wolf"
+                },
+                {
+                  "value": "Zombie",
+                  "label": "Zombie"
+                }
+              ],
+              "mcreator": "aiBase",
+              "help": "Copies the AI of a vanilla mob instead of the goal blocks below."
+            },
+            {
+              "key": "breedable",
+              "type": "boolean",
+              "label": "Can breed",
+              "default": false,
+              "mcreator": "breedable",
+              "help": "Breeding forces AI on and disables the base AI."
+            },
+            {
+              "key": "tameable",
+              "type": "boolean",
+              "label": "Can be tamed",
+              "default": false,
+              "mcreator": "tameable",
+              "showIf": {
+                "key": "breedable",
+                "equals": true
+              }
+            },
+            {
+              "key": "breedTriggerItems",
+              "type": "list",
+              "label": "Breeding items",
+              "default": [],
+              "fields": [
+                {
+                  "key": "item",
+                  "type": "item",
+                  "label": "Item or block",
+                  "default": "",
+                  "allowTags": true
+                }
+              ],
+              "mcreator": "breedTriggerItems",
+              "showIf": {
+                "key": "breedable",
+                "equals": true
+              }
+            },
+            {
+              "key": "ranged",
+              "type": "boolean",
+              "label": "Has a ranged attack",
+              "default": false,
+              "mcreator": "ranged"
+            },
+            {
+              "key": "rangedItemType",
+              "type": "element",
+              "elementTypes": [
+                "projectile"
+              ],
+              "options": [
+                {
+                  "value": "Default item",
+                  "label": "Default item"
+                }
+              ],
+              "label": "Ranged projectile",
+              "default": "Default item",
+              "mcreator": "rangedItemType",
+              "showIf": {
+                "key": "ranged",
+                "equals": true
+              },
+              "help": "\"Default item\" shoots the item below; otherwise the name of a projectile element."
+            },
+            {
+              "key": "rangedAttackItem",
+              "type": "item",
+              "label": "Ranged attack item",
+              "default": "",
+              "mcreator": "rangedAttackItem",
+              "showIf": {
+                "key": "ranged",
+                "equals": true
+              }
+            },
+            {
+              "key": "rangedAttackInterval",
+              "type": "integer",
+              "label": "Attack interval (ticks)",
+              "default": 20,
+              "min": 0,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "rangedAttackInterval",
+              "showIf": {
+                "key": "ranged",
+                "equals": true
+              }
+            },
+            {
+              "key": "rangedAttackRadius",
+              "type": "number",
+              "label": "Attack radius",
+              "default": 10,
+              "min": 0,
+              "max": 1024,
+              "step": 0.1,
+              "mcreator": "rangedAttackRadius",
+              "showIf": {
+                "key": "ranged",
+                "equals": true
+              }
+            }
+          ]
+        },
+        {
+          "title": "Goals",
+          "fields": [
+            {
+              "key": "aixml",
+              "type": "blockly",
+              "label": "AI goals",
+              "default": "",
+              "mcreator": "aixml",
+              "help": "Goal blocks (editor \"aitasks\"). Defaults to melee attack, wander, retaliate, look around and swim."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "spawning",
+      "title": "Spawning",
+      "groups": [
+        {
+          "title": "Natural spawning",
+          "fields": [
+            {
+              "key": "spawnThisMob",
+              "type": "boolean",
+              "label": "Spawns naturally",
+              "default": true,
+              "mcreator": "spawnThisMob"
+            },
+            {
+              "key": "doesDespawnWhenIdle",
+              "type": "boolean",
+              "label": "Despawns when far away",
+              "default": true,
+              "mcreator": "doesDespawnWhenIdle"
+            },
+            {
+              "key": "spawningCondition",
+              "type": "procedure",
+              "label": "Extra spawn condition",
+              "default": "",
+              "trigger": "entity_spawn_condition",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world"
+              ],
+              "mcreator": "spawningCondition",
+              "returns": "logic",
+              "showIf": {
+                "key": "spawnThisMob",
+                "equals": true
+              }
+            },
+            {
+              "key": "spawningProbability",
+              "type": "integer",
+              "label": "Spawn weight",
+              "default": 20,
+              "min": 1,
+              "max": 1000,
+              "step": 1,
+              "mcreator": "spawningProbability",
+              "showIf": {
+                "key": "spawnThisMob",
+                "equals": true
+              }
+            },
+            {
+              "key": "mobSpawningType",
+              "type": "select",
+              "label": "Spawn category",
+              "default": "monster",
+              "options": [
+                {
+                  "value": "monster",
+                  "label": "Monster"
+                },
+                {
+                  "value": "creature",
+                  "label": "Creature"
+                },
+                {
+                  "value": "ambient",
+                  "label": "Ambient"
+                },
+                {
+                  "value": "undergroundWaterCreature",
+                  "label": "Undergroundwatercreature"
+                },
+                {
+                  "value": "waterCreature",
+                  "label": "Watercreature"
+                },
+                {
+                  "value": "waterAmbient",
+                  "label": "Waterambient"
+                },
+                {
+                  "value": "misc",
+                  "label": "Misc"
+                },
+                {
+                  "value": "axolotls",
+                  "label": "Axolotls"
+                }
+              ],
+              "mcreator": "mobSpawningType",
+              "showIf": {
+                "key": "spawnThisMob",
+                "equals": true
+              }
+            },
+            {
+              "key": "minNumberOfMobsPerGroup",
+              "type": "integer",
+              "label": "Min group size",
+              "default": 4,
+              "min": 1,
+              "max": 128,
+              "step": 1,
+              "mcreator": "minNumberOfMobsPerGroup",
+              "showIf": {
+                "key": "spawnThisMob",
+                "equals": true
+              }
+            },
+            {
+              "key": "maxNumberOfMobsPerGroup",
+              "type": "integer",
+              "label": "Max group size",
+              "default": 4,
+              "min": 1,
+              "max": 128,
+              "step": 1,
+              "mcreator": "maxNumberOfMobsPerGroup",
+              "showIf": {
+                "key": "spawnThisMob",
+                "equals": true
+              }
+            },
+            {
+              "key": "restrictionBiomes",
+              "type": "list",
+              "label": "Spawn biomes",
+              "default": [],
+              "fields": [
+                {
+                  "key": "biome",
+                  "type": "biome",
+                  "label": "Biome",
+                  "default": "",
+                  "allowTags": true
+                }
+              ],
+              "mcreator": "restrictionBiomes",
+              "showIf": {
+                "key": "spawnThisMob",
+                "equals": true
+              }
+            },
+            {
+              "key": "spawnInDungeons",
+              "type": "boolean",
+              "label": "Can come from dungeon spawners",
+              "default": false,
+              "mcreator": "spawnInDungeons"
+            }
+          ]
+        },
+        {
+          "title": "Raid waves",
+          "fields": [
+            {
+              "key": "raidSpawnsWave1",
+              "type": "integer",
+              "label": "Count in wave 1",
+              "default": 4,
+              "min": 0,
+              "max": 1000,
+              "step": 1,
+              "mcreator": "raidSpawnsCount[0]",
+              "showIf": {
+                "key": "mobBehaviourType",
+                "equals": "Raider"
+              }
+            },
+            {
+              "key": "raidSpawnsWave2",
+              "type": "integer",
+              "label": "Count in wave 2",
+              "default": 3,
+              "min": 0,
+              "max": 1000,
+              "step": 1,
+              "mcreator": "raidSpawnsCount[1]",
+              "showIf": {
+                "key": "mobBehaviourType",
+                "equals": "Raider"
+              }
+            },
+            {
+              "key": "raidSpawnsWave3",
+              "type": "integer",
+              "label": "Count in wave 3",
+              "default": 3,
+              "min": 0,
+              "max": 1000,
+              "step": 1,
+              "mcreator": "raidSpawnsCount[2]",
+              "showIf": {
+                "key": "mobBehaviourType",
+                "equals": "Raider"
+              }
+            },
+            {
+              "key": "raidSpawnsWave4",
+              "type": "integer",
+              "label": "Count in wave 4",
+              "default": 4,
+              "min": 0,
+              "max": 1000,
+              "step": 1,
+              "mcreator": "raidSpawnsCount[3]",
+              "showIf": {
+                "key": "mobBehaviourType",
+                "equals": "Raider"
+              }
+            },
+            {
+              "key": "raidSpawnsWave5",
+              "type": "integer",
+              "label": "Count in wave 5",
+              "default": 4,
+              "min": 0,
+              "max": 1000,
+              "step": 1,
+              "mcreator": "raidSpawnsCount[4]",
+              "showIf": {
+                "key": "mobBehaviourType",
+                "equals": "Raider"
+              }
+            },
+            {
+              "key": "raidSpawnsWave6",
+              "type": "integer",
+              "label": "Count in wave 6",
+              "default": 4,
+              "min": 0,
+              "max": 1000,
+              "step": 1,
+              "mcreator": "raidSpawnsCount[5]",
+              "showIf": {
+                "key": "mobBehaviourType",
+                "equals": "Raider"
+              }
+            },
+            {
+              "key": "raidSpawnsWave7",
+              "type": "integer",
+              "label": "Count in wave 7",
+              "default": 2,
+              "min": 0,
+              "max": 1000,
+              "step": 1,
+              "mcreator": "raidSpawnsCount[6]",
+              "showIf": {
+                "key": "mobBehaviourType",
+                "equals": "Raider"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

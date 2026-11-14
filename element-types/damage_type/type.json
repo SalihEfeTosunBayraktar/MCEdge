@@ -1,0 +1,122 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "damage_type",
+  "folder": "damage_types",
+  "name": "Damage type",
+  "description": "A new kind of damage with its own death messages and scaling.",
+  "icon": "skull",
+  "langKey": "death.attack",
+  "mcreator": "damagetype",
+  "pages": [
+    {
+      "id": "properties",
+      "title": "Properties",
+      "groups": [
+        {
+          "title": "Damage",
+          "fields": [
+            {
+              "key": "exhaustion",
+              "type": "number",
+              "label": "Exhaustion",
+              "help": "Hunger exhaustion added to the victim when hit.",
+              "default": 0.1,
+              "min": 0,
+              "max": 100,
+              "step": 0.01,
+              "mcreator": "exhaustion"
+            },
+            {
+              "key": "scaling",
+              "type": "select",
+              "label": "Difficulty scaling",
+              "help": "When damage grows with world difficulty.",
+              "default": "never",
+              "options": [
+                {
+                  "value": "never",
+                  "label": "Never"
+                },
+                {
+                  "value": "always",
+                  "label": "Always"
+                },
+                {
+                  "value": "when_caused_by_living_non_player",
+                  "label": "When caused by a non-player mob"
+                }
+              ],
+              "mcreator": "scaling"
+            },
+            {
+              "key": "effects",
+              "type": "select",
+              "label": "Hurt effect",
+              "help": "Sound played when hurt.",
+              "default": "hurt",
+              "options": [
+                {
+                  "value": "hurt",
+                  "label": "Hurt"
+                },
+                {
+                  "value": "thorns",
+                  "label": "Thorns"
+                },
+                {
+                  "value": "drowning",
+                  "label": "Drowning"
+                },
+                {
+                  "value": "burning",
+                  "label": "Burning"
+                },
+                {
+                  "value": "poking",
+                  "label": "Poking"
+                },
+                {
+                  "value": "freezing",
+                  "label": "Freezing"
+                }
+              ],
+              "mcreator": "effects"
+            }
+          ]
+        },
+        {
+          "title": "Death messages",
+          "fields": [
+            {
+              "key": "normalDeathMessage",
+              "type": "text",
+              "label": "Plain death message",
+              "help": "Shown when nothing else is involved. Use <player> for the victim.",
+              "default": "<player> died",
+              "required": true,
+              "mcreator": "normalDeathMessage"
+            },
+            {
+              "key": "itemDeathMessage",
+              "type": "text",
+              "label": "Death message with item",
+              "help": "Shown when the attacker used a named item. Use <player>, <attacker> and <item>.",
+              "default": "<player> was killed by <attacker> using <item>",
+              "required": true,
+              "mcreator": "itemDeathMessage"
+            },
+            {
+              "key": "playerDeathMessage",
+              "type": "text",
+              "label": "Death message while fleeing",
+              "help": "Shown when the victim was last hurt by someone while dying. Use <player> and <attacker>.",
+              "default": "<player> died whilst trying to escape <attacker>",
+              "required": true,
+              "mcreator": "playerDeathMessage"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

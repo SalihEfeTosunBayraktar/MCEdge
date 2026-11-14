@@ -1,0 +1,133 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "game_rule",
+  "folder": "game_rules",
+  "name": "Game rule",
+  "description": "A /gamerule switch or number that procedures can read.",
+  "icon": "sliders",
+  "langKey": "gamerule",
+  "mcreator": "gamerule",
+  "pages": [
+    {
+      "id": "properties",
+      "title": "Properties",
+      "groups": [
+        {
+          "title": "Game rule",
+          "fields": [
+            {
+              "key": "displayName",
+              "type": "text",
+              "label": "Display name",
+              "help": "Name shown in the world creation game rule list.",
+              "default": "",
+              "required": true,
+              "mcreator": "displayName"
+            },
+            {
+              "key": "description",
+              "type": "text",
+              "label": "Description",
+              "help": "Explanation shown in the game rule list.",
+              "default": "",
+              "required": true,
+              "mcreator": "description"
+            },
+            {
+              "key": "ruleName",
+              "type": "text",
+              "label": "Name in game",
+              "help": "The name /gamerule uses before Minecraft 26.x, exactly as typed (letters, digits and underscores). Empty: the registry name in camelCase. Set it to keep a name that is not camelCase, like question_repeat_ticks, so worlds saved with it keep their value.",
+              "default": "",
+              "pattern": "^[A-Za-z0-9_]*$"
+            },
+            {
+              "key": "category",
+              "type": "select",
+              "label": "Category",
+              "help": "Group the rule appears under in the game rule list.",
+              "default": "PLAYER",
+              "options": [
+                {
+                  "value": "PLAYER",
+                  "label": "Player"
+                },
+                {
+                  "value": "UPDATES",
+                  "label": "World updates"
+                },
+                {
+                  "value": "CHAT",
+                  "label": "Chat"
+                },
+                {
+                  "value": "DROPS",
+                  "label": "Drops"
+                },
+                {
+                  "value": "MISC",
+                  "label": "Miscellaneous"
+                },
+                {
+                  "value": "MOBS",
+                  "label": "Mobs"
+                },
+                {
+                  "value": "SPAWNING",
+                  "label": "Spawning"
+                }
+              ],
+              "mcreator": "category"
+            },
+            {
+              "key": "type",
+              "type": "select",
+              "label": "Value type",
+              "help": "Whether the rule holds a number or true/false.",
+              "default": "Number",
+              "options": [
+                {
+                  "value": "Number",
+                  "label": "Number"
+                },
+                {
+                  "value": "Logic",
+                  "label": "True/false"
+                }
+              ],
+              "required": true,
+              "mcreator": "type"
+            },
+            {
+              "key": "defaultValueNumber",
+              "type": "integer",
+              "label": "Default value",
+              "help": "Starting value for new worlds.",
+              "default": 0,
+              "min": -2147483648,
+              "max": 2147483647,
+              "step": 1,
+              "showIf": {
+                "key": "type",
+                "equals": "Number"
+              },
+              "mcreator": "defaultValueNumber"
+            },
+            {
+              "key": "defaultValueLogic",
+              "type": "boolean",
+              "label": "Default value",
+              "help": "Starting value for new worlds.",
+              "default": false,
+              "showIf": {
+                "key": "type",
+                "equals": "Logic"
+              },
+              "mcreator": "defaultValueLogic"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

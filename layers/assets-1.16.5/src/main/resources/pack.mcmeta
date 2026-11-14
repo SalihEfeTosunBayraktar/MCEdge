@@ -1,0 +1,3 @@
+{
+  "pack": { "description": {{descriptionJson}}, "pack_format": {{versions.packFormat}} }
+}

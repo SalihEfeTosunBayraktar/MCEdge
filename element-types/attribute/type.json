@@ -1,0 +1,126 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "attribute",
+  "folder": "attributes",
+  "name": "Attribute",
+  "description": "A new entity attribute, with a value range and the entities that carry it.",
+  "icon": "gauge",
+  "langKey": "attribute.name",
+  "mcreator": "attribute",
+  "pages": [
+    {
+      "id": "main",
+      "title": "Attribute",
+      "groups": [
+        {
+          "title": "Attribute",
+          "fields": [
+            {
+              "key": "name",
+              "type": "text",
+              "label": "Name",
+              "help": "Readable name shown in item tooltips.",
+              "default": "",
+              "required": true,
+              "mcreator": "name"
+            },
+            {
+              "key": "defaultValue",
+              "type": "number",
+              "label": "Default value",
+              "help": "Base value an entity starts with. Must lie between the minimum and maximum.",
+              "default": 0,
+              "step": 1,
+              "mcreator": "defaultValue"
+            },
+            {
+              "key": "minValue",
+              "type": "number",
+              "label": "Minimum value",
+              "help": "Lowest value the attribute can reach.",
+              "default": 0,
+              "step": 1,
+              "mcreator": "minValue"
+            },
+            {
+              "key": "maxValue",
+              "type": "number",
+              "label": "Maximum value",
+              "help": "Highest value the attribute can reach.",
+              "default": 1,
+              "step": 1,
+              "mcreator": "maxValue"
+            },
+            {
+              "key": "sentiment",
+              "type": "select",
+              "label": "Sentiment",
+              "help": "Whether a higher value is good, bad or neutral; changes the tooltip color.",
+              "default": "POSITIVE",
+              "options": [
+                {
+                  "value": "POSITIVE",
+                  "label": "Positive"
+                },
+                {
+                  "value": "NEUTRAL",
+                  "label": "Neutral"
+                },
+                {
+                  "value": "NEGATIVE",
+                  "label": "Negative"
+                }
+              ],
+              "mcreator": "sentiment"
+            }
+          ]
+        },
+        {
+          "title": "Entities",
+          "fields": [
+            {
+              "key": "addToAllEntities",
+              "type": "boolean",
+              "label": "Add to every living entity",
+              "help": "Attach the attribute to all living entities.",
+              "default": false,
+              "mcreator": "addToAllEntities"
+            },
+            {
+              "key": "addToPlayers",
+              "type": "boolean",
+              "label": "Add to players",
+              "help": "Attach the attribute to players.",
+              "default": false,
+              "showIf": {
+                "key": "addToAllEntities",
+                "equals": false
+              },
+              "mcreator": "addToPlayers"
+            },
+            {
+              "key": "entities",
+              "type": "list",
+              "label": "Entities",
+              "help": "Entities that get the attribute. Needed unless one of the options above is on.",
+              "default": [],
+              "showIf": {
+                "key": "addToAllEntities",
+                "equals": false
+              },
+              "fields": [
+                {
+                  "key": "entity",
+                  "type": "entity",
+                  "label": "Entity",
+                  "default": ""
+                }
+              ],
+              "mcreator": "entities"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

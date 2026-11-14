@@ -1,0 +1,3 @@
+{
+{{#each entries}}  {{keyJson}}: {{valueJson}}{{@comma}}
+{{/each}}}

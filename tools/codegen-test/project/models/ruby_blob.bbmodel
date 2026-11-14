@@ -1,0 +1,9 @@
+{"meta":{"format_version":"4.10","model_format":"modded_entity","box_uv":true},"name":"ruby_blob","resolution":{"width":32,"height":32},
+"elements":[
+ {"name":"core","type":"cube","box_uv":true,"from":[-4,0,-4],"to":[4,8,4],"origin":[0,0,0],"uv_offset":[0,0],"inflate":0,"uuid":"c1"},
+ {"name":"spike","type":"cube","box_uv":true,"from":[-1,8,-1],"to":[1,12,1],"origin":[0,8,0],"rotation":[0,0,22.5],"uv_offset":[0,16],"uuid":"c2"}],
+"outliner":[{"name":"blob","origin":[0,0,0],"rotation":[0,0,0],"uuid":"g1","children":["c1",{"name":"top","origin":[0,8,0],"uuid":"g2","children":["c2"]}]}],
+"animations":[{"uuid":"a1","name":"animation.ruby_blob.bounce","loop":"loop","length":1,"animators":{"g2":{"name":"top","type":"bone","keyframes":[
+ {"channel":"position","data_points":[{"x":"0","y":"0","z":"0"}],"time":0,"interpolation":"linear"},
+ {"channel":"position","data_points":[{"x":"0","y":"2","z":"0"}],"time":0.5,"interpolation":"catmullrom"},
+ {"channel":"rotation","data_points":[{"x":"0","y":"90","z":"0"}],"time":0.5,"interpolation":"step"}]}}}]}

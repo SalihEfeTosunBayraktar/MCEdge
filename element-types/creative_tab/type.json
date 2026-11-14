@@ -1,0 +1,65 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "creative_tab",
+  "folder": "creative_tabs",
+  "name": "Creative tab",
+  "icon": "tab",
+  "langKey": "itemGroup",
+  "mcreator": "tab",
+  "description": "A creative inventory tab for this mod's items and blocks.",
+  "pages": [
+    {
+      "id": "properties",
+      "title": "Properties",
+      "groups": [
+        {
+          "title": "Tab",
+          "fields": [
+            {
+              "key": "name",
+              "type": "text",
+              "label": "Tab title",
+              "default": "",
+              "mcreator": "name",
+              "required": true
+            },
+            {
+              "key": "icon",
+              "type": "item",
+              "label": "Icon item",
+              "default": "",
+              "mcreator": "icon",
+              "required": true
+            },
+            {
+              "key": "showSearch",
+              "type": "boolean",
+              "label": "Has a search bar",
+              "default": false,
+              "mcreator": "showSearch"
+            },
+            {
+              "key": "hideTitle",
+              "type": "boolean",
+              "label": "Hide the title",
+              "default": false,
+              "mcreator": "hideTitle"
+            }
+          ]
+        },
+        {
+          "title": "Order",
+          "fields": [
+            {
+              "key": "order",
+              "type": "tab_order",
+              "label": "Items in order",
+              "default": [],
+              "help": "The mod's items and blocks in this tab, in the order the tab shows them. Drag a row to move it; Ctrl+click and Shift+click select several rows to move together, and a section folds with its arrow. Sections and spacers start a new row and leave empty slots on 1.16.5; newer versions keep only the order."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

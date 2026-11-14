@@ -1,0 +1,642 @@
+{
+  "MainMenu": {
+    "1.16.5": "net.minecraft.client.gui.screen.MainMenuScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.TitleScreen",
+    "26.3": "net.minecraft.client.gui.screens.TitleScreen"
+  },
+  "IngameMenu": {
+    "1.16.5": "net.minecraft.client.gui.screen.IngameMenuScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.PauseScreen",
+    "26.3": "net.minecraft.client.gui.screens.PauseScreen"
+  },
+  "AbstractCommandBlock": {
+    "1.16.5": "net.minecraft.client.gui.screen.AbstractCommandBlockScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.AbstractCommandBlockEditScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.AbstractCommandBlockEditScreen"
+  },
+  "AbstractContainer": {
+    "1.16.5": "net.minecraft.client.gui.screen.inventory.ContainerScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.AbstractContainerScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.AbstractContainerScreen"
+  },
+  "AbstractEditSign": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen"
+  },
+  "AbstractFurnace": {
+    "1.16.5": "net.minecraft.client.gui.screen.inventory.AbstractFurnaceScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.AbstractFurnaceScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.AbstractFurnaceScreen"
+  },
+  "Anvil": {
+    "1.16.5": "net.minecraft.client.gui.screen.inventory.AnvilScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.AnvilScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.AnvilScreen"
+  },
+  "Beacon": {
+    "1.16.5": "net.minecraft.client.gui.screen.inventory.BeaconScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.BeaconScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.BeaconScreen"
+  },
+  "BlastFurnace": {
+    "1.16.5": "net.minecraft.client.gui.screen.inventory.BlastFurnaceScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.BlastFurnaceScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.BlastFurnaceScreen"
+  },
+  "BrewingStand": {
+    "1.16.5": "net.minecraft.client.gui.screen.inventory.BrewingStandScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.BrewingStandScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.BrewingStandScreen"
+  },
+  "CartographyTable": {
+    "1.16.5": "net.minecraft.client.gui.screen.inventory.CartographyTableScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.CartographyTableScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.CartographyTableScreen"
+  },
+  "Chest": {
+    "1.16.5": "net.minecraft.client.gui.screen.inventory.ChestScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.ContainerScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.ContainerScreen"
+  },
+  "CommandBlock": {
+    "1.16.5": "net.minecraft.client.gui.screen.CommandBlockScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.CommandBlockEditScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.CommandBlockEditScreen"
+  },
+  "Crafter": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.CrafterScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.CrafterScreen"
+  },
+  "Crafting": {
+    "1.16.5": "net.minecraft.client.gui.screen.inventory.CraftingScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.CraftingScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.CraftingScreen"
+  },
+  "Dispenser": {
+    "1.16.5": "net.minecraft.client.gui.screen.inventory.DispenserScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.DispenserScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.DispenserScreen"
+  },
+  "EditBook": {
+    "1.16.5": "net.minecraft.client.gui.screen.EditBookScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.BookEditScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.BookEditScreen"
+  },
+  "EditMinecartCommandBlock": {
+    "1.16.5": "net.minecraft.client.gui.screen.EditMinecartCommandBlockScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.MinecartCommandBlockEditScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.MinecartCommandBlockEditScreen"
+  },
+  "EditSign": {
+    "1.16.5": "net.minecraft.client.gui.screen.EditSignScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.SignEditScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.SignEditScreen"
+  },
+  "EditStructure": {
+    "1.16.5": "net.minecraft.client.gui.screen.EditStructureScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.StructureBlockEditScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.StructureBlockEditScreen"
+  },
+  "Enchantment": {
+    "1.16.5": "net.minecraft.client.gui.screen.EnchantmentScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.EnchantmentScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.EnchantmentScreen"
+  },
+  "Furnace": {
+    "1.16.5": "net.minecraft.client.gui.screen.inventory.FurnaceScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.FurnaceScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.FurnaceScreen"
+  },
+  "Grindstone": {
+    "1.16.5": "net.minecraft.client.gui.screen.GrindstoneScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.GrindstoneScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.GrindstoneScreen"
+  },
+  "HangingSignEdit": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.HangingSignEditScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.HangingSignEditScreen"
+  },
+  "Hopper": {
+    "1.16.5": "net.minecraft.client.gui.screen.HopperScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.HopperScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.HopperScreen"
+  },
+  "HorseInventory": {
+    "1.16.5": "net.minecraft.client.gui.screen.inventory.HorseInventoryScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.HorseInventoryScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.HorseInventoryScreen"
+  },
+  "Jigsaw": {
+    "1.16.5": "net.minecraft.client.gui.screen.JigsawScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.JigsawBlockEditScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.JigsawBlockEditScreen"
+  },
+  "Lectern": {
+    "1.16.5": "net.minecraft.client.gui.screen.LecternScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.LecternScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.LecternScreen"
+  },
+  "Loom": {
+    "1.16.5": "net.minecraft.client.gui.screen.LoomScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.LoomScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.LoomScreen"
+  },
+  "Merchant": {
+    "1.16.5": "net.minecraft.client.gui.screen.inventory.MerchantScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.MerchantScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.MerchantScreen"
+  },
+  "ReadBook": {
+    "1.16.5": "net.minecraft.client.gui.screen.ReadBookScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.BookViewScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.BookViewScreen"
+  },
+  "ShulkerBox": {
+    "1.16.5": "net.minecraft.client.gui.screen.inventory.ShulkerBoxScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.ShulkerBoxScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.ShulkerBoxScreen"
+  },
+  "SmithingTable": {
+    "1.16.5": "net.minecraft.client.gui.screen.inventory.SmithingTableScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.SmithingScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.SmithingScreen"
+  },
+  "Smoker": {
+    "1.16.5": "net.minecraft.client.gui.screen.inventory.SmokerScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.SmokerScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.SmokerScreen"
+  },
+  "Stonecutter": {
+    "1.16.5": "net.minecraft.client.gui.screen.inventory.StonecutterScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.StonecutterScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.StonecutterScreen"
+  },
+  "AbstractReport": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.reporting.AbstractReportScreen",
+    "26.3": "net.minecraft.client.gui.screens.reporting.AbstractReportScreen"
+  },
+  "AccessibilityOnboarding": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.AccessibilityOnboardingScreen",
+    "26.3": "net.minecraft.client.gui.screens.AccessibilityOnboardingScreen"
+  },
+  "AccessibilityOptions": {
+    "1.16.5": "net.minecraft.client.gui.AccessibilityScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.options.AccessibilityOptionsScreen",
+    "26.3": "net.minecraft.client.gui.screens.options.AccessibilityOptionsScreen"
+  },
+  "AddServer": {
+    "1.16.5": "net.minecraft.client.gui.screen.AddServerScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.EditServerScreen",
+    "26.3": "net.minecraft.client.gui.screens.ManageServerScreen"
+  },
+  "Advancements": {
+    "1.16.5": "net.minecraft.client.gui.advancements.AdvancementsScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.advancements.AdvancementsScreen",
+    "26.3": "net.minecraft.client.gui.screens.advancements.AdvancementsScreen"
+  },
+  "Alert": {
+    "1.16.5": "net.minecraft.client.gui.screen.AlertScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.AlertScreen",
+    "26.3": "net.minecraft.client.gui.screens.AlertScreen"
+  },
+  "Chat": {
+    "1.16.5": "net.minecraft.client.gui.screen.ChatScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.ChatScreen",
+    "26.3": "net.minecraft.client.gui.screens.ChatScreen"
+  },
+  "ChatOptions": {
+    "1.16.5": "net.minecraft.client.gui.screen.ChatOptionsScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.options.ChatOptionsScreen",
+    "26.3": "net.minecraft.client.gui.screens.options.ChatOptionsScreen"
+  },
+  "ChatReport": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.reporting.ChatReportScreen",
+    "26.3": "net.minecraft.client.gui.screens.reporting.ChatReportScreen"
+  },
+  "ChatSelection": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.reporting.ChatSelectionScreen",
+    "26.3": "net.minecraft.client.gui.screens.reporting.ChatSelectionScreen"
+  },
+  "Confirm": {
+    "1.16.5": "net.minecraft.client.gui.screen.ConfirmScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.ConfirmScreen",
+    "26.3": "net.minecraft.client.gui.screens.ConfirmScreen"
+  },
+  "ConfirmBackup": {
+    "1.16.5": "net.minecraft.client.gui.screen.ConfirmBackupScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.BackupConfirmScreen",
+    "26.3": "net.minecraft.client.gui.screens.BackupConfirmScreen"
+  },
+  "ConfirmExperimentalFeatures": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.worldselection.ConfirmExperimentalFeaturesScreen",
+    "26.3": "net.minecraft.client.gui.screens.worldselection.ConfirmExperimentalFeaturesScreen"
+  },
+  "ConfirmOpenLink": {
+    "1.16.5": "net.minecraft.client.gui.screen.ConfirmOpenLinkScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.ConfirmLinkScreen",
+    "26.3": "net.minecraft.client.gui.screens.ConfirmLinkScreen"
+  },
+  "Connecting": {
+    "1.16.5": "net.minecraft.client.gui.screen.ConnectingScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.ConnectScreen",
+    "26.3": "net.minecraft.client.gui.screens.ConnectScreen"
+  },
+  "Controls": {
+    "1.16.5": "net.minecraft.client.gui.screen.ControlsScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.options.controls.ControlsScreen",
+    "26.3": "net.minecraft.client.gui.screens.options.controls.ControlsScreen"
+  },
+  "CreateBuffetWorld": {
+    "1.16.5": "net.minecraft.client.gui.screen.CreateBuffetWorldScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.CreateBuffetWorldScreen",
+    "26.3": "net.minecraft.client.gui.screens.CreateBuffetWorldScreen"
+  },
+  "CreateFlatWorld": {
+    "1.16.5": "net.minecraft.client.gui.screen.CreateFlatWorldScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.CreateFlatWorldScreen",
+    "26.3": "net.minecraft.client.gui.screens.CreateFlatWorldScreen"
+  },
+  "CreateWorld": {
+    "1.16.5": "net.minecraft.client.gui.screen.CreateWorldScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.worldselection.CreateWorldScreen",
+    "26.3": "net.minecraft.client.gui.screens.worldselection.CreateWorldScreen"
+  },
+  "Creative": {
+    "1.16.5": "net.minecraft.client.gui.screen.inventory.CreativeScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen"
+  },
+  "CreditsAndAttribution": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.CreditsAndAttributionScreen",
+    "26.3": "net.minecraft.client.gui.screens.CreditsAndAttributionScreen"
+  },
+  "CustomizeSkin": {
+    "1.16.5": "net.minecraft.client.gui.screen.CustomizeSkinScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.options.SkinCustomizationScreen",
+    "26.3": "net.minecraft.client.gui.screens.options.SkinCustomizationScreen"
+  },
+  "DatapackFailure": {
+    "1.16.5": "net.minecraft.client.gui.screen.DatapackFailureScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.DatapackLoadFailureScreen",
+    "26.3": "net.minecraft.client.gui.screens.DatapackLoadFailureScreen"
+  },
+  "Death": {
+    "1.16.5": "net.minecraft.client.gui.screen.DeathScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.DeathScreen",
+    "26.3": "net.minecraft.client.gui.screens.DeathScreen"
+  },
+  "DirtMessage": {
+    "1.16.5": "net.minecraft.client.gui.screen.DirtMessageScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.GenericMessageScreen",
+    "26.3": "net.minecraft.client.gui.screens.GenericMessageScreen"
+  },
+  "Disconnected": {
+    "1.16.5": "net.minecraft.client.gui.screen.DisconnectedScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.DisconnectedScreen",
+    "26.3": "net.minecraft.client.gui.screens.DisconnectedScreen"
+  },
+  "EditGamerules": {
+    "1.16.5": "net.minecraft.client.gui.screen.EditGamerulesScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.worldselection.EditGameRulesScreen",
+    "26.3": "net.minecraft.client.gui.screens.worldselection.WorldCreationGameRulesScreen"
+  },
+  "EditWorld": {
+    "1.16.5": "net.minecraft.client.gui.screen.EditWorldScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.worldselection.EditWorldScreen",
+    "26.3": "net.minecraft.client.gui.screens.worldselection.EditWorldScreen"
+  },
+  "AbstractRecipeBook": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.AbstractRecipeBookScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.AbstractRecipeBookScreen"
+  },
+  "Error": {
+    "1.16.5": "net.minecraft.client.gui.screen.ErrorScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.ErrorScreen",
+    "26.3": "net.minecraft.client.gui.screens.ErrorScreen"
+  },
+  "Experiments": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.worldselection.ExperimentsScreen",
+    "26.3": "net.minecraft.client.gui.screens.worldselection.ExperimentsScreen"
+  },
+  "FlatPresets": {
+    "1.16.5": "net.minecraft.client.gui.screen.FlatPresetsScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.PresetFlatWorldScreen",
+    "26.3": "net.minecraft.client.gui.screens.PresetFlatWorldScreen"
+  },
+  "GamemodeSelection": {
+    "1.16.5": "net.minecraft.client.gui.screen.GamemodeSelectionScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.debug.GameModeSwitcherScreen",
+    "26.3": "net.minecraft.client.gui.screens.debug.GameModeSwitcherScreen"
+  },
+  "GenericWaiting": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.GenericWaitingScreen",
+    "26.3": "net.minecraft.client.gui.screens.GenericWaitingScreen"
+  },
+  "GPUWarning": {
+    "1.16.5": "net.minecraft.client.gui.screen.GPUWarningScreen",
+    "1.21.5": "net.minecraft.client.gui.components.PopupScreen",
+    "26.3": "net.minecraft.client.gui.components.PopupScreen"
+  },
+  "Inventory": {
+    "1.16.5": "net.minecraft.client.gui.screen.inventory.InventoryScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.InventoryScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.InventoryScreen"
+  },
+  "ItemCombiner": {
+    "1.16.5": "net.minecraft.client.gui.screen.inventory.AbstractRepairScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.ItemCombinerScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.ItemCombinerScreen"
+  },
+  "KeyBinds": {
+    "1.16.5": "net.minecraft.client.gui.screen.ControlsScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.options.controls.KeyBindsScreen",
+    "26.3": "net.minecraft.client.gui.screens.options.controls.KeyBindsScreen"
+  },
+  "Language": {
+    "1.16.5": "net.minecraft.client.gui.screen.LanguageScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.options.LanguageSelectScreen",
+    "26.3": "net.minecraft.client.gui.screens.options.LanguageSelectScreen"
+  },
+  "MemoryError": {
+    "1.16.5": "net.minecraft.client.gui.screen.MemoryErrorScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.OutOfMemoryScreen",
+    "26.3": "net.minecraft.client.gui.screens.OutOfMemoryScreen"
+  },
+  "MouseSettings": {
+    "1.16.5": "net.minecraft.client.gui.screen.MouseSettingsScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.options.MouseSettingsScreen",
+    "26.3": "net.minecraft.client.gui.screens.options.MouseSettingsScreen"
+  },
+  "Multiplayer": {
+    "1.16.5": "net.minecraft.client.gui.screen.MultiplayerScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen",
+    "26.3": "net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen"
+  },
+  "MultiplayerWarning": {
+    "1.16.5": "net.minecraft.client.gui.screen.MultiplayerWarningScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.multiplayer.SafetyScreen",
+    "26.3": "net.minecraft.client.gui.screens.multiplayer.SafetyScreen"
+  },
+  "NameReport": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.reporting.NameReportScreen",
+    "26.3": "net.minecraft.client.gui.screens.reporting.NameReportScreen"
+  },
+  "OnlineOptions": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.options.OnlineOptionsScreen",
+    "26.3": "net.minecraft.client.gui.screens.options.OnlineOptionsScreen"
+  },
+  "OptimizeWorld": {
+    "1.16.5": "net.minecraft.client.gui.screen.OptimizeWorldScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.worldselection.OptimizeWorldScreen",
+    "26.3": "net.minecraft.client.gui.screens.worldselection.OptimizeWorldScreen"
+  },
+  "Options": {
+    "1.16.5": "net.minecraft.client.gui.screen.OptionsScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.options.OptionsScreen",
+    "26.3": "net.minecraft.client.gui.screens.options.OptionsScreen"
+  },
+  "OptionsSounds": {
+    "1.16.5": "net.minecraft.client.gui.screen.OptionsSoundsScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.options.SoundOptionsScreen",
+    "26.3": "net.minecraft.client.gui.screens.options.SoundOptionsScreen"
+  },
+  "Pack": {
+    "1.16.5": "net.minecraft.client.gui.screen.PackScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.packs.PackSelectionScreen",
+    "26.3": "net.minecraft.client.gui.screens.packs.PackSelectionScreen"
+  },
+  "Realms": {
+    "1.16.5": "net.minecraft.realms.RealmsScreen",
+    "1.21.5": "net.minecraft.realms.RealmsScreen",
+    "26.3": "net.minecraft.realms.RealmsScreen"
+  },
+  "RecoverWorldData": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.RecoverWorldDataScreen",
+    "26.3": "net.minecraft.client.gui.screens.RecoverWorldDataScreen"
+  },
+  "ReportPlayer": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.reporting.ReportPlayerScreen",
+    "26.3": "net.minecraft.client.gui.screens.reporting.ReportPlayerScreen"
+  },
+  "ReportReasonSelection": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.reporting.ReportReasonSelectionScreen",
+    "26.3": "net.minecraft.client.gui.screens.reporting.ReportReasonSelectionScreen"
+  },
+  "ServerList": {
+    "1.16.5": "net.minecraft.client.gui.screen.ServerListScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.DirectJoinServerScreen",
+    "26.3": "net.minecraft.client.gui.screens.DirectJoinServerScreen"
+  },
+  "ServerReconfig": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.multiplayer.ServerReconfigScreen",
+    "26.3": "net.minecraft.client.gui.screens.multiplayer.ServerReconfigScreen"
+  },
+  "ServerLinks": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.multiplayer.ServerLinksScreen",
+    "26.3": "net.minecraft.client.gui.screens.dialog.ServerLinksDialogScreen"
+  },
+  "Settings": {
+    "1.16.5": "net.minecraft.client.gui.screen.SettingsScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.options.OptionsSubScreen",
+    "26.3": "net.minecraft.client.gui.screens.options.OptionsSubScreen"
+  },
+  "SkinReport": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.reporting.SkinReportScreen",
+    "26.3": "net.minecraft.client.gui.screens.reporting.SkinReportScreen"
+  },
+  "SleepInMultiplayer": {
+    "1.16.5": "net.minecraft.client.gui.screen.SleepInMultiplayerScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.InBedChatScreen",
+    "26.3": "net.minecraft.client.gui.screens.InBedChatScreen"
+  },
+  "SocialInteractions": {
+    "1.16.5": "net.minecraft.client.gui.social.SocialInteractionsScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.social.SocialInteractionsScreen",
+    "26.3": "net.minecraft.client.gui.screens.social.SocialInteractionsScreen"
+  },
+  "Stats": {
+    "1.16.5": "net.minecraft.client.gui.screen.StatsScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.achievement.StatsScreen",
+    "26.3": "net.minecraft.client.gui.screens.achievement.StatsScreen"
+  },
+  "SymlinkWarning": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.NoticeWithLinkScreen",
+    "26.3": "net.minecraft.client.gui.screens.NoticeWithLinkScreen"
+  },
+  "TelemetryInfo": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.telemetry.TelemetryInfoScreen",
+    "26.3": "net.minecraft.client.gui.screens.telemetry.TelemetryInfoScreen"
+  },
+  "UnsupportedGraphicsWarning": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.options.UnsupportedGraphicsWarningScreen",
+    "26.3": "net.minecraft.client.gui.screens.options.UnsupportedGraphicsWarningScreen"
+  },
+  "VideoSettings": {
+    "1.16.5": "net.minecraft.client.gui.screen.VideoSettingsScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.options.VideoSettingsScreen",
+    "26.3": "net.minecraft.client.gui.screens.options.VideoSettingsScreen"
+  },
+  "Warning": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.multiplayer.WarningScreen",
+    "26.3": "net.minecraft.client.gui.screens.multiplayer.WarningScreen"
+  },
+  "Win": {
+    "1.16.5": "net.minecraft.client.gui.screen.WinGameScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.WinScreen",
+    "26.3": "net.minecraft.client.gui.screens.WinScreen"
+  },
+  "Working": {
+    "1.16.5": "net.minecraft.client.gui.screen.WorkingScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.ProgressScreen",
+    "26.3": "net.minecraft.client.gui.screens.ProgressScreen"
+  },
+  "WorldLoadProgress": {
+    "1.16.5": "net.minecraft.client.gui.screen.WorldLoadProgressScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.LevelLoadingScreen",
+    "26.3": "net.minecraft.client.gui.screens.LevelLoadingScreen"
+  },
+  "WorldSelection": {
+    "1.16.5": "net.minecraft.client.gui.screen.WorldSelectionScreen",
+    "1.21.5": "net.minecraft.client.gui.screens.worldselection.SelectWorldScreen",
+    "26.3": "net.minecraft.client.gui.screens.worldselection.SelectWorldScreen"
+  },
+  "FontOptions": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.options.FontOptionsScreen",
+    "26.3": "net.minecraft.client.gui.screens.options.FontOptionsScreen"
+  },
+  "ButtonListDialog": {
+    "1.16.5": null,
+    "1.21.5": null,
+    "26.3": "net.minecraft.client.gui.screens.dialog.ButtonListDialogScreen"
+  },
+  "DialogListDialog": {
+    "1.16.5": null,
+    "1.21.5": null,
+    "26.3": "net.minecraft.client.gui.screens.dialog.DialogListDialogScreen"
+  },
+  "Dialog": {
+    "1.16.5": null,
+    "1.21.5": null,
+    "26.3": "net.minecraft.client.gui.screens.dialog.DialogScreen"
+  },
+  "MultiButtonDialog": {
+    "1.16.5": null,
+    "1.21.5": null,
+    "26.3": "net.minecraft.client.gui.screens.dialog.MultiButtonDialogScreen"
+  },
+  "SimpleDialog": {
+    "1.16.5": null,
+    "1.21.5": null,
+    "26.3": "net.minecraft.client.gui.screens.dialog.SimpleDialogScreen"
+  },
+  "WaitingForResponse": {
+    "1.16.5": null,
+    "1.21.5": null,
+    "26.3": "net.minecraft.client.gui.screens.dialog.WaitingForResponseScreen"
+  },
+  "BookSign": {
+    "1.16.5": null,
+    "1.21.5": null,
+    "26.3": "net.minecraft.client.gui.screens.inventory.BookSignScreen"
+  },
+  "TestBlockEdit": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.TestBlockEditScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.TestBlockEditScreen"
+  },
+  "TestInstanceBlockEdit": {
+    "1.16.5": null,
+    "1.21.5": "net.minecraft.client.gui.screens.inventory.TestInstanceBlockEditScreen",
+    "26.3": "net.minecraft.client.gui.screens.inventory.TestInstanceBlockEditScreen"
+  },
+  "DebugOptions": {
+    "1.16.5": null,
+    "1.21.5": null,
+    "26.3": "net.minecraft.client.gui.screens.debug.DebugOptionsScreen"
+  },
+  "AbstractMountInventory": {
+    "1.16.5": null,
+    "1.21.5": null,
+    "26.3": "net.minecraft.client.gui.screens.inventory.AbstractMountInventoryScreen"
+  },
+  "NautilusInventory": {
+    "1.16.5": null,
+    "1.21.5": null,
+    "26.3": "net.minecraft.client.gui.screens.inventory.NautilusInventoryScreen"
+  },
+  "CodeOfConduct": {
+    "1.16.5": null,
+    "1.21.5": null,
+    "26.3": "net.minecraft.client.gui.screens.multiplayer.CodeOfConductScreen"
+  },
+  "Restrictions": {
+    "1.16.5": null,
+    "1.21.5": null,
+    "26.3": "net.minecraft.client.gui.screens.multiplayer.RestrictionsScreen"
+  },
+  "InWorldGameRules": {
+    "1.16.5": null,
+    "1.21.5": null,
+    "26.3": "net.minecraft.client.gui.screens.options.InWorldGameRulesScreen"
+  },
+  "WorldOptions": {
+    "1.16.5": null,
+    "1.21.5": null,
+    "26.3": "net.minecraft.client.gui.screens.WorldOptionsScreen"
+  },
+  "AbstractGameRules": {
+    "1.16.5": null,
+    "1.21.5": null,
+    "26.3": "net.minecraft.client.gui.screens.worldselection.AbstractGameRulesScreen"
+  },
+  "FileFixerProgress": {
+    "1.16.5": null,
+    "1.21.5": null,
+    "26.3": "net.minecraft.client.gui.screens.worldselection.FileFixerProgressScreen"
+  },
+  "FileFixerAborted": {
+    "1.16.5": null,
+    "1.21.5": null,
+    "26.3": "net.minecraft.client.gui.screens.FileFixerAbortedScreen"
+  },
+  "FriendsListConfirm": {
+    "1.16.5": null,
+    "1.21.5": null,
+    "26.3": "net.minecraft.client.gui.screens.friends.FriendsListConfirmScreen"
+  },
+  "FriendsOverlay": {
+    "1.16.5": null,
+    "1.21.5": null,
+    "26.3": "net.minecraft.client.gui.screens.friends.FriendsOverlayScreen"
+  },
+  "PrivacyConfirmLink": {
+    "1.16.5": null,
+    "1.21.5": null,
+    "26.3": "net.minecraft.client.gui.screens.PrivacyConfirmLinkScreen"
+  }
+}

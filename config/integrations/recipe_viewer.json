@@ -1,0 +1,192 @@
+{
+  "id": "recipe_viewer",
+  "name": "Recipe viewer (JEI / REI)",
+  "description": "Shows the recipes of the mod's machines in JEI (Forge, NeoForge) or REI (Fabric): a recipe category per machine block, its catalysts and its recipes.",
+  "tr": {
+    "name": "Tarif görüntüleyici (JEI / REI)",
+    "description": "Modun makinelerinin tariflerini JEI'de (Forge, NeoForge) ya da REI'de (Fabric) gösterir: makine bloğu başına bir tarif kategorisi, katalizörleri ve tarifleri."
+  },
+  "engines": {
+    "forge-1.16.5": {
+      "mod": "JEI",
+      "modId": "jei",
+      "version": ">=7.7.0",
+      "repositories": [
+        "https://maven.blamejared.com"
+      ],
+      "gradle": [
+        "compileOnly fg.deobf('mezz.jei:jei-1.16.5:7.8.1.1018:api')",
+        "runtimeOnly fg.deobf('mezz.jei:jei-1.16.5:7.8.1.1018')"
+      ]
+    },
+    "neoforge-1.21.5": {
+      "mod": "JEI",
+      "modId": "jei",
+      "version": ">=21.0.0",
+      "repositories": [
+        "https://maven.blamejared.com"
+      ],
+      "gradle": [
+        "compileOnly 'mezz.jei:jei-1.21.5-neoforge-api:21.4.0.27'",
+        "runtimeOnly 'mezz.jei:jei-1.21.5-neoforge:21.4.0.27'"
+      ]
+    },
+    "neoforge-26.3": {
+      "mod": "JEI",
+      "modId": "jei",
+      "version": ">=31.0.0",
+      "repositories": [
+        "https://maven.blamejared.com"
+      ],
+      "gradle": [
+        "compileOnly 'mezz.jei:jei-26.3-neoforge-api:31.17.0.109'",
+        "runtimeOnly 'mezz.jei:jei-26.3-neoforge:31.17.0.109'"
+      ]
+    },
+    "fabric-1.21.5": {
+      "mod": "REI",
+      "modId": "roughlyenoughitems",
+      "version": ">=19.0.0",
+      "repositories": [
+        "https://maven.shedaniel.me",
+        "https://maven.architectury.dev"
+      ],
+      "gradle": [
+        "modCompileOnly 'me.shedaniel:RoughlyEnoughItems-api-fabric:19.0.809'",
+        "modRuntimeOnly 'me.shedaniel:RoughlyEnoughItems-fabric:19.0.809'"
+      ]
+    },
+    "fabric-26.3": {
+      "mod": "REI",
+      "modId": "roughlyenoughitems",
+      "version": ">=26.3.0",
+      "repositories": [
+        "https://maven.shedaniel.me",
+        "https://maven.architectury.dev"
+      ],
+      "gradle": [
+        "compileOnly 'me.shedaniel:RoughlyEnoughItems-api-fabric:26.3.824'",
+        "compileOnly 'me.shedaniel.cloth:cloth-config-fabric:26.3.159'",
+        "compileOnly 'dev.architectury:architectury-fabric:22.0.3'",
+        "runtimeOnly 'me.shedaniel:RoughlyEnoughItems-fabric:26.3.824'"
+      ]
+    }
+  },
+  "groups": {
+    "block": {
+      "title": "Recipe viewer",
+      "fields": [
+        {
+          "key": "rvCategory",
+          "type": "boolean",
+          "label": "Recipe category",
+          "default": false,
+          "help": "Shows this block as a machine in JEI / REI: a category with its recipes, the block as the catalyst."
+        },
+        {
+          "key": "rvTitle",
+          "type": "text",
+          "label": "Category title",
+          "default": "",
+          "showIf": {
+            "key": "rvCategory",
+            "equals": true
+          },
+          "help": "Empty: the block's name."
+        },
+        {
+          "key": "rvCatalysts",
+          "type": "list",
+          "label": "Other catalysts",
+          "default": [],
+          "showIf": {
+            "key": "rvCategory",
+            "equals": true
+          },
+          "help": "Items shown as the category's crafting stations besides the block.",
+          "fields": [
+            {
+              "key": "item",
+              "type": "item",
+              "label": "Item",
+              "default": ""
+            }
+          ]
+        },
+        {
+          "key": "rvRecipes",
+          "type": "list",
+          "label": "Recipes",
+          "default": [],
+          "showIf": {
+            "key": "rvCategory",
+            "equals": true
+          },
+          "help": "What the machine makes: inputs on the left, outputs on the right, with the time and energy shown under them.",
+          "fields": [
+            {
+              "key": "inputs",
+              "type": "list",
+              "label": "Inputs",
+              "default": [],
+              "fields": [
+                {
+                  "key": "item",
+                  "type": "item",
+                  "label": "Item",
+                  "default": ""
+                },
+                {
+                  "key": "count",
+                  "type": "integer",
+                  "label": "Count",
+                  "default": 1,
+                  "min": 1,
+                  "max": 64
+                }
+              ]
+            },
+            {
+              "key": "outputs",
+              "type": "list",
+              "label": "Outputs",
+              "default": [],
+              "fields": [
+                {
+                  "key": "item",
+                  "type": "item",
+                  "label": "Item",
+                  "default": ""
+                },
+                {
+                  "key": "count",
+                  "type": "integer",
+                  "label": "Count",
+                  "default": 1,
+                  "min": 1,
+                  "max": 64
+                }
+              ]
+            },
+            {
+              "key": "time",
+              "type": "integer",
+              "label": "Time (ticks)",
+              "default": 0,
+              "min": 0,
+              "help": "0: not shown."
+            },
+            {
+              "key": "energy",
+              "type": "integer",
+              "label": "Energy (FE)",
+              "default": 0,
+              "min": 0,
+              "help": "0: not shown."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

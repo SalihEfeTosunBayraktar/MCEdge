@@ -1,0 +1,1013 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "fluid",
+  "folder": "fluids",
+  "name": "Fluid",
+  "description": "A flowing liquid block with an optional bucket.",
+  "icon": "droplet",
+  "langKey": "block",
+  "mcreator": "fluid",
+  "pages": [
+    {
+      "id": "visual",
+      "title": "Visual",
+      "groups": [
+        {
+          "title": "Textures",
+          "fields": [
+            {
+              "key": "textureStill",
+              "type": "texture",
+              "label": "Still texture",
+              "default": "",
+              "textureKind": "block",
+              "required": true,
+              "mcreator": "textureStill"
+            },
+            {
+              "key": "textureFlowing",
+              "type": "texture",
+              "label": "Flowing texture",
+              "default": "",
+              "textureKind": "block",
+              "required": true,
+              "mcreator": "textureFlowing"
+            }
+          ]
+        },
+        {
+          "title": "Inside the fluid",
+          "fields": [
+            {
+              "key": "textureRenderOverlay",
+              "type": "texture",
+              "label": "Screen overlay",
+              "help": "Optional image drawn over the screen while the camera is inside.",
+              "default": "",
+              "textureKind": "other",
+              "mcreator": "textureRenderOverlay"
+            },
+            {
+              "key": "hasFog",
+              "type": "boolean",
+              "label": "Fog",
+              "help": "Custom fog while the camera is inside.",
+              "default": false,
+              "mcreator": "hasFog"
+            },
+            {
+              "key": "fogColor",
+              "type": "color",
+              "label": "Fog color",
+              "help": "Empty uses the fluid tint.",
+              "default": "",
+              "showIf": {
+                "key": "hasFog",
+                "equals": true
+              },
+              "mcreator": "fogColor"
+            },
+            {
+              "key": "fogStartDistance",
+              "type": "number",
+              "label": "Fog start distance",
+              "default": 0,
+              "min": -1024,
+              "max": 1024,
+              "step": 0.01,
+              "mcreator": "fogStartDistance.fixedValue",
+              "showIf": {
+                "key": "hasFog",
+                "equals": true
+              }
+            },
+            {
+              "key": "fogStartDistanceProcedure",
+              "type": "procedure",
+              "label": "Fog start procedure",
+              "default": "",
+              "trigger": "fluid_fog",
+              "dependencies": [
+                "world",
+                "entity",
+                "nearDistance",
+                "farDistance",
+                "renderDistance"
+              ],
+              "returns": "number",
+              "mcreator": "fogStartDistance.name",
+              "showIf": {
+                "key": "hasFog",
+                "equals": true
+              }
+            },
+            {
+              "key": "fogEndDistance",
+              "type": "number",
+              "label": "Fog end distance",
+              "default": 48,
+              "min": -1024,
+              "max": 1024,
+              "step": 0.01,
+              "mcreator": "fogEndDistance.fixedValue",
+              "showIf": {
+                "key": "hasFog",
+                "equals": true
+              }
+            },
+            {
+              "key": "fogEndDistanceProcedure",
+              "type": "procedure",
+              "label": "Fog end procedure",
+              "default": "",
+              "trigger": "fluid_fog",
+              "dependencies": [
+                "world",
+                "entity",
+                "nearDistance",
+                "farDistance",
+                "renderDistance"
+              ],
+              "returns": "number",
+              "mcreator": "fogEndDistance.name",
+              "showIf": {
+                "key": "hasFog",
+                "equals": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "properties",
+      "title": "Properties",
+      "groups": [
+        {
+          "title": "Fluid",
+          "fields": [
+            {
+              "key": "name",
+              "type": "text",
+              "label": "Name",
+              "help": "Display name of the fluid block.",
+              "default": "",
+              "required": true,
+              "mcreator": "name"
+            },
+            {
+              "key": "type",
+              "type": "select",
+              "label": "Behaves like",
+              "help": "Base behavior and sounds.",
+              "default": "WATER",
+              "options": [
+                {
+                  "value": "WATER",
+                  "label": "Water"
+                },
+                {
+                  "value": "LAVA",
+                  "label": "Lava"
+                }
+              ],
+              "required": true,
+              "mcreator": "type"
+            },
+            {
+              "key": "flowRate",
+              "type": "integer",
+              "label": "Flow delay",
+              "help": "Ticks between spreading steps (water 5, lava 30).",
+              "default": 5,
+              "min": 1,
+              "max": 100000,
+              "step": 1,
+              "mcreator": "flowRate"
+            },
+            {
+              "key": "flowStrength",
+              "type": "number",
+              "label": "Push strength",
+              "help": "How strongly it pushes entities.",
+              "default": 1,
+              "min": -25,
+              "max": 25,
+              "step": 0.1,
+              "mcreator": "flowStrength"
+            },
+            {
+              "key": "levelDecrease",
+              "type": "integer",
+              "label": "Level drop per block",
+              "help": "How much the level falls per block of spread.",
+              "default": 1,
+              "min": 1,
+              "max": 8,
+              "step": 1,
+              "mcreator": "levelDecrease"
+            },
+            {
+              "key": "slopeFindDistance",
+              "type": "integer",
+              "label": "Slope search distance",
+              "help": "How far it looks for a downhill path.",
+              "default": 4,
+              "min": 1,
+              "max": 16,
+              "step": 1,
+              "mcreator": "slopeFindDistance"
+            },
+            {
+              "key": "canMultiply",
+              "type": "boolean",
+              "label": "Infinite source",
+              "help": "Two sources create a third one, like water.",
+              "default": false,
+              "mcreator": "canMultiply"
+            },
+            {
+              "key": "spawnParticles",
+              "type": "boolean",
+              "label": "Drip particles",
+              "help": "Drip from ceilings above the fluid.",
+              "default": false,
+              "mcreator": "spawnParticles"
+            },
+            {
+              "key": "dripParticle",
+              "type": "particle",
+              "label": "Drip particle",
+              "default": "",
+              "required": true,
+              "showIf": {
+                "key": "spawnParticles",
+                "equals": true
+              },
+              "mcreator": "dripParticle"
+            },
+            {
+              "key": "tintType",
+              "type": "select",
+              "label": "Tint",
+              "help": "Color the textures with a biome color.",
+              "default": "No tint",
+              "options": [
+                {
+                  "value": "No tint",
+                  "label": "No tint"
+                },
+                {
+                  "value": "Grass",
+                  "label": "Grass"
+                },
+                {
+                  "value": "Foliage",
+                  "label": "Foliage"
+                },
+                {
+                  "value": "Dry foliage",
+                  "label": "Dry foliage"
+                },
+                {
+                  "value": "Birch foliage",
+                  "label": "Birch foliage"
+                },
+                {
+                  "value": "Spruce foliage",
+                  "label": "Spruce foliage"
+                },
+                {
+                  "value": "Default foliage",
+                  "label": "Default foliage"
+                },
+                {
+                  "value": "Water",
+                  "label": "Water"
+                },
+                {
+                  "value": "Sky",
+                  "label": "Sky"
+                },
+                {
+                  "value": "Fog",
+                  "label": "Fog"
+                },
+                {
+                  "value": "Water fog",
+                  "label": "Water fog"
+                }
+              ],
+              "mcreator": "tintType"
+            }
+          ]
+        },
+        {
+          "title": "Bucket",
+          "fields": [
+            {
+              "key": "generateBucket",
+              "type": "boolean",
+              "label": "Bucket",
+              "help": "Create a bucket item for the fluid.",
+              "default": true,
+              "mcreator": "generateBucket"
+            },
+            {
+              "key": "bucketName",
+              "type": "text",
+              "label": "Bucket name",
+              "default": "",
+              "required": true,
+              "showIf": {
+                "key": "generateBucket",
+                "equals": true
+              },
+              "mcreator": "bucketName"
+            },
+            {
+              "key": "textureBucket",
+              "type": "texture",
+              "label": "Bucket texture",
+              "help": "Optional; generated from the fluid texture when empty.",
+              "default": "",
+              "textureKind": "item",
+              "showIf": {
+                "key": "generateBucket",
+                "equals": true
+              },
+              "mcreator": "textureBucket"
+            },
+            {
+              "key": "creativeTabs",
+              "type": "multiselect",
+              "elementTypes": [
+                "creative_tab"
+              ],
+              "label": "Creative tabs",
+              "help": "Creative inventory tabs that list this element. Tabs defined in this mod are offered as well.",
+              "default": [],
+              "options": [
+                {
+                  "value": "BUILDING_BLOCKS",
+                  "label": "Building blocks"
+                },
+                {
+                  "value": "DECORATIONS",
+                  "label": "Natural blocks"
+                },
+                {
+                  "value": "REDSTONE",
+                  "label": "Redstone"
+                },
+                {
+                  "value": "FOOD",
+                  "label": "Food and drinks"
+                },
+                {
+                  "value": "TOOLS",
+                  "label": "Tools and utilities"
+                },
+                {
+                  "value": "COMBAT",
+                  "label": "Combat"
+                },
+                {
+                  "value": "MATERIALS",
+                  "label": "Ingredients"
+                },
+                {
+                  "value": "MISC",
+                  "label": "Spawn eggs"
+                },
+                {
+                  "value": "TRANSPORTATION",
+                  "label": "Functional blocks"
+                },
+                {
+                  "value": "BREWING",
+                  "label": "Colored blocks"
+                },
+                {
+                  "value": "OP_BLOCKS",
+                  "label": "Operator items"
+                }
+              ],
+              "showIf": {
+                "key": "generateBucket",
+                "equals": true
+              },
+              "mcreator": "creativeTabs"
+            },
+            {
+              "key": "emptySound",
+              "type": "sound",
+              "label": "Empty sound",
+              "help": "Played when the bucket is emptied.",
+              "default": "",
+              "showIf": {
+                "key": "generateBucket",
+                "equals": true
+              },
+              "mcreator": "emptySound"
+            },
+            {
+              "key": "rarity",
+              "type": "select",
+              "label": "Rarity",
+              "default": "COMMON",
+              "options": [
+                {
+                  "value": "COMMON",
+                  "label": "Common"
+                },
+                {
+                  "value": "UNCOMMON",
+                  "label": "Uncommon"
+                },
+                {
+                  "value": "RARE",
+                  "label": "Rare"
+                },
+                {
+                  "value": "EPIC",
+                  "label": "Epic"
+                }
+              ],
+              "showIf": {
+                "key": "generateBucket",
+                "equals": true
+              },
+              "mcreator": "rarity"
+            },
+            {
+              "key": "specialInformation",
+              "type": "multiline",
+              "label": "Tooltip lines",
+              "help": "Extra tooltip lines under the name, one per row.",
+              "default": "",
+              "mcreator": "specialInformation.fixedValue",
+              "showIf": {
+                "key": "generateBucket",
+                "equals": true
+              }
+            },
+            {
+              "key": "specialInformationProcedure",
+              "type": "procedure",
+              "label": "Tooltip lines procedure",
+              "help": "Optional procedure that returns the tooltip lines instead of the fixed list.",
+              "default": "",
+              "trigger": "item_tooltip",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "returns": "string_list",
+              "mcreator": "specialInformation.name",
+              "showIf": {
+                "key": "generateBucket",
+                "equals": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "advanced",
+      "title": "Advanced properties",
+      "groups": [
+        {
+          "title": "Block",
+          "fields": [
+            {
+              "key": "resistance",
+              "type": "number",
+              "label": "Blast resistance",
+              "default": 100,
+              "min": 0,
+              "max": 2147483647,
+              "step": 0.5,
+              "mcreator": "resistance"
+            },
+            {
+              "key": "luminance",
+              "type": "integer",
+              "label": "Light level",
+              "default": 0,
+              "min": 0,
+              "max": 15,
+              "step": 1,
+              "mcreator": "luminance"
+            },
+            {
+              "key": "lightOpacity",
+              "type": "integer",
+              "label": "Light opacity",
+              "default": 1,
+              "min": 0,
+              "max": 15,
+              "step": 1,
+              "mcreator": "lightOpacity"
+            },
+            {
+              "key": "tickRate",
+              "type": "integer",
+              "label": "Tick rate",
+              "default": 10,
+              "min": 0,
+              "max": 9999999,
+              "step": 1,
+              "mcreator": "tickRate"
+            },
+            {
+              "key": "ignitedByLava",
+              "type": "boolean",
+              "label": "Ignited by lava",
+              "default": false,
+              "mcreator": "ignitedByLava"
+            },
+            {
+              "key": "flammability",
+              "type": "integer",
+              "label": "Flammability",
+              "default": 0,
+              "min": 0,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "flammability"
+            },
+            {
+              "key": "fireSpreadSpeed",
+              "type": "integer",
+              "label": "Fire spread speed",
+              "default": 0,
+              "min": 0,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "fireSpreadSpeed"
+            },
+            {
+              "key": "colorOnMap",
+              "type": "select",
+              "label": "Map color",
+              "default": "DEFAULT",
+              "options": [
+                {
+                  "value": "DEFAULT",
+                  "label": "Default"
+                },
+                {
+                  "value": "AIR",
+                  "label": "None (transparent)"
+                },
+                {
+                  "value": "GRASS",
+                  "label": "Grass"
+                },
+                {
+                  "value": "SAND",
+                  "label": "Sand"
+                },
+                {
+                  "value": "CLOTH",
+                  "label": "Wool"
+                },
+                {
+                  "value": "TNT",
+                  "label": "Tnt"
+                },
+                {
+                  "value": "ICE",
+                  "label": "Ice"
+                },
+                {
+                  "value": "IRON",
+                  "label": "Iron"
+                },
+                {
+                  "value": "FOLIAGE",
+                  "label": "Foliage"
+                },
+                {
+                  "value": "SNOW",
+                  "label": "Snow"
+                },
+                {
+                  "value": "CLAY",
+                  "label": "Clay"
+                },
+                {
+                  "value": "DIRT",
+                  "label": "Dirt"
+                },
+                {
+                  "value": "STONE",
+                  "label": "Stone"
+                },
+                {
+                  "value": "WATER",
+                  "label": "Water"
+                },
+                {
+                  "value": "WOOD",
+                  "label": "Wood"
+                },
+                {
+                  "value": "QUARTZ",
+                  "label": "Quartz"
+                },
+                {
+                  "value": "ADOBE",
+                  "label": "Adobe"
+                },
+                {
+                  "value": "MAGENTA",
+                  "label": "Magenta"
+                },
+                {
+                  "value": "LIGHT_BLUE",
+                  "label": "Light blue"
+                },
+                {
+                  "value": "YELLOW",
+                  "label": "Yellow"
+                },
+                {
+                  "value": "LIME",
+                  "label": "Lime"
+                },
+                {
+                  "value": "PINK",
+                  "label": "Pink"
+                },
+                {
+                  "value": "GRAY",
+                  "label": "Gray"
+                },
+                {
+                  "value": "SILVER",
+                  "label": "Light gray"
+                },
+                {
+                  "value": "CYAN",
+                  "label": "Cyan"
+                },
+                {
+                  "value": "PURPLE",
+                  "label": "Purple"
+                },
+                {
+                  "value": "BLUE",
+                  "label": "Blue"
+                },
+                {
+                  "value": "BROWN",
+                  "label": "Brown"
+                },
+                {
+                  "value": "GREEN",
+                  "label": "Green"
+                },
+                {
+                  "value": "RED",
+                  "label": "Red"
+                },
+                {
+                  "value": "BLACK",
+                  "label": "Black"
+                },
+                {
+                  "value": "GOLD",
+                  "label": "Gold"
+                },
+                {
+                  "value": "DIAMOND",
+                  "label": "Diamond"
+                },
+                {
+                  "value": "LAPIS",
+                  "label": "Lapis"
+                },
+                {
+                  "value": "EMERALD",
+                  "label": "Emerald"
+                },
+                {
+                  "value": "PODZOL",
+                  "label": "Podzol"
+                },
+                {
+                  "value": "NETHERRACK",
+                  "label": "Netherrack"
+                },
+                {
+                  "value": "WHITE_TERRACOTTA",
+                  "label": "White terracotta"
+                },
+                {
+                  "value": "ORANGE_TERRACOTTA",
+                  "label": "Orange terracotta"
+                },
+                {
+                  "value": "MAGENTA_TERRACOTTA",
+                  "label": "Magenta terracotta"
+                },
+                {
+                  "value": "LIGHT_BLUE_TERRACOTTA",
+                  "label": "Light blue terracotta"
+                },
+                {
+                  "value": "YELLOW_TERRACOTTA",
+                  "label": "Yellow terracotta"
+                },
+                {
+                  "value": "LIME_TERRACOTTA",
+                  "label": "Lime terracotta"
+                },
+                {
+                  "value": "PINK_TERRACOTTA",
+                  "label": "Pink terracotta"
+                },
+                {
+                  "value": "GRAY_TERRACOTTA",
+                  "label": "Gray terracotta"
+                },
+                {
+                  "value": "LIGHT_GRAY_TERRACOTTA",
+                  "label": "Light gray terracotta"
+                },
+                {
+                  "value": "CYAN_TERRACOTTA",
+                  "label": "Cyan terracotta"
+                },
+                {
+                  "value": "PURPLE_TERRACOTTA",
+                  "label": "Purple terracotta"
+                },
+                {
+                  "value": "BLUE_TERRACOTTA",
+                  "label": "Blue terracotta"
+                },
+                {
+                  "value": "BROWN_TERRACOTTA",
+                  "label": "Brown terracotta"
+                },
+                {
+                  "value": "GREEN_TERRACOTTA",
+                  "label": "Green terracotta"
+                },
+                {
+                  "value": "RED_TERRACOTTA",
+                  "label": "Red terracotta"
+                },
+                {
+                  "value": "BLACK_TERRACOTTA",
+                  "label": "Black terracotta"
+                },
+                {
+                  "value": "CRIMSON_NYLIUM",
+                  "label": "Crimson nylium"
+                },
+                {
+                  "value": "CRIMSON_STEM",
+                  "label": "Crimson stem"
+                },
+                {
+                  "value": "CRIMSON_HYPHAE",
+                  "label": "Crimson hyphae"
+                },
+                {
+                  "value": "WARPED_NYLIUM",
+                  "label": "Warped nylium"
+                },
+                {
+                  "value": "WARPED_STEM",
+                  "label": "Warped stem"
+                },
+                {
+                  "value": "WARPED_HYPHAE",
+                  "label": "Warped hyphae"
+                },
+                {
+                  "value": "WARPED_WART",
+                  "label": "Warped wart"
+                },
+                {
+                  "value": "DEEPSLATE_GRAY",
+                  "label": "Deepslate gray"
+                },
+                {
+                  "value": "RAW_IRON_PINK",
+                  "label": "Raw iron pink"
+                },
+                {
+                  "value": "LICHEN_GREEN",
+                  "label": "Lichen green"
+                }
+              ],
+              "mcreator": "colorOnMap"
+            },
+            {
+              "key": "emissiveRendering",
+              "type": "boolean",
+              "label": "Glowing texture",
+              "help": "Render at full brightness.",
+              "default": false,
+              "mcreator": "emissiveRendering"
+            }
+          ]
+        },
+        {
+          "title": "Fluid type",
+          "fields": [
+            {
+              "key": "luminosity",
+              "type": "integer",
+              "label": "Fluid light",
+              "help": "Light level reported by the fluid type.",
+              "default": 0,
+              "min": 0,
+              "max": 100,
+              "step": 1,
+              "mcreator": "luminosity"
+            },
+            {
+              "key": "density",
+              "type": "integer",
+              "label": "Density",
+              "help": "Negative values make it rise like a gas.",
+              "default": 1000,
+              "min": -100000,
+              "max": 100000,
+              "step": 1,
+              "mcreator": "density"
+            },
+            {
+              "key": "viscosity",
+              "type": "integer",
+              "label": "Viscosity",
+              "help": "Higher values flow slower in some mods.",
+              "default": 1000,
+              "min": 0,
+              "max": 100000,
+              "step": 1,
+              "mcreator": "viscosity"
+            },
+            {
+              "key": "temperature",
+              "type": "integer",
+              "label": "Temperature (K)",
+              "default": 300,
+              "min": 0,
+              "max": 100000,
+              "step": 1,
+              "mcreator": "temperature"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "triggers",
+      "title": "Triggers",
+      "groups": [
+        {
+          "title": "Events",
+          "fields": [
+            {
+              "key": "onBlockAdded",
+              "type": "procedure",
+              "label": "Added to the world",
+              "default": "",
+              "trigger": "block_added",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "blockstate"
+              ],
+              "mcreator": "onBlockAdded"
+            },
+            {
+              "key": "onNeighbourChanges",
+              "type": "procedure",
+              "label": "Neighbor changed",
+              "default": "",
+              "trigger": "block_neighbour_changed",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "blockstate"
+              ],
+              "mcreator": "onNeighbourChanges"
+            },
+            {
+              "key": "onTickUpdate",
+              "type": "procedure",
+              "label": "Update tick",
+              "default": "",
+              "trigger": "block_tick",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "blockstate"
+              ],
+              "mcreator": "onTickUpdate"
+            },
+            {
+              "key": "onEntityCollides",
+              "type": "procedure",
+              "label": "Entity inside",
+              "default": "",
+              "trigger": "block_entity_collides",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "blockstate"
+              ],
+              "mcreator": "onEntityCollides"
+            },
+            {
+              "key": "onRandomUpdateEvent",
+              "type": "procedure",
+              "label": "Client display tick",
+              "default": "",
+              "trigger": "block_display_tick",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "blockstate"
+              ],
+              "mcreator": "onRandomUpdateEvent"
+            },
+            {
+              "key": "onDestroyedByExplosion",
+              "type": "procedure",
+              "label": "Destroyed by explosion",
+              "default": "",
+              "trigger": "block_destroyed_by_explosion",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world"
+              ],
+              "mcreator": "onDestroyedByExplosion"
+            },
+            {
+              "key": "flowCondition",
+              "type": "procedure",
+              "label": "Can flow",
+              "help": "Optional; return false to stop flowing in a direction.",
+              "default": "",
+              "trigger": "fluid_flow_check",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "direction",
+                "blockstate",
+                "intostate"
+              ],
+              "returns": "logic",
+              "mcreator": "flowCondition"
+            },
+            {
+              "key": "beforeReplacingBlock",
+              "type": "procedure",
+              "label": "Before replacing a block",
+              "default": "",
+              "trigger": "fluid_before_replace",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "blockstate"
+              ],
+              "mcreator": "beforeReplacingBlock"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

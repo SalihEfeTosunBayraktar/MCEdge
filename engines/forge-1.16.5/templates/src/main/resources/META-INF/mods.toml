@@ -1,0 +1,28 @@
+modLoader="javafml"
+loaderVersion="[36,)"
+license={{licenseJson}}
+
+[[mods]]
+modId="{{mod.id}}"
+version="{{mod.version}}"
+displayName={{nameJson}}
+authors={{authorsJoinedJson}}
+description={{descriptionJson}}
+{{#if mod.website}}displayURL={{websiteJson}}
+{{/if}}{{#if mod.credits}}credits={{creditsJson}}
+{{/if}}{{#if logoFile}}logoFile="{{logoFile}}"
+{{/if}}
+[[dependencies.{{mod.id}}]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[{{minecraft}}]"
+    ordering="NONE"
+    side="BOTH"
+{{#each dependencies}}
+[[dependencies.{{mod.id}}]]
+    modId="{{modId}}"
+    mandatory={{required}}
+    versionRange="{{mavenRange}}"
+    ordering="NONE"
+    side="{{sideUpper}}"
+{{/each}}

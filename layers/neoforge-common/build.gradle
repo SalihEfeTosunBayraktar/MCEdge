@@ -1,0 +1,31 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '{{versions.moddevgradle}}'
+}
+
+version = '{{mod.version}}'
+group = '{{mod.package}}'
+base { archivesName = '{{mod.id}}' }
+
+java.toolchain.languageVersion = JavaLanguageVersion.of({{java}})
+
+neoForge {
+    version = '{{versions.neoforge}}'
+    runs {
+        client { client() }
+        server { server(); programArgument '--nogui' }
+    }
+    mods {
+        '{{mod.id}}' { sourceSet sourceSets.main }
+    }
+}
+
+{{#if integrationRepositories}}repositories {
+{{#each integrationRepositories}}    maven { url = '{{url}}' }
+{{/each}}}
+
+{{/if}}{{#if integrationGradle}}dependencies {
+{{#each integrationGradle}}    {{line}}
+{{/each}}}
+
+{{/if}}tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }

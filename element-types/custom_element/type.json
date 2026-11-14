@@ -1,0 +1,30 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "custom_element",
+  "folder": "custom_elements",
+  "name": "Custom element",
+  "description": "A hand-written source file; MCEdge generates a stub once and then leaves the code to you.",
+  "icon": "code",
+  "langKey": null,
+  "mcreator": "code",
+  "pages": [
+    {
+      "id": "main",
+      "title": "Code",
+      "groups": [
+        {
+          "title": "Source",
+          "fields": [
+            {
+              "key": "code",
+              "type": "multiline",
+              "label": "Source code",
+              "help": "Full contents of the generated class. Generated once from a template, then owned by you and never regenerated.",
+              "default": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

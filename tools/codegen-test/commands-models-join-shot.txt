@@ -1,0 +1,4 @@
+@wait 60
+@shot models
+@wait 2
+@kill

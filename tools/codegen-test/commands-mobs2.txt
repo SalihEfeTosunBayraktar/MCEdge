@@ -1,0 +1,83 @@
+forceload add 0 0 15 15
+setworldspawn 8 100 8
+gamerule spawnRadius 0
+fill 0 100 0 15 110 15 minecraft:air
+fill 0 99 0 15 99 15 minecraft:glass
+summon wavethree:base_bat 1 100 1
+summon wavethree:base_blaze 4 100 1
+summon wavethree:base_chicken 7 100 1
+summon wavethree:base_cow 10 100 1
+summon wavethree:base_creeper 13 100 1
+summon wavethree:base_enderman 1 100 3
+summon wavethree:base_horse 4 100 3
+summon wavethree:base_irongolem 7 100 3
+summon wavethree:base_magmacube 10 100 3
+summon wavethree:base_ocelot 13 100 3
+summon wavethree:base_pig 1 100 5
+summon wavethree:base_skeleton 4 100 5
+summon wavethree:base_spider 7 100 5
+summon wavethree:base_squid 10 100 5
+summon wavethree:base_villager 13 100 5
+summon wavethree:base_witch 1 100 7
+summon wavethree:model_chicken 4 100 7
+summon wavethree:model_creeper 7 100 7
+summon wavethree:model_pig 10 100 7
+summon wavethree:model_piglin 13 100 7
+summon wavethree:model_salmon 1 100 9
+summon wavethree:model_silverfish 4 100 9
+summon wavethree:model_villager 7 100 9
+summon wavethree:ruby_bat 10 100 9
+summon wavethree:ruby_beast 13 100 9
+summon wavethree:ruby_blob 1 100 11
+summon wavethree:ruby_cube 4 100 11
+summon wavethree:ruby_fish 7 100 11
+summon wavethree:ruby_golem 10 100 11
+summon wavethree:ruby_raider 13 100 11
+summon wavethree:ruby_sheep 1 100 13
+summon wavethree:ruby_wolf 4 100 13
+summon wavethree:ruby_zombie 7 100 13
+@wait 5
+execute if entity @e[type=wavethree:base_bat] run say base_bat-ok
+execute if entity @e[type=wavethree:base_blaze] run say base_blaze-ok
+execute if entity @e[type=wavethree:base_chicken] run say base_chicken-ok
+execute if entity @e[type=wavethree:base_cow] run say base_cow-ok
+execute if entity @e[type=wavethree:base_creeper] run say base_creeper-ok
+execute if entity @e[type=wavethree:base_enderman] run say base_enderman-ok
+execute if entity @e[type=wavethree:base_horse] run say base_horse-ok
+execute if entity @e[type=wavethree:base_irongolem] run say base_irongolem-ok
+execute if entity @e[type=wavethree:base_magmacube] run say base_magmacube-ok
+execute if entity @e[type=wavethree:base_ocelot] run say base_ocelot-ok
+execute if entity @e[type=wavethree:base_pig] run say base_pig-ok
+execute if entity @e[type=wavethree:base_skeleton] run say base_skeleton-ok
+execute if entity @e[type=wavethree:base_spider] run say base_spider-ok
+execute if entity @e[type=wavethree:base_squid] run say base_squid-ok
+execute if entity @e[type=wavethree:base_villager] run say base_villager-ok
+execute if entity @e[type=wavethree:base_witch] run say base_witch-ok
+execute if entity @e[type=wavethree:model_chicken] run say model_chicken-ok
+execute if entity @e[type=wavethree:model_creeper] run say model_creeper-ok
+execute if entity @e[type=wavethree:model_pig] run say model_pig-ok
+execute if entity @e[type=wavethree:model_piglin] run say model_piglin-ok
+execute if entity @e[type=wavethree:model_salmon] run say model_salmon-ok
+execute if entity @e[type=wavethree:model_silverfish] run say model_silverfish-ok
+execute if entity @e[type=wavethree:model_villager] run say model_villager-ok
+execute if entity @e[type=wavethree:ruby_bat] run say ruby_bat-ok
+execute if entity @e[type=wavethree:ruby_beast] run say ruby_beast-ok
+execute if entity @e[type=wavethree:ruby_blob] run say ruby_blob-ok
+execute if entity @e[type=wavethree:ruby_cube] run say ruby_cube-ok
+execute if entity @e[type=wavethree:ruby_fish] run say ruby_fish-ok
+execute if entity @e[type=wavethree:ruby_golem] run say ruby_golem-ok
+execute if entity @e[type=wavethree:ruby_raider] run say ruby_raider-ok
+execute if entity @e[type=wavethree:ruby_sheep] run say ruby_sheep-ok
+execute if entity @e[type=wavethree:ruby_wolf] run say ruby_wolf-ok
+execute if entity @e[type=wavethree:ruby_zombie] run say ruby_zombie-ok
+data get entity @e[type=wavethree:ruby_golem,limit=1] Datapower
+data get entity @e[type=wavethree:ruby_golem,limit=1] Dataangry
+data get entity @e[type=wavethree:ruby_golem,limit=1] Datatitle
+data get entity @e[type=wavethree:ruby_golem,limit=1] CustomName
+data get entity @e[type=wavethree:ruby_beast,limit=1] Dataidle
+data get entity @e[type=wavethree:ruby_sheep,limit=1] InventoryCustom
+@wait 10
+execute if entity @e[type=wavethree:ruby_bat] run say bat-still-ok
+kill @e[type=wavethree:ruby_sheep]
+@wait 2
+stop

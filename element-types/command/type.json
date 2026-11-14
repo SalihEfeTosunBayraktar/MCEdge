@@ -1,0 +1,110 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "command",
+  "folder": "commands",
+  "name": "Command",
+  "description": "A chat command with its argument tree built from blocks.",
+  "icon": "terminal",
+  "langKey": null,
+  "mcreator": "command",
+  "pages": [
+    {
+      "id": "main",
+      "title": "Command",
+      "groups": [
+        {
+          "title": "Command",
+          "fields": [
+            {
+              "key": "commandName",
+              "type": "text",
+              "label": "Command name",
+              "help": "What players type after the slash.",
+              "default": "",
+              "required": true,
+              "pattern": "^[a-z0-9_\\-]+$",
+              "mcreator": "commandName"
+            },
+            {
+              "key": "type",
+              "type": "select",
+              "label": "Availability",
+              "help": "Where the command is registered.",
+              "default": "STANDARD",
+              "options": [
+                {
+                  "value": "STANDARD",
+                  "label": "Everywhere"
+                },
+                {
+                  "value": "SINGLEPLAYER_ONLY",
+                  "label": "Single player only"
+                },
+                {
+                  "value": "MULTIPLAYER_ONLY",
+                  "label": "Multiplayer only"
+                },
+                {
+                  "value": "CLIENTSIDE",
+                  "label": "Client side"
+                }
+              ],
+              "mcreator": "type"
+            },
+            {
+              "key": "permissionLevel",
+              "type": "select",
+              "label": "Permission level",
+              "help": "Operator level needed to run it.",
+              "default": "4",
+              "options": [
+                {
+                  "value": "No requirement",
+                  "label": "Anyone"
+                },
+                {
+                  "value": "1",
+                  "label": "1 - bypass spawn protection"
+                },
+                {
+                  "value": "2",
+                  "label": "2 - cheats"
+                },
+                {
+                  "value": "3",
+                  "label": "3 - player management"
+                },
+                {
+                  "value": "4",
+                  "label": "4 - server management"
+                }
+              ],
+              "mcreator": "permissionLevel"
+            },
+            {
+              "key": "commandArguments",
+              "type": "text",
+              "label": "Typed arguments",
+              "help": "Optional. type:name separated by spaces; types are word, string, greedy, double, integer, logic, player, entity. double and integer also take a minimum: double:amount:1. Empty: the command takes free text.",
+              "default": "",
+              "pattern": "^(((word|string|greedy|logic|player|entity):[a-z0-9_]+|(double|integer):[a-z0-9_]+(:-?[0-9]+)?)( |$))*$"
+            }
+          ]
+        },
+        {
+          "title": "Arguments",
+          "fields": [
+            {
+              "key": "argsxml",
+              "type": "blockly",
+              "label": "Arguments",
+              "help": "Block tree describing the arguments and the procedures they call.",
+              "default": "<xml xmlns=\"https://developers.google.com/blockly/xml\"><block type=\"args_start\" deletable=\"false\" x=\"40\" y=\"40\"><next><block type=\"call_procedure\"><field name=\"procedure\"></field></block></next></block></xml>",
+              "mcreator": "argsxml"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

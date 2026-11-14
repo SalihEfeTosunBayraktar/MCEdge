@@ -1,0 +1,262 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mcedge/elements/tool.schema.json",
+  "title": "MCEdge Tool element",
+  "description": "Pickaxes, axes, swords, shovels, hoes, shields, shears, fishing rods, multi-tools and special tools.",
+  "type": "object",
+  "required": [
+    "id"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "title": {
+      "type": "string"
+    },
+    "texture": {
+      "title": "Texture",
+      "type": "string"
+    },
+    "model": {
+      "title": "Model",
+      "description": "Model kind is stored as renderType.",
+      "type": "string"
+    },
+    "blockingModel": {
+      "title": "Blocking model",
+      "description": "Model used while the shield is raised. Model kind is stored as blockingRenderType.",
+      "type": "string"
+    },
+    "guiTexture": {
+      "title": "Inventory texture",
+      "type": "string"
+    },
+    "glowCondition": {
+      "title": "Enchanted glint",
+      "type": "boolean"
+    },
+    "glowConditionProcedure": {
+      "title": "Enchanted glint (procedure)",
+      "description": "When set, this procedure decides the value instead of the checkbox.",
+      "type": "string"
+    },
+    "specialInformation": {
+      "title": "Tooltip lines",
+      "description": "One tooltip line per row.",
+      "type": "string"
+    },
+    "specialInformationProcedure": {
+      "title": "Tooltip lines (procedure)",
+      "description": "When set, this procedure returns the tooltip lines instead.",
+      "type": "string"
+    },
+    "name": {
+      "title": "Display name",
+      "type": "string"
+    },
+    "rarity": {
+      "title": "Rarity",
+      "description": "Colors the item name.",
+      "enum": [
+        "COMMON",
+        "UNCOMMON",
+        "RARE",
+        "EPIC"
+      ]
+    },
+    "creativeTabs": {
+      "title": "Creative tabs",
+      "description": "Creative inventory tabs that list this element. Tabs defined in this mod are offered as well.",
+      "type": "array",
+      "items": {}
+    },
+    "enchantability": {
+      "title": "Enchantability",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 128000
+    },
+    "usageCount": {
+      "title": "Durability",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 128000
+    },
+    "repairItems": {
+      "title": "Repair items",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "title": "Item or block",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "immuneToFire": {
+      "title": "Immune to fire and lava",
+      "type": "boolean"
+    },
+    "stayInGridWhenCrafting": {
+      "title": "Stays in the crafting grid",
+      "type": "boolean"
+    },
+    "damageOnCrafting": {
+      "title": "Loses durability when crafting",
+      "type": "boolean"
+    },
+    "toolType": {
+      "title": "Tool type",
+      "enum": [
+        "Pickaxe",
+        "Axe",
+        "Sword",
+        "Spade",
+        "Hoe",
+        "Shield",
+        "Shears",
+        "Fishing rod",
+        "Special",
+        "MultiTool"
+      ]
+    },
+    "blockDropsTier": {
+      "title": "Mining tier",
+      "enum": [
+        "WOOD",
+        "STONE",
+        "IRON",
+        "DIAMOND",
+        "GOLD",
+        "NETHERITE"
+      ]
+    },
+    "additionalDropCondition": {
+      "title": "Extra drop condition",
+      "type": "string"
+    },
+    "efficiency": {
+      "title": "Mining speed",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 128000
+    },
+    "damageVsEntity": {
+      "title": "Attack damage",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 128000
+    },
+    "attackSpeed": {
+      "title": "Attack speed",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "blocksAffected": {
+      "title": "Blocks it mines",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "block": {
+            "title": "Block",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "attributeModifiers": {
+      "title": "Attribute modifiers",
+      "description": "Changes entity attributes while this is active.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "equipmentSlot": {
+            "title": "Active in slot",
+            "enum": [
+              "any",
+              "mainhand",
+              "offhand",
+              "hand",
+              "feet",
+              "legs",
+              "chest",
+              "head",
+              "armor",
+              "body",
+              "saddle"
+            ]
+          },
+          "attribute": {
+            "title": "Attribute",
+            "type": "string"
+          },
+          "amount": {
+            "title": "Amount",
+            "type": "number",
+            "minimum": -1024,
+            "maximum": 1024
+          },
+          "operation": {
+            "title": "Operation",
+            "enum": [
+              "ADD_VALUE",
+              "ADD_MULTIPLIED_BASE",
+              "ADD_MULTIPLIED_TOTAL"
+            ]
+          }
+        }
+      }
+    },
+    "onRightClickedInAir": {
+      "title": "Right-clicked in the air",
+      "type": "string"
+    },
+    "onRightClickedOnBlock": {
+      "title": "Right-clicked on a block",
+      "description": "May return an interaction result; returning nothing keeps the default.",
+      "type": "string"
+    },
+    "onCrafted": {
+      "title": "Crafted or smelted",
+      "type": "string"
+    },
+    "onEntityHitWith": {
+      "title": "Entity hit with this",
+      "type": "string"
+    },
+    "onItemInInventoryTick": {
+      "title": "Every tick in inventory",
+      "type": "string"
+    },
+    "onItemInUseTick": {
+      "title": "Every tick while held",
+      "type": "string"
+    },
+    "onBlockDestroyedWithTool": {
+      "title": "Block mined with it",
+      "type": "string"
+    },
+    "onEntitySwing": {
+      "title": "Entity swings it",
+      "type": "string"
+    },
+    "onDroppedByPlayer": {
+      "title": "Dropped by a player",
+      "type": "string"
+    },
+    "onItemEntityDestroyed": {
+      "title": "Dropped item destroyed",
+      "type": "string"
+    }
+  }
+}

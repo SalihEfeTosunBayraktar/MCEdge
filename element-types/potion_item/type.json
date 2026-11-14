@@ -1,0 +1,122 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "potion_item",
+  "folder": "potion_items",
+  "name": "Potion",
+  "icon": "potion",
+  "langKey": null,
+  "mcreator": "potion",
+  "description": "A potion type with drinkable, splash, lingering and tipped arrow variants.",
+  "pages": [
+    {
+      "id": "properties",
+      "title": "Properties",
+      "groups": [
+        {
+          "title": "Names",
+          "fields": [
+            {
+              "key": "potionName",
+              "type": "text",
+              "label": "Potion name",
+              "default": "",
+              "mcreator": "potionName",
+              "required": true
+            },
+            {
+              "key": "splashName",
+              "type": "text",
+              "label": "Splash potion name",
+              "default": "",
+              "mcreator": "splashName",
+              "required": true
+            },
+            {
+              "key": "lingeringName",
+              "type": "text",
+              "label": "Lingering potion name",
+              "default": "",
+              "mcreator": "lingeringName",
+              "required": true
+            },
+            {
+              "key": "arrowName",
+              "type": "text",
+              "label": "Tipped arrow name",
+              "default": "",
+              "mcreator": "arrowName",
+              "required": true
+            }
+          ]
+        },
+        {
+          "title": "Effects",
+          "fields": [
+            {
+              "key": "effects",
+              "type": "list",
+              "label": "Effects",
+              "default": [
+                {
+                  "effect": "minecraft:speed",
+                  "duration": 3600,
+                  "infinite": false,
+                  "amplifier": 0,
+                  "ambient": false,
+                  "showParticles": true
+                }
+              ],
+              "fields": [
+                {
+                  "key": "effect",
+                  "type": "effect",
+                  "label": "Effect",
+                  "default": "minecraft:speed"
+                },
+                {
+                  "key": "duration",
+                  "type": "integer",
+                  "label": "Duration (ticks)",
+                  "default": 3600,
+                  "min": 1,
+                  "max": 72000,
+                  "step": 1
+                },
+                {
+                  "key": "infinite",
+                  "type": "boolean",
+                  "label": "Infinite duration",
+                  "default": false
+                },
+                {
+                  "key": "amplifier",
+                  "type": "integer",
+                  "label": "Amplifier",
+                  "default": 0,
+                  "min": 0,
+                  "max": 255,
+                  "step": 1,
+                  "help": "0 is level I."
+                },
+                {
+                  "key": "ambient",
+                  "type": "boolean",
+                  "label": "Ambient (faint particles)",
+                  "default": false
+                },
+                {
+                  "key": "showParticles",
+                  "type": "boolean",
+                  "label": "Show particles",
+                  "default": true
+                }
+              ],
+              "mcreator": "effects",
+              "minItems": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

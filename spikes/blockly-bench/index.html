@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Blockly bench</title>
+<style>
+  body { font: 14px system-ui, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+  #bar { padding: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #ccc; }
+  #main { flex: 1; display: flex; min-height: 0; }
+  #ws { flex: 1; min-width: 0; }
+  #side { width: 560px; overflow: auto; padding: 8px; border-left: 1px solid #ccc; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid #ccc; padding: 3px 6px; text-align: right; font-size: 12px; }
+  th:first-child, td:first-child { text-align: left; }
+  pre { font-size: 11px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <label id="lblN"></label>
+  <select id="n"><option>300</option><option>1000</option><option selected>2000</option><option>4000</option></select>
+  <label><input type="checkbox" id="collapsed"> <span id="lblCollapsed"></span></label>
+  <button id="run"></button>
+  <button id="all"></button>
+  <span id="status"></span>
+</div>
+<div id="main">
+  <div id="ws"></div>
+  <div id="side">
+    <table id="tbl"></table>
+    <pre id="json"></pre>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/blockly@13.4.0/blockly.min.js"></script>
+<script src="bench.js"></script>
+</body>
+</html>

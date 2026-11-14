@@ -1,0 +1,119 @@
+{
+  "$comment": "Element types and fields these templates generate; see src/engines/coverage.ts.",
+  "generates": {
+    "item": [
+      "musicDiscLengthInTicks",
+      "attributeModifiers.equipmentSlot",
+      "providedBannerPatterns",
+      "providedBannerPatterns.pattern"
+    ],
+    "block": [
+      "colorOnMap",
+      "ignitedByLava",
+      "tintType"
+    ],
+    "tool": [
+      "attributeModifiers.equipmentSlot"
+    ],
+    "recipe": [
+      "craftingBookCategory",
+      "cookingBookCategory",
+      "smithingInputTemplateStack"
+    ],
+    "creative_tab": [
+      "name"
+    ],
+    "armor": [
+      "attributeModifiers.equipmentSlot"
+    ],
+    "loot_table": [
+      "type"
+    ],
+    "enchantment": [
+      "anvilCost"
+    ],
+    "damage_type": [
+      "exhaustion",
+      "effects"
+    ],
+    "painting": [
+      "title",
+      "author"
+    ],
+    "banner_pattern": [
+      "texture",
+      "shieldTexture",
+      "name",
+      "requireItem"
+    ],
+    "armor_trim": [
+      "name",
+      "item",
+      "armorTextureFile"
+    ],
+    "potion_effect": [
+      "particle",
+      "onMobHurt",
+      "onMobRemoved"
+    ],
+    "attribute": [
+      "sentiment"
+    ],
+    "feature": [
+      "skipPlacement",
+      "generationStep",
+      "restrictionBiomes",
+      "restrictionBiomes.biome",
+      "generateCondition"
+    ],
+    "biome": [
+      "dryFoliageColor",
+      "genErosion",
+      "genDepth"
+    ],
+    "structure": [
+      "projection",
+      "separation",
+      "terrainAdaptation",
+      "size",
+      "maxDistanceFromCenter",
+      "jigsawPools",
+      "jigsawPools.poolName",
+      "jigsawPools.fallbackPool",
+      "jigsawPools.poolParts"
+    ],
+    "dimension": [
+      "biomesInDimensionCaves",
+      "biomesInDimensionCaves.biome",
+      "generateOreVeins",
+      "generateAquifers",
+      "minMonsterSpawnLightLimit",
+      "maxMonsterSpawnLightLimit",
+      "monsterSpawnBlockLightLimit"
+    ],
+    "special_entity": [
+      "entityType",
+      "name",
+      "entityTexture",
+      "itemTexture",
+      "rarity",
+      "creativeTabs",
+      "onTickUpdate",
+      "onPlayerCollidesWith"
+    ],
+    "plant": [
+      "colorOnMap",
+      "ignitedByLava",
+      "tintType"
+    ],
+    "living_entity": [
+      "sensitiveToVibration",
+      "vibrationalEvents",
+      "vibrationalEvents.event",
+      "vibrationSensitivityRadius",
+      "vibrationSensitivityRadiusProcedure",
+      "canReceiveVibrationCondition",
+      "onReceivedVibration"
+    ]
+  }
+}

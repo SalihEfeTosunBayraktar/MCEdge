@@ -1,0 +1,163 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "item_extension",
+  "folder": "item_extensions",
+  "name": "Item extension",
+  "icon": "extension",
+  "langKey": null,
+  "mcreator": "itemextension",
+  "description": "Adds fuel, composting or dispenser behavior to an existing item.",
+  "pages": [
+    {
+      "id": "properties",
+      "title": "Properties",
+      "groups": [
+        {
+          "title": "Target",
+          "fields": [
+            {
+              "key": "item",
+              "type": "item",
+              "label": "Item to extend",
+              "default": "",
+              "mcreator": "item",
+              "required": true,
+              "help": "Vanilla or mod item that gets the extra behavior."
+            }
+          ]
+        },
+        {
+          "title": "Fuel",
+          "fields": [
+            {
+              "key": "enableFuel",
+              "type": "boolean",
+              "label": "Usable as furnace fuel",
+              "default": false,
+              "mcreator": "enableFuel"
+            },
+            {
+              "key": "fuelPower",
+              "type": "integer",
+              "label": "Burn time (ticks)",
+              "default": 1600,
+              "min": 0,
+              "max": 2147483647,
+              "step": 1,
+              "mcreator": "fuelPower.fixedValue",
+              "showIf": {
+                "key": "enableFuel",
+                "equals": true
+              }
+            },
+            {
+              "key": "fuelPowerProcedure",
+              "type": "procedure",
+              "label": "Burn time (ticks) (procedure)",
+              "default": "",
+              "trigger": "fuel_burn_time",
+              "dependencies": [
+                "itemstack"
+              ],
+              "mcreator": "fuelPower.name",
+              "returns": "number",
+              "help": "When set, this procedure computes the value instead of the fixed number.",
+              "showIf": {
+                "key": "enableFuel",
+                "equals": true
+              }
+            },
+            {
+              "key": "fuelSuccessCondition",
+              "type": "procedure",
+              "label": "Can burn condition",
+              "default": "",
+              "trigger": "fuel_condition",
+              "dependencies": [
+                "itemstack"
+              ],
+              "mcreator": "fuelSuccessCondition",
+              "returns": "logic",
+              "showIf": {
+                "key": "enableFuel",
+                "equals": true
+              }
+            }
+          ]
+        },
+        {
+          "title": "Composting",
+          "fields": [
+            {
+              "key": "compostLayerChance",
+              "type": "number",
+              "label": "Compost layer chance",
+              "default": 0,
+              "min": 0,
+              "max": 1,
+              "step": 0.01,
+              "mcreator": "compostLayerChance",
+              "help": "0 disables composting."
+            }
+          ]
+        },
+        {
+          "title": "Dispenser",
+          "fields": [
+            {
+              "key": "hasDispenseBehavior",
+              "type": "boolean",
+              "label": "Custom dispenser behavior",
+              "default": false,
+              "mcreator": "hasDispenseBehavior"
+            },
+            {
+              "key": "dispenseSuccessCondition",
+              "type": "procedure",
+              "label": "Dispense success condition",
+              "default": "",
+              "trigger": "dispense_condition",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "itemstack",
+                "direction"
+              ],
+              "mcreator": "dispenseSuccessCondition",
+              "returns": "logic",
+              "showIf": {
+                "key": "hasDispenseBehavior",
+                "equals": true
+              }
+            },
+            {
+              "key": "dispenseResultItemstack",
+              "type": "procedure",
+              "label": "Dispense result",
+              "default": "",
+              "trigger": "dispense_result",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "itemstack",
+                "direction",
+                "success"
+              ],
+              "mcreator": "dispenseResultItemstack",
+              "returns": "itemstack",
+              "help": "Item stack left in the dispenser; empty keeps the default.",
+              "showIf": {
+                "key": "hasDispenseBehavior",
+                "equals": true
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

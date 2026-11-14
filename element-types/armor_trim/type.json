@@ -1,0 +1,51 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "armor_trim",
+  "folder": "armor_trims",
+  "name": "Armor trim",
+  "description": "A smithing trim pattern that paints an extra layer over armor.",
+  "icon": "palette",
+  "langKey": "trim_pattern",
+  "mcreator": "armortrim",
+  "pages": [
+    {
+      "id": "main",
+      "title": "Armor trim",
+      "groups": [
+        {
+          "title": "Trim",
+          "fields": [
+            {
+              "key": "name",
+              "type": "text",
+              "label": "Name",
+              "help": "Pattern name shown in the armor tooltip.",
+              "default": "",
+              "required": true,
+              "mcreator": "name"
+            },
+            {
+              "key": "item",
+              "type": "item",
+              "label": "Smithing template",
+              "help": "Template item that applies this pattern in the smithing table.",
+              "default": "",
+              "required": true,
+              "mcreator": "item"
+            },
+            {
+              "key": "armorTextureFile",
+              "type": "texture",
+              "label": "Armor layer texture",
+              "help": "Armor texture pair (layer 1 and layer 2) used as the trim overlay.",
+              "default": "",
+              "textureKind": "armor",
+              "required": true,
+              "mcreator": "armorTextureFile"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

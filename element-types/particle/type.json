@@ -1,0 +1,262 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "particle",
+  "folder": "particles",
+  "name": "Particle",
+  "icon": "sparkle",
+  "langKey": null,
+  "mcreator": "particle",
+  "description": "A custom particle with texture, motion, lifetime and rendering options.",
+  "pages": [
+    {
+      "id": "visual",
+      "title": "Visual",
+      "groups": [
+        {
+          "title": "Appearance",
+          "fields": [
+            {
+              "key": "texture",
+              "type": "texture",
+              "label": "Texture",
+              "default": "",
+              "textureKind": "particle",
+              "mcreator": "texture",
+              "required": true,
+              "help": "A vertical strip of square frames makes an animation."
+            },
+            {
+              "key": "animate",
+              "type": "boolean",
+              "label": "Animated texture",
+              "default": false,
+              "mcreator": "animate"
+            },
+            {
+              "key": "frameDuration",
+              "type": "integer",
+              "label": "Ticks per frame",
+              "default": 1,
+              "min": 1,
+              "max": 100000,
+              "step": 1,
+              "mcreator": "frameDuration",
+              "showIf": {
+                "key": "animate",
+                "equals": true
+              }
+            },
+            {
+              "key": "renderType",
+              "type": "select",
+              "label": "Render mode",
+              "default": "OPAQUE",
+              "options": [
+                {
+                  "value": "OPAQUE",
+                  "label": "Opaque"
+                },
+                {
+                  "value": "TRANSLUCENT",
+                  "label": "Translucent"
+                }
+              ],
+              "mcreator": "renderType"
+            },
+            {
+              "key": "emissiveRendering",
+              "type": "boolean",
+              "label": "Full bright",
+              "default": false,
+              "mcreator": "emissiveRendering"
+            },
+            {
+              "key": "scale",
+              "type": "number",
+              "label": "Visual scale",
+              "default": 1,
+              "min": 0.1,
+              "max": 4096,
+              "step": 0.1,
+              "mcreator": "scale.fixedValue"
+            },
+            {
+              "key": "scaleProcedure",
+              "type": "procedure",
+              "label": "Visual scale (procedure)",
+              "default": "",
+              "trigger": "particle_scale",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "age",
+                "scale"
+              ],
+              "mcreator": "scale.name",
+              "returns": "number",
+              "help": "When set, this procedure computes the value instead of the fixed number."
+            },
+            {
+              "key": "width",
+              "type": "number",
+              "label": "Hitbox width",
+              "default": 0.2,
+              "min": 0,
+              "max": 4096,
+              "step": 0.1,
+              "mcreator": "width"
+            },
+            {
+              "key": "height",
+              "type": "number",
+              "label": "Hitbox height",
+              "default": 0.2,
+              "min": 0,
+              "max": 4096,
+              "step": 0.1,
+              "mcreator": "height"
+            },
+            {
+              "key": "fixedScale",
+              "type": "boolean",
+              "label": "Fixed scale",
+              "default": false,
+              "mcreator": "fixedScale"
+            },
+            {
+              "key": "alwaysShow",
+              "type": "boolean",
+              "label": "Always shown, ignoring particle settings",
+              "default": false,
+              "mcreator": "alwaysShow"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "properties",
+      "title": "Properties",
+      "groups": [
+        {
+          "title": "Motion",
+          "fields": [
+            {
+              "key": "speedFactor",
+              "type": "number",
+              "label": "Speed multiplier",
+              "default": 1,
+              "min": -100,
+              "max": 100,
+              "step": 0.1,
+              "mcreator": "speedFactor"
+            },
+            {
+              "key": "angularVelocity",
+              "type": "number",
+              "label": "Spin speed",
+              "default": 0,
+              "min": -100,
+              "max": 100,
+              "step": 0.01,
+              "mcreator": "angularVelocity"
+            },
+            {
+              "key": "angularAcceleration",
+              "type": "number",
+              "label": "Spin acceleration",
+              "default": 0,
+              "min": -100,
+              "max": 100,
+              "step": 0.01,
+              "mcreator": "angularAcceleration"
+            },
+            {
+              "key": "rotationProvider",
+              "type": "procedure",
+              "label": "Rotation",
+              "default": "",
+              "trigger": "particle_rotation",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "speedX",
+                "speedY",
+                "speedZ",
+                "angularVelocity",
+                "angularAcceleration",
+                "age"
+              ],
+              "mcreator": "rotationProvider",
+              "returns": "vector",
+              "help": "Empty faces the camera."
+            },
+            {
+              "key": "gravity",
+              "type": "number",
+              "label": "Gravity",
+              "default": 0,
+              "min": -100,
+              "max": 100,
+              "step": 0.1,
+              "mcreator": "gravity"
+            },
+            {
+              "key": "canCollide",
+              "type": "boolean",
+              "label": "Collides with blocks",
+              "default": true,
+              "mcreator": "canCollide"
+            }
+          ]
+        },
+        {
+          "title": "Lifetime",
+          "fields": [
+            {
+              "key": "maxAge",
+              "type": "integer",
+              "label": "Lifetime (ticks)",
+              "default": 7,
+              "min": 0,
+              "max": 100000,
+              "step": 1,
+              "mcreator": "maxAge"
+            },
+            {
+              "key": "maxAgeDiff",
+              "type": "integer",
+              "label": "Random lifetime variation",
+              "default": 0,
+              "min": 0,
+              "max": 100000,
+              "step": 1,
+              "mcreator": "maxAgeDiff"
+            },
+            {
+              "key": "additionalExpiryCondition",
+              "type": "procedure",
+              "label": "Extra expiry condition",
+              "default": "",
+              "trigger": "particle_expiry",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "age",
+                "onGround"
+              ],
+              "mcreator": "additionalExpiryCondition",
+              "returns": "logic"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

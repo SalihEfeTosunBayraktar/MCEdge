@@ -1,0 +1,24 @@
+forceload add 0 0 15 15
+setworldspawn 8 100 4
+time set noon
+weather clear
+fill 0 99 0 15 99 15 minecraft:grass_block
+fill 0 100 0 15 112 15 minecraft:air
+setblock 4 100 10 wavethree:ruby_lamp
+setblock 6 100 11 wavethree:ruby_lamp_recolored
+setblock 9 100 11 wavethree:ruby_gem_recolored
+setblock 2 100 11 wavethree:ruby_gem_block
+setblock 13 100 11 wavethree:ruby_pedestal
+setblock 11 100 10 wavethree:ruby_bloom
+setblock 8 100 13 wavethree:missing_model_block
+setblock 5 100 7 wavethree:ruby_statue[facing=east]
+setblock 3 102 12 wavethree:ruby_switch
+setblock 5 102 12 wavethree:ruby_switch[lit=true]
+setblock 10 102 12 wavethree:ruby_switch[mood=angry,facing=north]
+setblock 12 102 12 wavethree:ruby_switch[level=3,facing=east]
+setblock 14 100 12 wavethree:ruby_layers
+summon minecraft:armor_stand 7.5 100 9.5 {ShowArms:1b,NoGravity:1b,Rotation:[180f,0f],equipment:{head:{id:"wavethree:crown_armor_helmet"},chest:{id:"wavethree:crown_armor_chestplate"},legs:{id:"wavethree:crown_armor_leggings"},feet:{id:"wavethree:crown_armor_boots"},mainhand:{id:"wavethree:ruby_scepter"},offhand:{id:"wavethree:ruby_shield"}}}
+summon minecraft:armor_stand 9.5 100 9.5 {ShowArms:1b,NoGravity:1b,Rotation:[180f,0f],equipment:{head:{id:"wavethree:ruby_armor_helmet"},chest:{id:"wavethree:ruby_armor_chestplate"},mainhand:{id:"wavethree:ruby_sword"},offhand:{id:"wavethree:ruby_beacon"}}}
+summon minecraft:armor_stand 11.5 100 8.5 {ShowArms:1b,NoGravity:1b,Rotation:[180f,0f],equipment:{mainhand:{id:"wavethree:ruby_idol"},offhand:{id:"wavethree:ruby_buckler"},head:{id:"wavethree:ruby_club"}}}
+@wait 3
+stop

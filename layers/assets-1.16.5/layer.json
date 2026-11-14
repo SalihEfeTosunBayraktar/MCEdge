@@ -1,0 +1,30 @@
+{
+  "$comment": "Element types and fields these templates generate; see src/engines/coverage.ts.",
+  "generates": {
+    "block": [
+      "hasPostProcess",
+      "colorOnMap",
+      "ignitedByLava"
+    ],
+    "potion_effect": [
+      "onExpired",
+      "renderStatusInInventory",
+      "renderStatusInHUD",
+      "isCuredbyHoney"
+    ],
+    "key_binding": [
+      "keyBindingCategoryKey=movement|misc|multiplayer|gameplay|inventory|creative"
+    ],
+    "dimension": [
+      "hasFixedTime",
+      "fixedTimeValue"
+    ],
+    "plant": [
+      "colorOnMap",
+      "ignitedByLava"
+    ],
+    "fluid": [
+      "flowStrength"
+    ]
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "{{mod.id}}",
+  "version": "{{mod.version}}",
+  "name": {{nameJson}},
+  "description": {{descriptionJson}},
+  "authors": {{authorsJson}},
+  "license": {{licenseJson}},
+{{#if mod.website}}  "contact": { "homepage": {{websiteJson}} },
+{{/if}}{{#if logoFile}}  "icon": "{{logoFile}}",
+{{/if}}  "environment": "*",
+  "mixins": ["{{mod.id}}.mixins.json"],
+  "entrypoints": {
+    "main": ["{{mod.package}}.{{modClass}}"],
+    "client": ["{{mod.package}}.{{modClass}}Client"]{{#each extraEntrypoints}},
+    "{{name}}": {{classes}}{{/each}}
+  },
+  "depends": {
+{{#each requiredDependencies}}    "{{modId}}": {{fabricRangeJson}},
+{{/each}}    "fabricloader": ">={{versions.loader}}",
+    "fabric-api": "*",
+    "minecraft": "~{{minecraft}}",
+    "java": ">={{java}}"
+  },
+  "suggests": {
+{{#each optionalDependencies}}    "{{modId}}": {{fabricRangeJson}}{{@comma}}
+{{/each}}  }
+}

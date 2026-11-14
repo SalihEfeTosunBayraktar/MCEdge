@@ -1,0 +1,213 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "advancement",
+  "folder": "advancements",
+  "name": "Advancement",
+  "description": "A goal in the advancements screen with its trigger, display settings and rewards.",
+  "icon": "trophy",
+  "langKey": "advancements",
+  "mcreator": "achievement",
+  "pages": [
+    {
+      "id": "main",
+      "title": "Advancement",
+      "groups": [
+        {
+          "title": "Display",
+          "fields": [
+            {
+              "key": "achievementName",
+              "type": "text",
+              "label": "Title",
+              "help": "Name shown on the advancement tile and in the toast.",
+              "default": "",
+              "required": true,
+              "mcreator": "achievementName"
+            },
+            {
+              "key": "achievementDescription",
+              "type": "text",
+              "label": "Description",
+              "help": "Text shown when hovering the advancement.",
+              "default": "",
+              "required": true,
+              "mcreator": "achievementDescription"
+            },
+            {
+              "key": "achievementIcon",
+              "type": "item",
+              "label": "Icon",
+              "help": "Item or block drawn on the advancement tile.",
+              "default": "",
+              "required": true,
+              "mcreator": "achievementIcon"
+            },
+            {
+              "key": "background",
+              "type": "texture",
+              "label": "Tab background",
+              "help": "Background of the advancement tab. Only used for root advancements; \"Default\" keeps the vanilla look.",
+              "default": "Default",
+              "textureKind": "screen",
+              "mcreator": "background",
+              "showIf": {
+                "key": "parent",
+                "equals": "No parent: root"
+              }
+            },
+            {
+              "key": "achievementType",
+              "type": "select",
+              "label": "Frame",
+              "help": "Shape of the tile frame and the toast wording.",
+              "default": "task",
+              "options": [
+                {
+                  "value": "task",
+                  "label": "Task"
+                },
+                {
+                  "value": "goal",
+                  "label": "Goal"
+                },
+                {
+                  "value": "challenge",
+                  "label": "Challenge"
+                }
+              ],
+              "mcreator": "achievementType"
+            },
+            {
+              "key": "parent",
+              "type": "element",
+              "elementTypes": [
+                "advancement"
+              ],
+              "options": [
+                {
+                  "value": "No parent: root",
+                  "label": "No parent (new tab)"
+                }
+              ],
+              "allowCustom": true,
+              "label": "Parent advancement",
+              "help": "Advancement this one hangs under, for example story/mine_stone or a mod advancement. \"No parent: root\" starts a new tab.",
+              "default": "No parent: root",
+              "mcreator": "parent"
+            },
+            {
+              "key": "showPopup",
+              "type": "boolean",
+              "label": "Show toast",
+              "help": "Pop up a toast in the corner when completed.",
+              "default": true,
+              "mcreator": "showPopup"
+            }
+          ]
+        },
+        {
+          "title": "Logic and rewards",
+          "fields": [
+            {
+              "key": "rewardXP",
+              "type": "integer",
+              "label": "Experience reward",
+              "help": "Experience points granted on completion.",
+              "default": 0,
+              "min": 0,
+              "max": 64000,
+              "step": 1,
+              "mcreator": "rewardXP"
+            },
+            {
+              "key": "rewardFunction",
+              "type": "element",
+              "elementTypes": [
+                "function"
+              ],
+              "label": "Function reward",
+              "help": "Function element run as the player on completion. Leave empty for none.",
+              "default": "",
+              "mcreator": "rewardFunction"
+            },
+            {
+              "key": "rewardLoot",
+              "type": "list",
+              "label": "Loot table rewards",
+              "help": "Loot table elements rolled and given to the player.",
+              "default": [],
+              "fields": [
+                {
+                  "key": "lootTable",
+                  "type": "element",
+                  "elementTypes": [
+                    "loot_table"
+                  ],
+                  "label": "Loot table",
+                  "default": ""
+                }
+              ],
+              "mcreator": "rewardLoot"
+            },
+            {
+              "key": "rewardRecipes",
+              "type": "list",
+              "label": "Recipe rewards",
+              "help": "Recipe elements unlocked in the recipe book.",
+              "default": [],
+              "fields": [
+                {
+                  "key": "recipe",
+                  "type": "element",
+                  "elementTypes": [
+                    "recipe"
+                  ],
+                  "label": "Recipe",
+                  "default": ""
+                }
+              ],
+              "mcreator": "rewardRecipes"
+            },
+            {
+              "key": "announceToChat",
+              "type": "boolean",
+              "label": "Announce in chat",
+              "help": "Post a chat message for everyone when someone completes it.",
+              "default": true,
+              "mcreator": "announceToChat"
+            },
+            {
+              "key": "hideIfNotCompleted",
+              "type": "boolean",
+              "label": "Hidden until done",
+              "help": "Keep it and its children out of the screen until completed.",
+              "default": false,
+              "mcreator": "hideIfNotCompleted"
+            },
+            {
+              "key": "disableDisplay",
+              "type": "boolean",
+              "label": "No display",
+              "help": "Do not show this advancement in the advancements screen at all.",
+              "default": false,
+              "mcreator": "disableDisplay"
+            }
+          ]
+        },
+        {
+          "title": "Trigger",
+          "fields": [
+            {
+              "key": "triggerxml",
+              "type": "blockly",
+              "label": "Trigger",
+              "help": "Blocks describing what completes the advancement (JSON trigger editor).",
+              "default": "<xml xmlns=\"https://developers.google.com/blockly/xml\"><block type=\"advancement_trigger\" deletable=\"false\" x=\"40\" y=\"80\"><next><shadow type=\"custom_trigger\"></shadow></next></block></xml>",
+              "mcreator": "triggerxml"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

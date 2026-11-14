@@ -1,0 +1,17 @@
+{
+  "$schema": "./schemas/variables.schema.json",
+  "variables": [
+    {
+      "name": "playerMoney",
+      "type": "number",
+      "scope": "player_persistent",
+      "initial": "0"
+    },
+    {
+      "name": "variable2",
+      "type": "number",
+      "scope": "global_world",
+      "initial": "0"
+    }
+  ]
+}

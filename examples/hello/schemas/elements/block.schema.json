@@ -1,0 +1,1498 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mcedge/elements/block.schema.json",
+  "title": "MCEdge Block element",
+  "description": "A placeable block: model, states, properties, inventory, energy, events and ore generation.",
+  "type": "object",
+  "required": [
+    "id"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "title": {
+      "type": "string"
+    },
+    "blockBase": {
+      "title": "Block base",
+      "description": "Start from a vanilla block shape and behavior. Empty is a plain custom block.",
+      "enum": [
+        "",
+        "Stairs",
+        "Slab",
+        "Fence",
+        "Wall",
+        "Leaves",
+        "TrapDoor",
+        "Pane",
+        "Door",
+        "FenceGate",
+        "EndRod",
+        "PressurePlate",
+        "Button",
+        "FlowerPot",
+        "Sign",
+        "HangingSign"
+      ]
+    },
+    "hasGravity": {
+      "title": "Falls like sand",
+      "description": "Falls when nothing supports it. Not available with waterlogging.",
+      "type": "boolean"
+    },
+    "blockSetType": {
+      "title": "Sound and redstone set",
+      "description": "Material set used by doors, trapdoors, pressure plates and buttons.",
+      "enum": [
+        "OAK",
+        "STONE",
+        "IRON"
+      ]
+    },
+    "leavesParticleType": {
+      "title": "Falling leaf particle",
+      "description": "Particle dropping from leaves. Empty uses the default.",
+      "type": "string"
+    },
+    "leavesParticleChance": {
+      "title": "Leaf particle chance",
+      "description": "Chance per display tick.",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "pottedPlant": {
+      "title": "Potted plant",
+      "description": "Plant shown inside the flower pot.",
+      "type": "string"
+    },
+    "signEntityTexture": {
+      "title": "Sign texture",
+      "description": "Entity texture of the sign.",
+      "type": "string"
+    },
+    "signGUITexture": {
+      "title": "Hanging sign edit screen",
+      "description": "Background of the text editing screen.",
+      "type": "string"
+    },
+    "texture": {
+      "title": "Main texture",
+      "description": "Texture used on every side unless a side texture below is set (bottom face for cubes).",
+      "type": "string"
+    },
+    "textureTop": {
+      "title": "Top texture",
+      "description": "Optional.",
+      "type": "string"
+    },
+    "textureLeft": {
+      "title": "Left texture",
+      "description": "Optional.",
+      "type": "string"
+    },
+    "textureFront": {
+      "title": "Front texture",
+      "description": "Optional.",
+      "type": "string"
+    },
+    "textureRight": {
+      "title": "Right texture",
+      "description": "Optional.",
+      "type": "string"
+    },
+    "textureBack": {
+      "title": "Back texture",
+      "description": "Optional.",
+      "type": "string"
+    },
+    "renderType": {
+      "title": "Model type",
+      "description": "Built-in shape or a custom model. Tinted variants are picked automatically when a tint is set.",
+      "enum": [
+        10,
+        11,
+        110,
+        12,
+        120,
+        13,
+        14,
+        15,
+        150,
+        2,
+        3,
+        4
+      ]
+    },
+    "customModelName": {
+      "title": "Model",
+      "description": "Built-in model name (\"Normal\", \"Single texture\", \"Cross model\", \"Crop model\", \"Grass block\", \"Potted plant\") or a custom model.",
+      "type": "string"
+    },
+    "itemTexture": {
+      "title": "Item texture",
+      "description": "Optional flat inventory icon instead of the 3D block.",
+      "type": "string"
+    },
+    "itemDisplay": {
+      "title": "Item display transforms",
+      "description": "Optional JSON object for the block item model's \"display\" (gui, ground, fixed, thirdperson_righthand, ...), each with rotation, translation and scale.",
+      "type": "string"
+    },
+    "particleTexture": {
+      "title": "Particle texture",
+      "description": "Optional texture for break particles.",
+      "type": "string"
+    },
+    "specialInformation": {
+      "title": "Tooltip lines",
+      "description": "Extra tooltip lines under the name, one per row.",
+      "type": "string"
+    },
+    "specialInformationProcedure": {
+      "title": "Tooltip lines procedure",
+      "description": "Optional procedure that returns the tooltip lines instead of the fixed list.",
+      "type": "string"
+    },
+    "rotationMode": {
+      "title": "Rotation",
+      "description": "How the block faces when placed.",
+      "enum": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "enablePitch": {
+      "title": "Floor, wall and ceiling",
+      "description": "Also allow facing up and down (only for the horizontal rotation modes).",
+      "type": "boolean"
+    },
+    "isWaterloggable": {
+      "title": "Waterloggable",
+      "description": "Can hold water like stairs and slabs.",
+      "type": "boolean"
+    },
+    "hasTransparency": {
+      "title": "Has transparency",
+      "description": "The block does not fill the full cube or has see-through pixels.",
+      "type": "boolean"
+    },
+    "transparencyType": {
+      "title": "Render layer",
+      "description": "How transparent pixels are drawn.",
+      "enum": [
+        "SOLID",
+        "CUTOUT",
+        "CUTOUT_MIPPED",
+        "TRANSLUCENT"
+      ]
+    },
+    "connectedSides": {
+      "title": "Hide shared faces",
+      "description": "Faces touching the same block are not drawn, like glass.",
+      "type": "boolean"
+    },
+    "displayFluidOverlay": {
+      "title": "Show fluid overlay",
+      "description": "Show the water overlay texture instead of hiding faces next to water.",
+      "type": "boolean"
+    },
+    "tintType": {
+      "title": "Tint",
+      "description": "Color the texture with a biome color.",
+      "enum": [
+        "No tint",
+        "Grass",
+        "Foliage",
+        "Dry foliage",
+        "Birch foliage",
+        "Spruce foliage",
+        "Default foliage",
+        "Water",
+        "Sky",
+        "Fog",
+        "Water fog"
+      ]
+    },
+    "isItemTinted": {
+      "title": "Tint the item too",
+      "description": "Apply the same tint to the inventory item.",
+      "type": "boolean"
+    },
+    "offsetType": {
+      "title": "Random offset",
+      "description": "Random position shift like flowers have.",
+      "enum": [
+        "NONE",
+        "XZ",
+        "XYZ"
+      ]
+    },
+    "disableOffset": {
+      "title": "Ignore offset for boxes",
+      "description": "Keep the boxes in place even when the block is randomly offset.",
+      "type": "boolean"
+    },
+    "isNotColidable": {
+      "title": "Walk through",
+      "description": "Entities can pass through the block.",
+      "type": "boolean"
+    },
+    "boundingBoxes": {
+      "title": "Boxes",
+      "description": "Outline and collision shape in pixels (0-16 per axis).",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "mx": {
+            "title": "From X",
+            "type": "number",
+            "minimum": -100,
+            "maximum": 100
+          },
+          "my": {
+            "title": "From Y",
+            "type": "number",
+            "minimum": -100,
+            "maximum": 100
+          },
+          "mz": {
+            "title": "From Z",
+            "type": "number",
+            "minimum": -100,
+            "maximum": 100
+          },
+          "Mx": {
+            "title": "To X",
+            "type": "number",
+            "minimum": -100,
+            "maximum": 100
+          },
+          "My": {
+            "title": "To Y",
+            "type": "number",
+            "minimum": -100,
+            "maximum": 100
+          },
+          "Mz": {
+            "title": "To Z",
+            "type": "number",
+            "minimum": -100,
+            "maximum": 100
+          },
+          "subtract": {
+            "title": "Subtract",
+            "description": "Cut this box out of the previous ones instead of adding it.",
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "customProperties": {
+      "title": "Properties",
+      "description": "Extra block state properties (logic, integer, number or text) with their default value.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "enum": [
+              "logic",
+              "integer",
+              "number",
+              "string"
+            ]
+          },
+          "min": {
+            "title": "Minimum",
+            "type": "number"
+          },
+          "max": {
+            "title": "Maximum",
+            "type": "number"
+          },
+          "arrayData": {
+            "title": "Allowed values",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "title": "Value",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "value": {
+            "title": "Default value",
+            "description": "Starting value, written as text (true/false, a number or one of the allowed values).",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "multipartModel": {
+      "title": "Multipart format",
+      "description": "Write the block states as multipart instead of variants.",
+      "type": "boolean"
+    },
+    "states": {
+      "title": "State overrides",
+      "description": "Different model, textures or boxes for specific property values.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stateMap": {
+            "title": "When",
+            "description": "Property values this entry applies to.",
+            "type": "object",
+            "additionalProperties": {
+              "title": "Value",
+              "type": "string"
+            }
+          },
+          "texture": {
+            "title": "Main texture",
+            "description": "Texture used on every side unless a side texture below is set (bottom face for cubes).",
+            "type": "string"
+          },
+          "textureTop": {
+            "title": "Top texture",
+            "description": "Optional.",
+            "type": "string"
+          },
+          "textureLeft": {
+            "title": "Left texture",
+            "description": "Optional.",
+            "type": "string"
+          },
+          "textureFront": {
+            "title": "Front texture",
+            "description": "Optional.",
+            "type": "string"
+          },
+          "textureRight": {
+            "title": "Right texture",
+            "description": "Optional.",
+            "type": "string"
+          },
+          "textureBack": {
+            "title": "Back texture",
+            "description": "Optional.",
+            "type": "string"
+          },
+          "renderType": {
+            "title": "Model type",
+            "enum": [
+              10,
+              11,
+              110,
+              12,
+              120,
+              13,
+              14,
+              15,
+              150,
+              2,
+              3,
+              4
+            ]
+          },
+          "customModelName": {
+            "title": "Model",
+            "type": "string"
+          },
+          "particleTexture": {
+            "title": "Particle texture",
+            "type": "string"
+          },
+          "hasCustomBoundingBox": {
+            "title": "Own bounding boxes",
+            "type": "boolean"
+          },
+          "boundingBoxes": {
+            "title": "Boxes",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "mx": {
+                  "title": "From X",
+                  "type": "number",
+                  "minimum": -100,
+                  "maximum": 100
+                },
+                "my": {
+                  "title": "From Y",
+                  "type": "number",
+                  "minimum": -100,
+                  "maximum": 100
+                },
+                "mz": {
+                  "title": "From Z",
+                  "type": "number",
+                  "minimum": -100,
+                  "maximum": 100
+                },
+                "Mx": {
+                  "title": "To X",
+                  "type": "number",
+                  "minimum": -100,
+                  "maximum": 100
+                },
+                "My": {
+                  "title": "To Y",
+                  "type": "number",
+                  "minimum": -100,
+                  "maximum": 100
+                },
+                "Mz": {
+                  "title": "To Z",
+                  "type": "number",
+                  "minimum": -100,
+                  "maximum": 100
+                },
+                "subtract": {
+                  "title": "Subtract",
+                  "description": "Cut this box out of the previous ones instead of adding it.",
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "animations": {
+      "title": "Animations",
+      "description": "Animations played by a Java model block (needs the custom Java model type).",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "animation": {
+            "title": "Animation",
+            "description": "Animation id from the workspace.",
+            "type": "string"
+          },
+          "speed": {
+            "title": "Speed",
+            "type": "number",
+            "minimum": 0
+          },
+          "condition": {
+            "title": "Play condition",
+            "description": "Optional; the animation plays while this returns true.",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "name": {
+      "title": "Name",
+      "description": "Display name of the block.",
+      "type": "string"
+    },
+    "hardness": {
+      "title": "Hardness",
+      "description": "Time needed to break it. -1 makes it unbreakable.",
+      "type": "number",
+      "minimum": -1,
+      "maximum": 64000
+    },
+    "resistance": {
+      "title": "Blast resistance",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 2147483647
+    },
+    "unbreakable": {
+      "title": "Unbreakable",
+      "description": "Cannot be broken in survival, like bedrock.",
+      "type": "boolean"
+    },
+    "hasCustomOpacity": {
+      "title": "Custom light opacity",
+      "description": "Set how much light the block blocks.",
+      "type": "boolean"
+    },
+    "lightOpacity": {
+      "title": "Light opacity",
+      "description": "0 lets all light through, 15 blocks it fully.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 15
+    },
+    "emissiveRendering": {
+      "title": "Glowing texture",
+      "description": "Render at full brightness even in the dark.",
+      "type": "boolean"
+    },
+    "hasPostProcess": {
+      "title": "Post-process render",
+      "description": "Marks the block for the post-process render step, used for glowing blocks. Not available on Minecraft 26.x, which removed it.",
+      "type": "boolean"
+    },
+    "isReplaceable": {
+      "title": "Replaceable",
+      "description": "Other blocks can be placed into it, like tall grass.",
+      "type": "boolean"
+    },
+    "hasBlockItem": {
+      "title": "Has an item",
+      "description": "Create an item form of the block.",
+      "type": "boolean"
+    },
+    "maxStackSize": {
+      "title": "Stack size",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 99
+    },
+    "rarity": {
+      "title": "Rarity",
+      "enum": [
+        "COMMON",
+        "UNCOMMON",
+        "RARE",
+        "EPIC"
+      ]
+    },
+    "immuneToFire": {
+      "title": "Fireproof item",
+      "type": "boolean"
+    },
+    "creativeTabs": {
+      "title": "Creative tabs",
+      "description": "Creative inventory tabs that list this element. Tabs defined in this mod are offered as well.",
+      "type": "array",
+      "items": {}
+    },
+    "isCustomSoundType": {
+      "title": "Custom sounds",
+      "description": "Pick each sound yourself instead of a vanilla sound set.",
+      "type": "boolean"
+    },
+    "soundOnStep": {
+      "title": "Sound set",
+      "description": "Vanilla sound set for breaking, stepping and placing.",
+      "enum": [
+        "GROUND",
+        "EMPTY",
+        "WOOD",
+        "PLANT",
+        "LILY_PADS",
+        "STONE",
+        "METAL",
+        "GLASS",
+        "CLOTH",
+        "SAND",
+        "SNOW",
+        "LADDER",
+        "ANVIL",
+        "SLIME",
+        "WET_GRASS",
+        "CORAL",
+        "BAMBOO",
+        "BAMBOO_SAPLING",
+        "SCAFFOLDING",
+        "SWEET_BERRY_BUSH",
+        "CROP",
+        "STEM",
+        "VINE",
+        "NETHER_WART",
+        "LANTERN",
+        "HONEY",
+        "HYPHAE",
+        "NYLIUM",
+        "FUNGUS",
+        "ROOT",
+        "SHROOMLIGHT",
+        "NETHER_VINE",
+        "NETHER_VINE_LOWER_PITCH",
+        "SOUL_SAND",
+        "SOUL_SOIL",
+        "BASALT",
+        "WART",
+        "NETHERRACK",
+        "NETHER_BRICK",
+        "NETHER_SPROUT",
+        "NETHER_ORE",
+        "BONE",
+        "NETHERITE",
+        "ANCIENT_DEBRIS",
+        "LODESTONE",
+        "CHAIN",
+        "NETHER_GOLD",
+        "GILDED_BLACKSTONE",
+        "AMETHYST_BLOCK",
+        "AMETHYST_CLUSTER",
+        "AZALEA",
+        "AZALEA_LEAVES",
+        "BIG_DRIPLEAF",
+        "CANDLE",
+        "CALCITE",
+        "CAVE_VINES",
+        "COPPER",
+        "COPPER_BULB",
+        "COPPER_GRATE",
+        "COPPER_GOLEM_STATUE",
+        "DEEPSLATE",
+        "DEEPSLATE_BRICKS",
+        "DEEPSLATE_TILES",
+        "DRIPSTONE_BLOCK",
+        "FLOWERING_AZALEA",
+        "GLOW_LICHEN",
+        "HANGING_ROOTS",
+        "LARGE_AMETHYST_BUD",
+        "MEDIUM_AMETHYST_BUD",
+        "MOSS_CARPET",
+        "PINK_PETALS",
+        "LEAF_LITTER",
+        "MOSS_BLOCK",
+        "POINTED_DRIPSTONE",
+        "POLISHED_DEEPSLATE",
+        "POLISHED_TUFF",
+        "POWDER_SNOW",
+        "ROOTED_DIRT",
+        "SCULK_SENSOR",
+        "SCULK_CATALYST",
+        "SCULK",
+        "SCULK_VEIN",
+        "SCULK_SHRIEKER",
+        "SMALL_AMETHYST_BUD",
+        "SMALL_DRIPLEAF",
+        "SPORE_BLOSSOM",
+        "CACTUS_FLOWER",
+        "TUFF",
+        "TUFF_BRICKS",
+        "FROGLIGHT",
+        "FROGSPAWN",
+        "MANGROVE_ROOTS",
+        "MUDDY_MANGROVE_ROOTS",
+        "MUD",
+        "MUD_BRICKS",
+        "PACKED_MUD",
+        "HANGING_SIGN",
+        "NETHER_WOOD_HANGING_SIGN",
+        "BAMBOO_WOOD_HANGING_SIGN",
+        "BAMBOO_WOOD",
+        "NETHER_WOOD",
+        "CHERRY_WOOD",
+        "CHERRY_SAPLING",
+        "CHERRY_LEAVES",
+        "CHERRY_WOOD_HANGING_SIGN",
+        "CHISELED_BOOKSHELF",
+        "SHELF",
+        "SUSPICIOUS_SAND",
+        "SUSPICIOUS_GRAVEL",
+        "DECORATED_POT",
+        "DECORATED_POT_CRACKED",
+        "TRIAL_SPAWNER",
+        "SPONGE",
+        "WET_SPONGE",
+        "VAULT",
+        "CREAKING_HEART",
+        "HEAVY_CORE",
+        "COBWEB",
+        "SPAWNER",
+        "RESIN",
+        "RESIN_BRICKS",
+        "IRON",
+        "DRIED_GHAST",
+        "SULFUR",
+        "POTENT_SULFUR",
+        "SULFUR_SPIKE",
+        "CINNABAR",
+        "SHELF_MUSHROOM",
+        "POPLAR_LEAVES",
+        "STRAW_BED",
+        "RED_SHRUB"
+      ]
+    },
+    "breakSound": {
+      "title": "Break sound",
+      "type": "string"
+    },
+    "fallSound": {
+      "title": "Fall sound",
+      "type": "string"
+    },
+    "hitSound": {
+      "title": "Hit sound",
+      "type": "string"
+    },
+    "placeSound": {
+      "title": "Place sound",
+      "type": "string"
+    },
+    "stepSound": {
+      "title": "Step sound",
+      "type": "string"
+    },
+    "customDrop": {
+      "title": "Drop",
+      "description": "Item dropped instead of the block itself.",
+      "type": "string"
+    },
+    "dropAmount": {
+      "title": "Drop amount",
+      "description": "0 drops nothing.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 99
+    },
+    "useLootTableForDrops": {
+      "title": "Use a loot table",
+      "description": "Drops come from a loot table element instead of the settings above.",
+      "type": "boolean"
+    },
+    "xpAmountMin": {
+      "title": "Experience: minimum",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1024
+    },
+    "xpAmountMax": {
+      "title": "Experience: maximum",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1024
+    },
+    "creativePickItem": {
+      "title": "Pick block item",
+      "description": "Item given on middle click in creative. Empty uses the block item.",
+      "type": "string"
+    },
+    "requiresCorrectTool": {
+      "title": "Needs correct tool",
+      "description": "Drops nothing unless mined with the right tool.",
+      "type": "boolean"
+    },
+    "destroyTool": {
+      "title": "Tool",
+      "description": "Tool type that mines it fastest.",
+      "enum": [
+        "Not specified",
+        "pickaxe",
+        "axe",
+        "shovel",
+        "hoe"
+      ]
+    },
+    "vanillaToolTier": {
+      "title": "Minimum tier",
+      "description": "Lowest tool tier that can harvest it.",
+      "enum": [
+        "NONE",
+        "STONE",
+        "IRON",
+        "DIAMOND"
+      ]
+    },
+    "additionalHarvestCondition": {
+      "title": "Extra harvest condition",
+      "description": "Optional; return false to block harvesting.",
+      "type": "string"
+    },
+    "material": {
+      "title": "Material",
+      "description": "The block's material. It sets the default map color, whether lava ignites the block, and on Minecraft 1.16.5 how fast a pickaxe breaks it (only metal and stone are fast).",
+      "enum": [
+        "STONE",
+        "METAL",
+        "HEAVY_METAL",
+        "WOOD",
+        "GLASS",
+        "DIRT",
+        "SAND",
+        "GRASS",
+        "WOOL",
+        "CLAY",
+        "ICE"
+      ]
+    },
+    "colorOnMap": {
+      "title": "Map color",
+      "description": "Color on filled maps.",
+      "enum": [
+        "DEFAULT",
+        "AIR",
+        "GRASS",
+        "SAND",
+        "CLOTH",
+        "TNT",
+        "ICE",
+        "IRON",
+        "FOLIAGE",
+        "SNOW",
+        "CLAY",
+        "DIRT",
+        "STONE",
+        "WATER",
+        "WOOD",
+        "QUARTZ",
+        "ADOBE",
+        "MAGENTA",
+        "LIGHT_BLUE",
+        "YELLOW",
+        "LIME",
+        "PINK",
+        "GRAY",
+        "SILVER",
+        "CYAN",
+        "PURPLE",
+        "BLUE",
+        "BROWN",
+        "GREEN",
+        "RED",
+        "BLACK",
+        "GOLD",
+        "DIAMOND",
+        "LAPIS",
+        "EMERALD",
+        "PODZOL",
+        "NETHERRACK",
+        "WHITE_TERRACOTTA",
+        "ORANGE_TERRACOTTA",
+        "MAGENTA_TERRACOTTA",
+        "LIGHT_BLUE_TERRACOTTA",
+        "YELLOW_TERRACOTTA",
+        "LIME_TERRACOTTA",
+        "PINK_TERRACOTTA",
+        "GRAY_TERRACOTTA",
+        "LIGHT_GRAY_TERRACOTTA",
+        "CYAN_TERRACOTTA",
+        "PURPLE_TERRACOTTA",
+        "BLUE_TERRACOTTA",
+        "BROWN_TERRACOTTA",
+        "GREEN_TERRACOTTA",
+        "RED_TERRACOTTA",
+        "BLACK_TERRACOTTA",
+        "CRIMSON_NYLIUM",
+        "CRIMSON_STEM",
+        "CRIMSON_HYPHAE",
+        "WARPED_NYLIUM",
+        "WARPED_STEM",
+        "WARPED_HYPHAE",
+        "WARPED_WART",
+        "DEEPSLATE_GRAY",
+        "RAW_IRON_PINK",
+        "LICHEN_GREEN"
+      ]
+    },
+    "noteBlockInstrument": {
+      "title": "Note block sound",
+      "description": "Instrument when placed under a note block.",
+      "enum": [
+        "harp",
+        "basedrum",
+        "snare",
+        "hat",
+        "bass",
+        "flute",
+        "bell",
+        "guitar",
+        "chime",
+        "xylophone",
+        "iron_xylophone",
+        "cow_bell",
+        "didgeridoo",
+        "bit",
+        "banjo",
+        "pling",
+        "trumpet",
+        "trumpet_exposed",
+        "trumpet_weathered",
+        "trumpet_oxidized",
+        "zombie",
+        "skeleton",
+        "creeper",
+        "dragon",
+        "wither_skeleton",
+        "piglin",
+        "custom_head"
+      ]
+    },
+    "slipperiness": {
+      "title": "Slipperiness",
+      "description": "0.6 is normal, 0.98 is ice.",
+      "type": "number",
+      "minimum": 0.01,
+      "maximum": 5
+    },
+    "jumpFactor": {
+      "title": "Jump factor",
+      "type": "number",
+      "minimum": -1000,
+      "maximum": 1000
+    },
+    "speedFactor": {
+      "title": "Speed factor",
+      "type": "number",
+      "minimum": -1000,
+      "maximum": 1000
+    },
+    "plantsGrowOn": {
+      "title": "Plants grow on it",
+      "description": "Saplings and flowers can be placed on top.",
+      "type": "boolean"
+    },
+    "beaconColorModifier": {
+      "title": "Beacon beam color",
+      "description": "Tints a beacon beam passing through. Empty for none.",
+      "type": "string"
+    },
+    "isLadder": {
+      "title": "Climbable",
+      "description": "Entities can climb it like a ladder.",
+      "type": "boolean"
+    },
+    "enchantPowerBonus": {
+      "title": "Enchanting power",
+      "description": "Bookshelf-style bonus for nearby enchanting tables.",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1024
+    },
+    "reactionToPushing": {
+      "title": "Piston reaction",
+      "enum": [
+        "NORMAL",
+        "DESTROY",
+        "BLOCK",
+        "PUSH_ONLY",
+        "IGNORE"
+      ]
+    },
+    "aiPathNodeType": {
+      "title": "Mob pathfinding type",
+      "description": "How mobs treat the block when pathfinding.",
+      "enum": [
+        "DEFAULT",
+        "BLOCKED",
+        "OPEN",
+        "WALKABLE",
+        "WALKABLE_DOOR",
+        "TRAPDOOR",
+        "POWDER_SNOW",
+        "DANGER_POWDER_SNOW",
+        "FENCE",
+        "LAVA",
+        "WATER",
+        "WATER_BORDER",
+        "RAIL",
+        "UNPASSABLE_RAIL",
+        "DANGER_FIRE",
+        "DAMAGE_FIRE",
+        "DANGER_OTHER",
+        "DAMAGE_OTHER",
+        "DOOR_OPEN",
+        "DOOR_WOOD_CLOSED",
+        "DOOR_IRON_CLOSED",
+        "BREACH",
+        "LEAVES",
+        "STICKY_HONEY",
+        "COCOA",
+        "DAMAGE_CAUTIOUS",
+        "DANGER_TRAPDOOR",
+        "BIG_MOBS_CLOSE_TO_DANGER"
+      ]
+    },
+    "strippingResult": {
+      "title": "Stripped block",
+      "description": "Block it turns into when right clicked with an axe.",
+      "type": "string"
+    },
+    "placingCondition": {
+      "title": "Placement condition",
+      "description": "Optional; return false to forbid placing here.",
+      "type": "string"
+    },
+    "tickRate": {
+      "title": "Tick rate",
+      "description": "Ticks between scheduled updates. 0 disables them.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9999999
+    },
+    "tickRandomly": {
+      "title": "Random ticks",
+      "description": "Use random ticks like crops instead of a fixed rate.",
+      "type": "boolean"
+    },
+    "canRedstoneConnect": {
+      "title": "Redstone connects",
+      "description": "Redstone dust visually connects to it.",
+      "type": "boolean"
+    },
+    "forceRedstoneConductor": {
+      "title": "Conducts redstone",
+      "description": "Passes redstone power through even if not a full block.",
+      "type": "boolean"
+    },
+    "canProvidePower": {
+      "title": "Emits redstone",
+      "description": "Gives off redstone power.",
+      "type": "boolean"
+    },
+    "emittedRedstonePower": {
+      "title": "Power level",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 15
+    },
+    "emittedRedstonePowerProcedure": {
+      "title": "Power level procedure",
+      "description": "Optional procedure returning the power level.",
+      "type": "string"
+    },
+    "luminance": {
+      "title": "Light level",
+      "description": "Light emitted by the block.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 15
+    },
+    "luminanceProcedure": {
+      "title": "Light level procedure",
+      "description": "Optional procedure returning the light level per state.",
+      "type": "string"
+    },
+    "isBonemealable": {
+      "title": "Bonemeal target",
+      "description": "Bonemeal can be used on it.",
+      "type": "boolean"
+    },
+    "isBonemealTargetCondition": {
+      "title": "Can use bonemeal",
+      "description": "Optional check whether bonemeal can be used now.",
+      "type": "string"
+    },
+    "bonemealSuccessCondition": {
+      "title": "Bonemeal succeeds",
+      "description": "Optional check whether a bonemeal use succeeds.",
+      "type": "string"
+    },
+    "onBonemealSuccess": {
+      "title": "On bonemeal success",
+      "description": "Runs when bonemeal succeeded.",
+      "type": "string"
+    },
+    "ignitedByLava": {
+      "title": "Ignited by lava",
+      "type": "boolean"
+    },
+    "flammability": {
+      "title": "Flammability",
+      "description": "How fast it burns away.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1024
+    },
+    "fireSpreadSpeed": {
+      "title": "Fire spread speed",
+      "description": "How easily fire catches on it.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1024
+    },
+    "hasInventory": {
+      "title": "Has inventory",
+      "description": "Give the block a block entity with item slots.",
+      "type": "boolean"
+    },
+    "guiBoundTo": {
+      "title": "GUI",
+      "description": "GUI element opened for this block. Empty for none.",
+      "type": "string"
+    },
+    "openGUIOnRightClick": {
+      "title": "Open GUI on right click",
+      "type": "boolean"
+    },
+    "inventorySize": {
+      "title": "Slot count",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 256
+    },
+    "inventoryStackSize": {
+      "title": "Max stack per slot",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1024
+    },
+    "inventoryDropWhenDestroyed": {
+      "title": "Drop items when broken",
+      "type": "boolean"
+    },
+    "inventoryComparatorPower": {
+      "title": "Comparator output",
+      "description": "Comparators read the fill level.",
+      "type": "boolean"
+    },
+    "inventoryInSlotIDs": {
+      "title": "Input slots",
+      "description": "Slot ids hoppers and pipes may insert into.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "slot": {
+            "title": "Slot id",
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "inventoryOutSlotIDs": {
+      "title": "Output slots",
+      "description": "Slot ids hoppers and pipes may extract from.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "slot": {
+            "title": "Slot id",
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "inventoryAutomationTakeCondition": {
+      "title": "Can extract",
+      "description": "Optional check for automated extraction.",
+      "type": "string"
+    },
+    "inventoryAutomationPlaceCondition": {
+      "title": "Can insert",
+      "description": "Optional check for automated insertion.",
+      "type": "string"
+    },
+    "sensitiveToVibration": {
+      "title": "Listens to vibrations",
+      "description": "Reacts to game events like a sculk sensor.",
+      "type": "boolean"
+    },
+    "vibrationalEvents": {
+      "title": "Game events",
+      "description": "Game events it listens to (or one tag).",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "title": "Game event",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "vibrationSensitivityRadius": {
+      "title": "Listening radius",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+    },
+    "vibrationSensitivityRadiusProcedure": {
+      "title": "Radius procedure",
+      "description": "Optional procedure returning the radius.",
+      "type": "string"
+    },
+    "canReceiveVibrationCondition": {
+      "title": "Can receive vibration",
+      "description": "Optional filter for incoming vibrations.",
+      "type": "string"
+    },
+    "onReceivedVibration": {
+      "title": "On vibration received",
+      "type": "string"
+    },
+    "hasEnergyStorage": {
+      "title": "Stores energy",
+      "description": "Needs the block entity (inventory) to be enabled.",
+      "type": "boolean"
+    },
+    "energyInitial": {
+      "title": "Starting energy",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+    },
+    "energyCapacity": {
+      "title": "Capacity",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+    },
+    "energyMaxReceive": {
+      "title": "Max input per tick",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+    },
+    "energyMaxExtract": {
+      "title": "Max output per tick",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+    },
+    "isFluidTank": {
+      "title": "Fluid tank",
+      "description": "Needs the block entity (inventory) to be enabled.",
+      "type": "boolean"
+    },
+    "fluidCapacity": {
+      "title": "Capacity (mB)",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+    },
+    "fluidRestrictions": {
+      "title": "Allowed fluids",
+      "description": "Fluids the tank accepts. Empty accepts all.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "fluid": {
+            "title": "Fluid",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "onRightClicked": {
+      "title": "Right clicked",
+      "description": "Runs when a player uses the block.",
+      "type": "string"
+    },
+    "onBlockAdded": {
+      "title": "Placed or added",
+      "description": "Runs when the block appears in the world.",
+      "type": "string"
+    },
+    "onNeighbourBlockChanges": {
+      "title": "Neighbor changed",
+      "type": "string"
+    },
+    "onTickUpdate": {
+      "title": "Update tick",
+      "description": "Scheduled or random tick.",
+      "type": "string"
+    },
+    "onRandomUpdateEvent": {
+      "title": "Client display tick",
+      "description": "Runs on the client now and then; for particles and sounds.",
+      "type": "string"
+    },
+    "onDestroyedByPlayer": {
+      "title": "Broken by player",
+      "type": "string"
+    },
+    "onDestroyedByExplosion": {
+      "title": "Destroyed by explosion",
+      "type": "string"
+    },
+    "onStartToDestroy": {
+      "title": "Player starts breaking",
+      "type": "string"
+    },
+    "onEntityCollides": {
+      "title": "Entity collides",
+      "type": "string"
+    },
+    "onEntityWalksOn": {
+      "title": "Entity walks on",
+      "type": "string"
+    },
+    "onHitByProjectile": {
+      "title": "Hit by projectile",
+      "type": "string"
+    },
+    "onBlockPlayedBy": {
+      "title": "Placed by entity",
+      "type": "string"
+    },
+    "onRedstoneOn": {
+      "title": "Redstone on",
+      "type": "string"
+    },
+    "onRedstoneOff": {
+      "title": "Redstone off",
+      "type": "string"
+    },
+    "onEntityFallsOn": {
+      "title": "Entity falls on",
+      "type": "string"
+    },
+    "generateFeature": {
+      "title": "Generate in the world",
+      "description": "Scatter the block through the terrain like an ore.",
+      "type": "boolean"
+    },
+    "blocksToReplace": {
+      "title": "Replaces",
+      "description": "Blocks (or tags) it can replace.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "block": {
+            "title": "Block",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "restrictionBiomes": {
+      "title": "Biomes",
+      "description": "Biomes (or one tag) where it generates. Empty means all.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "biome": {
+            "title": "Biome",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "generationShape": {
+      "title": "Height distribution",
+      "enum": [
+        "UNIFORM",
+        "TRIANGLE"
+      ]
+    },
+    "frequencyPerChunks": {
+      "title": "Veins per chunk",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 64
+    },
+    "frequencyOnChunk": {
+      "title": "Vein size",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 64
+    },
+    "minGenerateHeight": {
+      "title": "Lowest Y",
+      "type": "integer",
+      "minimum": -64,
+      "maximum": 320
+    },
+    "maxGenerateHeight": {
+      "title": "Highest Y",
+      "type": "integer",
+      "minimum": -64,
+      "maximum": 320
+    },
+    "rvCategory": {
+      "title": "Recipe category",
+      "description": "Shows this block as a machine in JEI / REI: a category with its recipes, the block as the catalyst.",
+      "type": "boolean"
+    },
+    "rvTitle": {
+      "title": "Category title",
+      "description": "Empty: the block's name.",
+      "type": "string"
+    },
+    "rvCatalysts": {
+      "title": "Other catalysts",
+      "description": "Items shown as the category's crafting stations besides the block.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "title": "Item",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "rvRecipes": {
+      "title": "Recipes",
+      "description": "What the machine makes: inputs on the left, outputs on the right, with the time and energy shown under them.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "inputs": {
+            "title": "Inputs",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "item": {
+                  "title": "Item",
+                  "type": "string"
+                },
+                "count": {
+                  "title": "Count",
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 64
+                }
+              }
+            }
+          },
+          "outputs": {
+            "title": "Outputs",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "item": {
+                  "title": "Item",
+                  "type": "string"
+                },
+                "count": {
+                  "title": "Count",
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 64
+                }
+              }
+            }
+          },
+          "time": {
+            "title": "Time (ticks)",
+            "description": "0: not shown.",
+            "type": "integer",
+            "minimum": 0
+          },
+          "energy": {
+            "title": "Energy (FE)",
+            "description": "0: not shown.",
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "$comment": "Element types and fields these templates generate; see src/engines/coverage.ts.",
+  "generates": {
+    "recipe": [
+      "recipeType=Crafting|Smelting|Blasting|Smoking|Stone cutting|Campfire cooking|Smithing"
+    ],
+    "block": [
+      "transparencyType"
+    ],
+    "item_extension": [
+      "item",
+      "enableFuel",
+      "fuelPower",
+      "compostLayerChance"
+    ]
+  }
+}

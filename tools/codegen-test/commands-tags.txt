@@ -1,0 +1,6 @@
+@wait 5
+tagprobe
+@wait 3
+stop
+@wait 15
+@kill

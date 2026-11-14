@@ -1,0 +1,2260 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "plant",
+  "folder": "plants",
+  "name": "Plant",
+  "icon": "plant",
+  "langKey": "block",
+  "mcreator": "plant",
+  "description": "Flowers, grass, tall plants, growing plants like sugar cane, and saplings.",
+  "pages": [
+    {
+      "id": "visual",
+      "title": "Visual and type",
+      "groups": [
+        {
+          "title": "Textures and model",
+          "fields": [
+            {
+              "key": "texture",
+              "type": "texture",
+              "label": "Texture",
+              "default": "",
+              "textureKind": "block",
+              "mcreator": "texture",
+              "required": true,
+              "help": "For double plants this is the top half."
+            },
+            {
+              "key": "textureBottom",
+              "type": "texture",
+              "label": "Bottom texture",
+              "default": "",
+              "textureKind": "block",
+              "mcreator": "textureBottom",
+              "showIf": {
+                "key": "plantType",
+                "equals": "double"
+              }
+            },
+            {
+              "key": "model",
+              "type": "model",
+              "label": "Model",
+              "default": "Cross model",
+              "modelKinds": [
+                "builtin",
+                "json",
+                "obj"
+              ],
+              "mcreator": "customModelName",
+              "help": "Built-in: Cross model, Crop model. Double plants always use the cross model. Model kind is stored as renderType."
+            },
+            {
+              "key": "itemTexture",
+              "type": "texture",
+              "label": "Item texture",
+              "default": "",
+              "textureKind": "item",
+              "mcreator": "itemTexture"
+            },
+            {
+              "key": "particleTexture",
+              "type": "texture",
+              "label": "Particle texture",
+              "default": "",
+              "textureKind": "block",
+              "mcreator": "particleTexture"
+            },
+            {
+              "key": "tintType",
+              "type": "select",
+              "label": "Biome tint",
+              "default": "No tint",
+              "options": [
+                {
+                  "value": "No tint",
+                  "label": "No tint"
+                },
+                {
+                  "value": "Grass",
+                  "label": "Grass"
+                },
+                {
+                  "value": "Foliage",
+                  "label": "Foliage"
+                },
+                {
+                  "value": "Dry foliage",
+                  "label": "Dry foliage"
+                },
+                {
+                  "value": "Birch foliage",
+                  "label": "Birch foliage"
+                },
+                {
+                  "value": "Spruce foliage",
+                  "label": "Spruce foliage"
+                },
+                {
+                  "value": "Default foliage",
+                  "label": "Default foliage"
+                },
+                {
+                  "value": "Water",
+                  "label": "Water"
+                },
+                {
+                  "value": "Sky",
+                  "label": "Sky"
+                },
+                {
+                  "value": "Fog",
+                  "label": "Fog"
+                },
+                {
+                  "value": "Water fog",
+                  "label": "Water fog"
+                }
+              ],
+              "mcreator": "tintType"
+            },
+            {
+              "key": "isItemTinted",
+              "type": "boolean",
+              "label": "Tint the item too",
+              "default": false,
+              "mcreator": "isItemTinted"
+            },
+            {
+              "key": "offsetType",
+              "type": "select",
+              "label": "Random position offset",
+              "default": "XZ",
+              "options": [
+                {
+                  "value": "XZ",
+                  "label": "Xz"
+                },
+                {
+                  "value": "XYZ",
+                  "label": "Xyz"
+                },
+                {
+                  "value": "NONE",
+                  "label": "None"
+                }
+              ],
+              "mcreator": "offsetType",
+              "help": "Growing plants and saplings usually use NONE."
+            }
+          ]
+        },
+        {
+          "title": "Plant type",
+          "fields": [
+            {
+              "key": "plantType",
+              "type": "select",
+              "label": "Plant type",
+              "default": "normal",
+              "options": [
+                {
+                  "value": "normal",
+                  "label": "Single block"
+                },
+                {
+                  "value": "double",
+                  "label": "Two blocks tall"
+                },
+                {
+                  "value": "growapable",
+                  "label": "Grows upward"
+                },
+                {
+                  "value": "sapling",
+                  "label": "Sapling"
+                }
+              ],
+              "mcreator": "plantType"
+            },
+            {
+              "key": "suspiciousStewEffect",
+              "type": "effect",
+              "label": "Suspicious stew effect",
+              "default": "",
+              "mcreator": "suspiciousStewEffect",
+              "showIf": {
+                "key": "plantType",
+                "equals": "normal"
+              }
+            },
+            {
+              "key": "suspiciousStewDuration",
+              "type": "integer",
+              "label": "Stew effect duration (ticks)",
+              "default": 100,
+              "min": 0,
+              "max": 100000,
+              "step": 1,
+              "mcreator": "suspiciousStewDuration",
+              "showIf": {
+                "key": "plantType",
+                "equals": "normal"
+              }
+            },
+            {
+              "key": "growapableSpawnType",
+              "type": "select",
+              "label": "Grows on",
+              "default": "Plains",
+              "options": [
+                {
+                  "value": "Plains",
+                  "label": "Plains"
+                },
+                {
+                  "value": "Desert",
+                  "label": "Desert"
+                },
+                {
+                  "value": "Beach",
+                  "label": "Beach"
+                },
+                {
+                  "value": "Cave",
+                  "label": "Cave"
+                },
+                {
+                  "value": "Water",
+                  "label": "Water"
+                },
+                {
+                  "value": "Nether",
+                  "label": "Nether"
+                },
+                {
+                  "value": "Crop",
+                  "label": "Crop"
+                }
+              ],
+              "mcreator": "growapableSpawnType",
+              "showIf": {
+                "key": "plantType",
+                "equals": "growapable"
+              }
+            },
+            {
+              "key": "growapableMaxHeight",
+              "type": "integer",
+              "label": "Max height (blocks)",
+              "default": 3,
+              "min": 1,
+              "max": 14,
+              "step": 1,
+              "mcreator": "growapableMaxHeight",
+              "showIf": {
+                "key": "plantType",
+                "equals": "growapable"
+              }
+            },
+            {
+              "key": "trees1",
+              "type": "text",
+              "label": "Tree",
+              "default": "",
+              "mcreator": "trees[0]",
+              "help": "Configured feature id.",
+              "showIf": {
+                "key": "plantType",
+                "equals": "sapling"
+              }
+            },
+            {
+              "key": "trees2",
+              "type": "text",
+              "label": "Tree (alternative)",
+              "default": "",
+              "mcreator": "trees[1]",
+              "help": "Configured feature id.",
+              "showIf": {
+                "key": "plantType",
+                "equals": "sapling"
+              }
+            },
+            {
+              "key": "flowerTrees1",
+              "type": "text",
+              "label": "Tree near flowers",
+              "default": "",
+              "mcreator": "flowerTrees[0]",
+              "help": "Configured feature id.",
+              "showIf": {
+                "key": "plantType",
+                "equals": "sapling"
+              }
+            },
+            {
+              "key": "flowerTrees2",
+              "type": "text",
+              "label": "Tree near flowers (alternative)",
+              "default": "",
+              "mcreator": "flowerTrees[1]",
+              "help": "Configured feature id.",
+              "showIf": {
+                "key": "plantType",
+                "equals": "sapling"
+              }
+            },
+            {
+              "key": "megaTrees1",
+              "type": "text",
+              "label": "2x2 mega tree",
+              "default": "",
+              "mcreator": "megaTrees[0]",
+              "help": "Configured feature id.",
+              "showIf": {
+                "key": "plantType",
+                "equals": "sapling"
+              }
+            },
+            {
+              "key": "megaTrees2",
+              "type": "text",
+              "label": "2x2 mega tree (alternative)",
+              "default": "",
+              "mcreator": "megaTrees[1]",
+              "help": "Configured feature id.",
+              "showIf": {
+                "key": "plantType",
+                "equals": "sapling"
+              }
+            },
+            {
+              "key": "secondaryTreeChance",
+              "type": "number",
+              "label": "Alternative tree chance",
+              "default": 0.1,
+              "min": 0,
+              "max": 1,
+              "step": 0.01,
+              "mcreator": "secondaryTreeChance",
+              "showIf": {
+                "key": "plantType",
+                "equals": "sapling"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bounding_boxes",
+      "title": "Bounding boxes",
+      "groups": [
+        {
+          "title": "Shape",
+          "fields": [
+            {
+              "key": "customBoundingBox",
+              "type": "boolean",
+              "label": "Custom bounding box",
+              "default": false,
+              "mcreator": "customBoundingBox"
+            },
+            {
+              "key": "disableOffset",
+              "type": "boolean",
+              "label": "Ignore random offset for the box",
+              "default": false,
+              "mcreator": "disableOffset",
+              "showIf": {
+                "key": "customBoundingBox",
+                "equals": true
+              }
+            },
+            {
+              "key": "isSolid",
+              "type": "boolean",
+              "label": "Solid (has collision)",
+              "default": false,
+              "mcreator": "isSolid"
+            },
+            {
+              "key": "boundingBoxes",
+              "type": "list",
+              "label": "Boxes",
+              "default": [],
+              "fields": [
+                {
+                  "key": "minX",
+                  "type": "number",
+                  "label": "From X",
+                  "default": 0,
+                  "min": -100,
+                  "max": 100,
+                  "step": 0.1,
+                  "mcreator": "mx"
+                },
+                {
+                  "key": "minY",
+                  "type": "number",
+                  "label": "From Y",
+                  "default": 0,
+                  "min": -100,
+                  "max": 100,
+                  "step": 0.1,
+                  "mcreator": "my"
+                },
+                {
+                  "key": "minZ",
+                  "type": "number",
+                  "label": "From Z",
+                  "default": 0,
+                  "min": -100,
+                  "max": 100,
+                  "step": 0.1,
+                  "mcreator": "mz"
+                },
+                {
+                  "key": "maxX",
+                  "type": "number",
+                  "label": "To X",
+                  "default": 16,
+                  "min": -100,
+                  "max": 100,
+                  "step": 0.1,
+                  "mcreator": "Mx"
+                },
+                {
+                  "key": "maxY",
+                  "type": "number",
+                  "label": "To Y",
+                  "default": 16,
+                  "min": -100,
+                  "max": 100,
+                  "step": 0.1,
+                  "mcreator": "My"
+                },
+                {
+                  "key": "maxZ",
+                  "type": "number",
+                  "label": "To Z",
+                  "default": 16,
+                  "min": -100,
+                  "max": 100,
+                  "step": 0.1,
+                  "mcreator": "Mz"
+                },
+                {
+                  "key": "subtract",
+                  "type": "boolean",
+                  "label": "Cut out of previous boxes",
+                  "default": false
+                }
+              ],
+              "mcreator": "boundingBoxes",
+              "showIf": {
+                "key": "customBoundingBox",
+                "equals": true
+              },
+              "help": "Coordinates in pixels (0-16 is one block)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "properties",
+      "title": "Properties",
+      "groups": [
+        {
+          "title": "General",
+          "fields": [
+            {
+              "key": "name",
+              "type": "text",
+              "label": "Display name",
+              "default": "",
+              "mcreator": "name",
+              "required": true
+            },
+            {
+              "key": "hardness",
+              "type": "number",
+              "label": "Hardness",
+              "default": 0,
+              "min": -1,
+              "max": 64000,
+              "step": 0.1,
+              "mcreator": "hardness"
+            },
+            {
+              "key": "resistance",
+              "type": "number",
+              "label": "Explosion resistance",
+              "default": 0,
+              "min": 0,
+              "max": 2147483647,
+              "step": 0.5,
+              "mcreator": "resistance"
+            },
+            {
+              "key": "unbreakable",
+              "type": "boolean",
+              "label": "Unbreakable",
+              "default": false,
+              "mcreator": "unbreakable"
+            },
+            {
+              "key": "luminance",
+              "type": "integer",
+              "label": "Light level",
+              "default": 0,
+              "min": 0,
+              "max": 15,
+              "step": 1,
+              "mcreator": "luminance"
+            },
+            {
+              "key": "emissiveRendering",
+              "type": "boolean",
+              "label": "Full bright",
+              "default": false,
+              "mcreator": "emissiveRendering"
+            },
+            {
+              "key": "isReplaceable",
+              "type": "boolean",
+              "label": "Replaceable when placing blocks",
+              "default": false,
+              "mcreator": "isReplaceable"
+            },
+            {
+              "key": "isWaterloggable",
+              "type": "boolean",
+              "label": "Can be waterlogged",
+              "default": false,
+              "mcreator": "isWaterloggable",
+              "help": "Not available for saplings with mega trees."
+            }
+          ]
+        },
+        {
+          "title": "Drops",
+          "fields": [
+            {
+              "key": "customDrop",
+              "type": "item",
+              "label": "Dropped item",
+              "default": "",
+              "mcreator": "customDrop",
+              "help": "Empty drops the plant itself."
+            },
+            {
+              "key": "dropAmount",
+              "type": "integer",
+              "label": "Drop count",
+              "default": 1,
+              "min": 0,
+              "max": 200,
+              "step": 1,
+              "mcreator": "dropAmount"
+            },
+            {
+              "key": "xpAmountMin",
+              "type": "integer",
+              "label": "Min experience",
+              "default": 0,
+              "min": 0,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "xpAmountMin"
+            },
+            {
+              "key": "xpAmountMax",
+              "type": "integer",
+              "label": "Max experience",
+              "default": 0,
+              "min": 0,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "xpAmountMax"
+            },
+            {
+              "key": "useLootTableForDrops",
+              "type": "boolean",
+              "label": "Use a loot table instead",
+              "default": false,
+              "mcreator": "useLootTableForDrops"
+            },
+            {
+              "key": "creativePickItem",
+              "type": "item",
+              "label": "Pick block result",
+              "default": "",
+              "mcreator": "creativePickItem"
+            }
+          ]
+        },
+        {
+          "title": "Sounds",
+          "fields": [
+            {
+              "key": "isCustomSoundType",
+              "type": "boolean",
+              "label": "Custom sounds",
+              "default": false,
+              "mcreator": "isCustomSoundType"
+            },
+            {
+              "key": "soundOnStep",
+              "type": "select",
+              "label": "Sound set",
+              "default": "PLANT",
+              "options": [
+                {
+                  "value": "GROUND",
+                  "label": "Ground"
+                },
+                {
+                  "value": "EMPTY",
+                  "label": "Empty"
+                },
+                {
+                  "value": "WOOD",
+                  "label": "Wood"
+                },
+                {
+                  "value": "PLANT",
+                  "label": "Plant"
+                },
+                {
+                  "value": "LILY_PADS",
+                  "label": "Lily pads"
+                },
+                {
+                  "value": "STONE",
+                  "label": "Stone"
+                },
+                {
+                  "value": "METAL",
+                  "label": "Metal"
+                },
+                {
+                  "value": "GLASS",
+                  "label": "Glass"
+                },
+                {
+                  "value": "CLOTH",
+                  "label": "Cloth"
+                },
+                {
+                  "value": "SAND",
+                  "label": "Sand"
+                },
+                {
+                  "value": "SNOW",
+                  "label": "Snow"
+                },
+                {
+                  "value": "LADDER",
+                  "label": "Ladder"
+                },
+                {
+                  "value": "ANVIL",
+                  "label": "Anvil"
+                },
+                {
+                  "value": "SLIME",
+                  "label": "Slime"
+                },
+                {
+                  "value": "WET_GRASS",
+                  "label": "Wet grass"
+                },
+                {
+                  "value": "CORAL",
+                  "label": "Coral"
+                },
+                {
+                  "value": "BAMBOO",
+                  "label": "Bamboo"
+                },
+                {
+                  "value": "BAMBOO_SAPLING",
+                  "label": "Bamboo sapling"
+                },
+                {
+                  "value": "SCAFFOLDING",
+                  "label": "Scaffolding"
+                },
+                {
+                  "value": "SWEET_BERRY_BUSH",
+                  "label": "Sweet berry bush"
+                },
+                {
+                  "value": "CROP",
+                  "label": "Crop"
+                },
+                {
+                  "value": "STEM",
+                  "label": "Stem"
+                },
+                {
+                  "value": "VINE",
+                  "label": "Vine"
+                },
+                {
+                  "value": "NETHER_WART",
+                  "label": "Nether wart"
+                },
+                {
+                  "value": "LANTERN",
+                  "label": "Lantern"
+                },
+                {
+                  "value": "HONEY",
+                  "label": "Honey"
+                },
+                {
+                  "value": "HYPHAE",
+                  "label": "Hyphae"
+                },
+                {
+                  "value": "NYLIUM",
+                  "label": "Nylium"
+                },
+                {
+                  "value": "FUNGUS",
+                  "label": "Fungus"
+                },
+                {
+                  "value": "ROOT",
+                  "label": "Root"
+                },
+                {
+                  "value": "SHROOMLIGHT",
+                  "label": "Shroomlight"
+                },
+                {
+                  "value": "NETHER_VINE",
+                  "label": "Nether vine"
+                },
+                {
+                  "value": "NETHER_VINE_LOWER_PITCH",
+                  "label": "Nether vine lower pitch"
+                },
+                {
+                  "value": "SOUL_SAND",
+                  "label": "Soul sand"
+                },
+                {
+                  "value": "SOUL_SOIL",
+                  "label": "Soul soil"
+                },
+                {
+                  "value": "BASALT",
+                  "label": "Basalt"
+                },
+                {
+                  "value": "WART",
+                  "label": "Wart"
+                },
+                {
+                  "value": "NETHERRACK",
+                  "label": "Netherrack"
+                },
+                {
+                  "value": "NETHER_BRICK",
+                  "label": "Nether brick"
+                },
+                {
+                  "value": "NETHER_SPROUT",
+                  "label": "Nether sprout"
+                },
+                {
+                  "value": "NETHER_ORE",
+                  "label": "Nether ore"
+                },
+                {
+                  "value": "BONE",
+                  "label": "Bone"
+                },
+                {
+                  "value": "NETHERITE",
+                  "label": "Netherite"
+                },
+                {
+                  "value": "ANCIENT_DEBRIS",
+                  "label": "Ancient debris"
+                },
+                {
+                  "value": "LODESTONE",
+                  "label": "Lodestone"
+                },
+                {
+                  "value": "CHAIN",
+                  "label": "Chain"
+                },
+                {
+                  "value": "NETHER_GOLD",
+                  "label": "Nether gold"
+                },
+                {
+                  "value": "GILDED_BLACKSTONE",
+                  "label": "Gilded blackstone"
+                },
+                {
+                  "value": "AMETHYST_BLOCK",
+                  "label": "Amethyst block"
+                },
+                {
+                  "value": "AMETHYST_CLUSTER",
+                  "label": "Amethyst cluster"
+                },
+                {
+                  "value": "AZALEA",
+                  "label": "Azalea"
+                },
+                {
+                  "value": "AZALEA_LEAVES",
+                  "label": "Azalea leaves"
+                },
+                {
+                  "value": "BIG_DRIPLEAF",
+                  "label": "Big dripleaf"
+                },
+                {
+                  "value": "CANDLE",
+                  "label": "Candle"
+                },
+                {
+                  "value": "CALCITE",
+                  "label": "Calcite"
+                },
+                {
+                  "value": "CAVE_VINES",
+                  "label": "Cave vines"
+                },
+                {
+                  "value": "COPPER",
+                  "label": "Copper"
+                },
+                {
+                  "value": "COPPER_BULB",
+                  "label": "Copper bulb"
+                },
+                {
+                  "value": "COPPER_GRATE",
+                  "label": "Copper grate"
+                },
+                {
+                  "value": "COPPER_GOLEM_STATUE",
+                  "label": "Copper golem statue"
+                },
+                {
+                  "value": "DEEPSLATE",
+                  "label": "Deepslate"
+                },
+                {
+                  "value": "DEEPSLATE_BRICKS",
+                  "label": "Deepslate bricks"
+                },
+                {
+                  "value": "DEEPSLATE_TILES",
+                  "label": "Deepslate tiles"
+                },
+                {
+                  "value": "DRIPSTONE_BLOCK",
+                  "label": "Dripstone block"
+                },
+                {
+                  "value": "FLOWERING_AZALEA",
+                  "label": "Flowering azalea"
+                },
+                {
+                  "value": "GLOW_LICHEN",
+                  "label": "Glow lichen"
+                },
+                {
+                  "value": "HANGING_ROOTS",
+                  "label": "Hanging roots"
+                },
+                {
+                  "value": "LARGE_AMETHYST_BUD",
+                  "label": "Large amethyst bud"
+                },
+                {
+                  "value": "MEDIUM_AMETHYST_BUD",
+                  "label": "Medium amethyst bud"
+                },
+                {
+                  "value": "MOSS_CARPET",
+                  "label": "Moss carpet"
+                },
+                {
+                  "value": "PINK_PETALS",
+                  "label": "Pink petals"
+                },
+                {
+                  "value": "LEAF_LITTER",
+                  "label": "Leaf litter"
+                },
+                {
+                  "value": "MOSS_BLOCK",
+                  "label": "Moss block"
+                },
+                {
+                  "value": "POINTED_DRIPSTONE",
+                  "label": "Pointed dripstone"
+                },
+                {
+                  "value": "POLISHED_DEEPSLATE",
+                  "label": "Polished deepslate"
+                },
+                {
+                  "value": "POLISHED_TUFF",
+                  "label": "Polished tuff"
+                },
+                {
+                  "value": "POWDER_SNOW",
+                  "label": "Powder snow"
+                },
+                {
+                  "value": "ROOTED_DIRT",
+                  "label": "Rooted dirt"
+                },
+                {
+                  "value": "SCULK_SENSOR",
+                  "label": "Sculk sensor"
+                },
+                {
+                  "value": "SCULK_CATALYST",
+                  "label": "Sculk catalyst"
+                },
+                {
+                  "value": "SCULK",
+                  "label": "Sculk"
+                },
+                {
+                  "value": "SCULK_VEIN",
+                  "label": "Sculk vein"
+                },
+                {
+                  "value": "SCULK_SHRIEKER",
+                  "label": "Sculk shrieker"
+                },
+                {
+                  "value": "SMALL_AMETHYST_BUD",
+                  "label": "Small amethyst bud"
+                },
+                {
+                  "value": "SMALL_DRIPLEAF",
+                  "label": "Small dripleaf"
+                },
+                {
+                  "value": "SPORE_BLOSSOM",
+                  "label": "Spore blossom"
+                },
+                {
+                  "value": "CACTUS_FLOWER",
+                  "label": "Cactus flower"
+                },
+                {
+                  "value": "TUFF",
+                  "label": "Tuff"
+                },
+                {
+                  "value": "TUFF_BRICKS",
+                  "label": "Tuff bricks"
+                },
+                {
+                  "value": "FROGLIGHT",
+                  "label": "Froglight"
+                },
+                {
+                  "value": "FROGSPAWN",
+                  "label": "Frogspawn"
+                },
+                {
+                  "value": "MANGROVE_ROOTS",
+                  "label": "Mangrove roots"
+                },
+                {
+                  "value": "MUDDY_MANGROVE_ROOTS",
+                  "label": "Muddy mangrove roots"
+                },
+                {
+                  "value": "MUD",
+                  "label": "Mud"
+                },
+                {
+                  "value": "MUD_BRICKS",
+                  "label": "Mud bricks"
+                },
+                {
+                  "value": "PACKED_MUD",
+                  "label": "Packed mud"
+                },
+                {
+                  "value": "HANGING_SIGN",
+                  "label": "Hanging sign"
+                },
+                {
+                  "value": "NETHER_WOOD_HANGING_SIGN",
+                  "label": "Nether wood hanging sign"
+                },
+                {
+                  "value": "BAMBOO_WOOD_HANGING_SIGN",
+                  "label": "Bamboo wood hanging sign"
+                },
+                {
+                  "value": "BAMBOO_WOOD",
+                  "label": "Bamboo wood"
+                },
+                {
+                  "value": "NETHER_WOOD",
+                  "label": "Nether wood"
+                },
+                {
+                  "value": "CHERRY_WOOD",
+                  "label": "Cherry wood"
+                },
+                {
+                  "value": "CHERRY_SAPLING",
+                  "label": "Cherry sapling"
+                },
+                {
+                  "value": "CHERRY_LEAVES",
+                  "label": "Cherry leaves"
+                },
+                {
+                  "value": "CHERRY_WOOD_HANGING_SIGN",
+                  "label": "Cherry wood hanging sign"
+                },
+                {
+                  "value": "CHISELED_BOOKSHELF",
+                  "label": "Chiseled bookshelf"
+                },
+                {
+                  "value": "SHELF",
+                  "label": "Shelf"
+                },
+                {
+                  "value": "SUSPICIOUS_SAND",
+                  "label": "Suspicious sand"
+                },
+                {
+                  "value": "SUSPICIOUS_GRAVEL",
+                  "label": "Suspicious gravel"
+                },
+                {
+                  "value": "DECORATED_POT",
+                  "label": "Decorated pot"
+                },
+                {
+                  "value": "DECORATED_POT_CRACKED",
+                  "label": "Decorated pot cracked"
+                },
+                {
+                  "value": "TRIAL_SPAWNER",
+                  "label": "Trial spawner"
+                },
+                {
+                  "value": "SPONGE",
+                  "label": "Sponge"
+                },
+                {
+                  "value": "WET_SPONGE",
+                  "label": "Wet sponge"
+                },
+                {
+                  "value": "VAULT",
+                  "label": "Vault"
+                },
+                {
+                  "value": "CREAKING_HEART",
+                  "label": "Creaking heart"
+                },
+                {
+                  "value": "HEAVY_CORE",
+                  "label": "Heavy core"
+                },
+                {
+                  "value": "COBWEB",
+                  "label": "Cobweb"
+                },
+                {
+                  "value": "SPAWNER",
+                  "label": "Spawner"
+                },
+                {
+                  "value": "RESIN",
+                  "label": "Resin"
+                },
+                {
+                  "value": "RESIN_BRICKS",
+                  "label": "Resin bricks"
+                },
+                {
+                  "value": "IRON",
+                  "label": "Iron"
+                },
+                {
+                  "value": "DRIED_GHAST",
+                  "label": "Dried ghast"
+                },
+                {
+                  "value": "SULFUR",
+                  "label": "Sulfur"
+                },
+                {
+                  "value": "POTENT_SULFUR",
+                  "label": "Potent sulfur"
+                },
+                {
+                  "value": "SULFUR_SPIKE",
+                  "label": "Sulfur spike"
+                },
+                {
+                  "value": "CINNABAR",
+                  "label": "Cinnabar"
+                },
+                {
+                  "value": "SHELF_MUSHROOM",
+                  "label": "Shelf mushroom"
+                },
+                {
+                  "value": "POPLAR_LEAVES",
+                  "label": "Poplar leaves"
+                },
+                {
+                  "value": "STRAW_BED",
+                  "label": "Straw bed"
+                },
+                {
+                  "value": "RED_SHRUB",
+                  "label": "Red shrub"
+                }
+              ],
+              "mcreator": "soundOnStep",
+              "showIf": {
+                "key": "isCustomSoundType",
+                "equals": false
+              }
+            },
+            {
+              "key": "breakSound",
+              "type": "sound",
+              "label": "Break sound",
+              "default": "",
+              "mcreator": "breakSound",
+              "showIf": {
+                "key": "isCustomSoundType",
+                "equals": true
+              }
+            },
+            {
+              "key": "stepSound",
+              "type": "sound",
+              "label": "Step sound",
+              "default": "",
+              "mcreator": "stepSound",
+              "showIf": {
+                "key": "isCustomSoundType",
+                "equals": true
+              }
+            },
+            {
+              "key": "placeSound",
+              "type": "sound",
+              "label": "Place sound",
+              "default": "",
+              "mcreator": "placeSound",
+              "showIf": {
+                "key": "isCustomSoundType",
+                "equals": true
+              }
+            },
+            {
+              "key": "hitSound",
+              "type": "sound",
+              "label": "Hit sound",
+              "default": "",
+              "mcreator": "hitSound",
+              "showIf": {
+                "key": "isCustomSoundType",
+                "equals": true
+              }
+            },
+            {
+              "key": "fallSound",
+              "type": "sound",
+              "label": "Fall sound",
+              "default": "",
+              "mcreator": "fallSound",
+              "showIf": {
+                "key": "isCustomSoundType",
+                "equals": true
+              }
+            }
+          ]
+        },
+        {
+          "title": "Block item",
+          "fields": [
+            {
+              "key": "hasBlockItem",
+              "type": "boolean",
+              "label": "Has an item form",
+              "default": true,
+              "mcreator": "hasBlockItem"
+            },
+            {
+              "key": "maxStackSize",
+              "type": "integer",
+              "label": "Max stack size",
+              "default": 64,
+              "min": 1,
+              "max": 99,
+              "step": 1,
+              "mcreator": "maxStackSize",
+              "showIf": {
+                "key": "hasBlockItem",
+                "equals": true
+              }
+            },
+            {
+              "key": "rarity",
+              "type": "select",
+              "label": "Rarity",
+              "default": "COMMON",
+              "options": [
+                {
+                  "value": "COMMON",
+                  "label": "Common"
+                },
+                {
+                  "value": "UNCOMMON",
+                  "label": "Uncommon"
+                },
+                {
+                  "value": "RARE",
+                  "label": "Rare"
+                },
+                {
+                  "value": "EPIC",
+                  "label": "Epic"
+                }
+              ],
+              "mcreator": "rarity",
+              "help": "Colors the item name.",
+              "showIf": {
+                "key": "hasBlockItem",
+                "equals": true
+              }
+            },
+            {
+              "key": "immuneToFire",
+              "type": "boolean",
+              "label": "Item immune to fire",
+              "default": false,
+              "mcreator": "immuneToFire",
+              "showIf": {
+                "key": "hasBlockItem",
+                "equals": true
+              }
+            },
+            {
+              "key": "creativeTabs",
+              "type": "multiselect",
+              "elementTypes": [
+                "creative_tab"
+              ],
+              "label": "Creative tabs",
+              "default": [
+                "DECORATIONS"
+              ],
+              "mcreator": "creativeTabs",
+              "options": [
+                {
+                  "value": "BUILDING_BLOCKS",
+                  "label": "Building blocks"
+                },
+                {
+                  "value": "DECORATIONS",
+                  "label": "Natural blocks"
+                },
+                {
+                  "value": "REDSTONE",
+                  "label": "Redstone"
+                },
+                {
+                  "value": "FOOD",
+                  "label": "Food and drinks"
+                },
+                {
+                  "value": "TOOLS",
+                  "label": "Tools and utilities"
+                },
+                {
+                  "value": "COMBAT",
+                  "label": "Combat"
+                },
+                {
+                  "value": "MATERIALS",
+                  "label": "Ingredients"
+                },
+                {
+                  "value": "MISC",
+                  "label": "Spawn eggs"
+                },
+                {
+                  "value": "TRANSPORTATION",
+                  "label": "Functional blocks"
+                },
+                {
+                  "value": "BREWING",
+                  "label": "Colored blocks"
+                },
+                {
+                  "value": "OP_BLOCKS",
+                  "label": "Operator items"
+                }
+              ],
+              "help": "Creative inventory tabs that list this element. Tabs defined in this mod are offered as well.",
+              "showIf": {
+                "key": "hasBlockItem",
+                "equals": true
+              }
+            },
+            {
+              "key": "specialInformation",
+              "type": "multiline",
+              "label": "Tooltip lines",
+              "default": "",
+              "mcreator": "specialInformation.fixedValue",
+              "help": "One tooltip line per row."
+            },
+            {
+              "key": "specialInformationProcedure",
+              "type": "procedure",
+              "label": "Tooltip lines (procedure)",
+              "default": "",
+              "trigger": "item_tooltip",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "mcreator": "specialInformation.name",
+              "returns": "string_list",
+              "help": "When set, this procedure returns the tooltip lines instead."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "advanced",
+      "title": "Advanced",
+      "groups": [
+        {
+          "title": "Advanced",
+          "fields": [
+            {
+              "key": "hasTileEntity",
+              "type": "boolean",
+              "label": "Has block entity",
+              "default": false,
+              "mcreator": "hasTileEntity"
+            },
+            {
+              "key": "forceTicking",
+              "type": "boolean",
+              "label": "Always tick",
+              "default": false,
+              "mcreator": "forceTicking"
+            },
+            {
+              "key": "colorOnMap",
+              "type": "select",
+              "label": "Map color",
+              "default": "DEFAULT",
+              "options": [
+                {
+                  "value": "DEFAULT",
+                  "label": "Default"
+                },
+                {
+                  "value": "AIR",
+                  "label": "Air"
+                },
+                {
+                  "value": "GRASS",
+                  "label": "Grass"
+                },
+                {
+                  "value": "SAND",
+                  "label": "Sand"
+                },
+                {
+                  "value": "CLOTH",
+                  "label": "Cloth"
+                },
+                {
+                  "value": "TNT",
+                  "label": "Tnt"
+                },
+                {
+                  "value": "ICE",
+                  "label": "Ice"
+                },
+                {
+                  "value": "IRON",
+                  "label": "Iron"
+                },
+                {
+                  "value": "FOLIAGE",
+                  "label": "Foliage"
+                },
+                {
+                  "value": "SNOW",
+                  "label": "Snow"
+                },
+                {
+                  "value": "CLAY",
+                  "label": "Clay"
+                },
+                {
+                  "value": "DIRT",
+                  "label": "Dirt"
+                },
+                {
+                  "value": "STONE",
+                  "label": "Stone"
+                },
+                {
+                  "value": "WATER",
+                  "label": "Water"
+                },
+                {
+                  "value": "WOOD",
+                  "label": "Wood"
+                },
+                {
+                  "value": "QUARTZ",
+                  "label": "Quartz"
+                },
+                {
+                  "value": "ADOBE",
+                  "label": "Adobe"
+                },
+                {
+                  "value": "MAGENTA",
+                  "label": "Magenta"
+                },
+                {
+                  "value": "LIGHT_BLUE",
+                  "label": "Light blue"
+                },
+                {
+                  "value": "YELLOW",
+                  "label": "Yellow"
+                },
+                {
+                  "value": "LIME",
+                  "label": "Lime"
+                },
+                {
+                  "value": "PINK",
+                  "label": "Pink"
+                },
+                {
+                  "value": "GRAY",
+                  "label": "Gray"
+                },
+                {
+                  "value": "SILVER",
+                  "label": "Silver"
+                },
+                {
+                  "value": "CYAN",
+                  "label": "Cyan"
+                },
+                {
+                  "value": "PURPLE",
+                  "label": "Purple"
+                },
+                {
+                  "value": "BLUE",
+                  "label": "Blue"
+                },
+                {
+                  "value": "BROWN",
+                  "label": "Brown"
+                },
+                {
+                  "value": "GREEN",
+                  "label": "Green"
+                },
+                {
+                  "value": "RED",
+                  "label": "Red"
+                },
+                {
+                  "value": "BLACK",
+                  "label": "Black"
+                },
+                {
+                  "value": "GOLD",
+                  "label": "Gold"
+                },
+                {
+                  "value": "DIAMOND",
+                  "label": "Diamond"
+                },
+                {
+                  "value": "LAPIS",
+                  "label": "Lapis"
+                },
+                {
+                  "value": "EMERALD",
+                  "label": "Emerald"
+                },
+                {
+                  "value": "PODZOL",
+                  "label": "Podzol"
+                },
+                {
+                  "value": "NETHERRACK",
+                  "label": "Netherrack"
+                },
+                {
+                  "value": "WHITE_TERRACOTTA",
+                  "label": "White terracotta"
+                },
+                {
+                  "value": "ORANGE_TERRACOTTA",
+                  "label": "Orange terracotta"
+                },
+                {
+                  "value": "MAGENTA_TERRACOTTA",
+                  "label": "Magenta terracotta"
+                },
+                {
+                  "value": "LIGHT_BLUE_TERRACOTTA",
+                  "label": "Light blue terracotta"
+                },
+                {
+                  "value": "YELLOW_TERRACOTTA",
+                  "label": "Yellow terracotta"
+                },
+                {
+                  "value": "LIME_TERRACOTTA",
+                  "label": "Lime terracotta"
+                },
+                {
+                  "value": "PINK_TERRACOTTA",
+                  "label": "Pink terracotta"
+                },
+                {
+                  "value": "GRAY_TERRACOTTA",
+                  "label": "Gray terracotta"
+                },
+                {
+                  "value": "LIGHT_GRAY_TERRACOTTA",
+                  "label": "Light gray terracotta"
+                },
+                {
+                  "value": "CYAN_TERRACOTTA",
+                  "label": "Cyan terracotta"
+                },
+                {
+                  "value": "PURPLE_TERRACOTTA",
+                  "label": "Purple terracotta"
+                },
+                {
+                  "value": "BLUE_TERRACOTTA",
+                  "label": "Blue terracotta"
+                },
+                {
+                  "value": "BROWN_TERRACOTTA",
+                  "label": "Brown terracotta"
+                },
+                {
+                  "value": "GREEN_TERRACOTTA",
+                  "label": "Green terracotta"
+                },
+                {
+                  "value": "RED_TERRACOTTA",
+                  "label": "Red terracotta"
+                },
+                {
+                  "value": "BLACK_TERRACOTTA",
+                  "label": "Black terracotta"
+                },
+                {
+                  "value": "CRIMSON_NYLIUM",
+                  "label": "Crimson nylium"
+                },
+                {
+                  "value": "CRIMSON_STEM",
+                  "label": "Crimson stem"
+                },
+                {
+                  "value": "CRIMSON_HYPHAE",
+                  "label": "Crimson hyphae"
+                },
+                {
+                  "value": "WARPED_NYLIUM",
+                  "label": "Warped nylium"
+                },
+                {
+                  "value": "WARPED_STEM",
+                  "label": "Warped stem"
+                },
+                {
+                  "value": "WARPED_HYPHAE",
+                  "label": "Warped hyphae"
+                },
+                {
+                  "value": "WARPED_WART",
+                  "label": "Warped wart"
+                },
+                {
+                  "value": "DEEPSLATE_GRAY",
+                  "label": "Deepslate gray"
+                },
+                {
+                  "value": "RAW_IRON_PINK",
+                  "label": "Raw iron pink"
+                },
+                {
+                  "value": "LICHEN_GREEN",
+                  "label": "Lichen green"
+                }
+              ],
+              "mcreator": "colorOnMap"
+            },
+            {
+              "key": "jumpFactor",
+              "type": "number",
+              "label": "Jump multiplier",
+              "default": 1,
+              "min": -1000,
+              "max": 1000,
+              "step": 0.1,
+              "mcreator": "jumpFactor"
+            },
+            {
+              "key": "speedFactor",
+              "type": "number",
+              "label": "Speed multiplier",
+              "default": 1,
+              "min": -1000,
+              "max": 1000,
+              "step": 0.1,
+              "mcreator": "speedFactor"
+            },
+            {
+              "key": "aiPathNodeType",
+              "type": "select",
+              "label": "Pathfinding type",
+              "default": "DEFAULT",
+              "options": [
+                {
+                  "value": "DEFAULT",
+                  "label": "Default"
+                },
+                {
+                  "value": "BLOCKED",
+                  "label": "Blocked"
+                },
+                {
+                  "value": "OPEN",
+                  "label": "Open"
+                },
+                {
+                  "value": "WALKABLE",
+                  "label": "Walkable"
+                },
+                {
+                  "value": "WALKABLE_DOOR",
+                  "label": "Walkable door"
+                },
+                {
+                  "value": "TRAPDOOR",
+                  "label": "Trapdoor"
+                },
+                {
+                  "value": "POWDER_SNOW",
+                  "label": "Powder snow"
+                },
+                {
+                  "value": "DANGER_POWDER_SNOW",
+                  "label": "Danger powder snow"
+                },
+                {
+                  "value": "FENCE",
+                  "label": "Fence"
+                },
+                {
+                  "value": "LAVA",
+                  "label": "Lava"
+                },
+                {
+                  "value": "WATER",
+                  "label": "Water"
+                },
+                {
+                  "value": "WATER_BORDER",
+                  "label": "Water border"
+                },
+                {
+                  "value": "RAIL",
+                  "label": "Rail"
+                },
+                {
+                  "value": "UNPASSABLE_RAIL",
+                  "label": "Unpassable rail"
+                },
+                {
+                  "value": "DANGER_FIRE",
+                  "label": "Danger fire"
+                },
+                {
+                  "value": "DAMAGE_FIRE",
+                  "label": "Damage fire"
+                },
+                {
+                  "value": "DANGER_OTHER",
+                  "label": "Danger other"
+                },
+                {
+                  "value": "DAMAGE_OTHER",
+                  "label": "Damage other"
+                },
+                {
+                  "value": "DOOR_OPEN",
+                  "label": "Door open"
+                },
+                {
+                  "value": "DOOR_WOOD_CLOSED",
+                  "label": "Door wood closed"
+                },
+                {
+                  "value": "DOOR_IRON_CLOSED",
+                  "label": "Door iron closed"
+                },
+                {
+                  "value": "BREACH",
+                  "label": "Breach"
+                },
+                {
+                  "value": "LEAVES",
+                  "label": "Leaves"
+                },
+                {
+                  "value": "STICKY_HONEY",
+                  "label": "Sticky honey"
+                },
+                {
+                  "value": "COCOA",
+                  "label": "Cocoa"
+                },
+                {
+                  "value": "DAMAGE_CAUTIOUS",
+                  "label": "Damage cautious"
+                },
+                {
+                  "value": "DANGER_TRAPDOOR",
+                  "label": "Danger trapdoor"
+                },
+                {
+                  "value": "BIG_MOBS_CLOSE_TO_DANGER",
+                  "label": "Big mobs close to danger"
+                }
+              ],
+              "mcreator": "aiPathNodeType"
+            },
+            {
+              "key": "strippingResult",
+              "type": "item",
+              "label": "Result when stripped with an axe",
+              "default": "",
+              "mcreator": "strippingResult"
+            },
+            {
+              "key": "canBePlacedOn",
+              "type": "list",
+              "label": "Can only be placed on",
+              "default": [],
+              "fields": [
+                {
+                  "key": "item",
+                  "type": "item",
+                  "label": "Item or block",
+                  "default": "",
+                  "allowTags": true
+                }
+              ],
+              "mcreator": "canBePlacedOn",
+              "help": "Empty uses the plant type default."
+            },
+            {
+              "key": "placingCondition",
+              "type": "procedure",
+              "label": "Extra placing condition",
+              "default": "",
+              "trigger": "plant_place_condition",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "blockstate"
+              ],
+              "mcreator": "placingCondition",
+              "returns": "logic"
+            }
+          ]
+        },
+        {
+          "title": "Bone meal",
+          "fields": [
+            {
+              "key": "isBonemealable",
+              "type": "boolean",
+              "label": "Bone meal works on it",
+              "default": false,
+              "mcreator": "isBonemealable",
+              "help": "Not available for saplings."
+            },
+            {
+              "key": "isBonemealTargetCondition",
+              "type": "procedure",
+              "label": "Is valid bone meal target",
+              "default": "",
+              "trigger": "bonemeal_target",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "blockstate",
+                "clientSide"
+              ],
+              "mcreator": "isBonemealTargetCondition",
+              "returns": "logic",
+              "showIf": {
+                "key": "isBonemealable",
+                "equals": true
+              }
+            },
+            {
+              "key": "bonemealSuccessCondition",
+              "type": "procedure",
+              "label": "Bone meal success",
+              "default": "",
+              "trigger": "bonemeal_success_condition",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "blockstate"
+              ],
+              "mcreator": "bonemealSuccessCondition",
+              "returns": "logic",
+              "showIf": {
+                "key": "isBonemealable",
+                "equals": true
+              }
+            },
+            {
+              "key": "onBonemealSuccess",
+              "type": "procedure",
+              "label": "On bone meal success",
+              "default": "",
+              "trigger": "bonemeal_success",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "blockstate"
+              ],
+              "mcreator": "onBonemealSuccess",
+              "showIf": {
+                "key": "isBonemealable",
+                "equals": true
+              }
+            }
+          ]
+        },
+        {
+          "title": "Flammability",
+          "fields": [
+            {
+              "key": "ignitedByLava",
+              "type": "boolean",
+              "label": "Ignited by lava",
+              "default": false,
+              "mcreator": "ignitedByLava"
+            },
+            {
+              "key": "flammability",
+              "type": "integer",
+              "label": "Flammability",
+              "default": 100,
+              "min": 0,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "flammability"
+            },
+            {
+              "key": "fireSpreadSpeed",
+              "type": "integer",
+              "label": "Fire spread speed",
+              "default": 60,
+              "min": 0,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "fireSpreadSpeed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "triggers",
+      "title": "Triggers",
+      "groups": [
+        {
+          "title": "Events",
+          "fields": [
+            {
+              "key": "onBlockAdded",
+              "type": "procedure",
+              "label": "Placed in world",
+              "default": "",
+              "trigger": "block_added",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "blockstate",
+                "oldState",
+                "moving"
+              ],
+              "mcreator": "onBlockAdded"
+            },
+            {
+              "key": "onNeighbourBlockChanges",
+              "type": "procedure",
+              "label": "Neighbor changed",
+              "default": "",
+              "trigger": "block_neighbour_changed",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "blockstate"
+              ],
+              "mcreator": "onNeighbourBlockChanges"
+            },
+            {
+              "key": "onTickUpdate",
+              "type": "procedure",
+              "label": "Scheduled tick",
+              "default": "",
+              "trigger": "block_tick",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "blockstate"
+              ],
+              "mcreator": "onTickUpdate"
+            },
+            {
+              "key": "onRandomUpdateEvent",
+              "type": "procedure",
+              "label": "Client display tick",
+              "default": "",
+              "trigger": "block_display_tick",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "blockstate"
+              ],
+              "mcreator": "onRandomUpdateEvent"
+            },
+            {
+              "key": "onDestroyedByPlayer",
+              "type": "procedure",
+              "label": "Broken by player",
+              "default": "",
+              "trigger": "block_destroyed_player",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "blockstate"
+              ],
+              "mcreator": "onDestroyedByPlayer"
+            },
+            {
+              "key": "onDestroyedByExplosion",
+              "type": "procedure",
+              "label": "Destroyed by explosion",
+              "default": "",
+              "trigger": "block_destroyed_explosion",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world"
+              ],
+              "mcreator": "onDestroyedByExplosion"
+            },
+            {
+              "key": "onStartToDestroy",
+              "type": "procedure",
+              "label": "Player starts breaking",
+              "default": "",
+              "trigger": "block_start_destroy",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "blockstate"
+              ],
+              "mcreator": "onStartToDestroy"
+            },
+            {
+              "key": "onEntityCollides",
+              "type": "procedure",
+              "label": "Entity inside",
+              "default": "",
+              "trigger": "block_entity_collides",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "blockstate"
+              ],
+              "mcreator": "onEntityCollides"
+            },
+            {
+              "key": "onBlockPlacedBy",
+              "type": "procedure",
+              "label": "Placed by entity",
+              "default": "",
+              "trigger": "block_placed_by",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack",
+                "blockstate"
+              ],
+              "mcreator": "onBlockPlacedBy"
+            },
+            {
+              "key": "onRightClicked",
+              "type": "procedure",
+              "label": "Right-clicked",
+              "default": "",
+              "trigger": "block_right_clicked",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "blockstate",
+                "direction",
+                "hitX",
+                "hitY",
+                "hitZ"
+              ],
+              "mcreator": "onRightClicked",
+              "returns": "actionresulttype"
+            },
+            {
+              "key": "onEntityWalksOn",
+              "type": "procedure",
+              "label": "Entity walks on it",
+              "default": "",
+              "trigger": "block_entity_walks",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "blockstate"
+              ],
+              "mcreator": "onEntityWalksOn"
+            },
+            {
+              "key": "onHitByProjectile",
+              "type": "procedure",
+              "label": "Hit by projectile",
+              "default": "",
+              "trigger": "block_projectile_hit",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "blockstate",
+                "direction",
+                "hitX",
+                "hitY",
+                "hitZ"
+              ],
+              "mcreator": "onHitByProjectile"
+            },
+            {
+              "key": "onEntityFallsOn",
+              "type": "procedure",
+              "label": "Entity falls on it",
+              "default": "",
+              "trigger": "block_entity_falls",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "blockstate",
+                "distance"
+              ],
+              "mcreator": "onEntityFallsOn"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "generation",
+      "title": "Generation",
+      "groups": [
+        {
+          "title": "World generation",
+          "fields": [
+            {
+              "key": "generateFeature",
+              "type": "boolean",
+              "label": "Generates in the world",
+              "default": false,
+              "mcreator": "generateFeature"
+            },
+            {
+              "key": "frequencyOnChunks",
+              "type": "integer",
+              "label": "Patches per chunk",
+              "default": 5,
+              "min": 0,
+              "max": 40,
+              "step": 1,
+              "mcreator": "frequencyOnChunks",
+              "showIf": {
+                "key": "generateFeature",
+                "equals": true
+              }
+            },
+            {
+              "key": "patchSize",
+              "type": "integer",
+              "label": "Patch size",
+              "default": 64,
+              "min": 1,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "patchSize",
+              "showIf": {
+                "key": "generateFeature",
+                "equals": true
+              }
+            },
+            {
+              "key": "generateAtAnyHeight",
+              "type": "boolean",
+              "label": "Any height, not just the surface",
+              "default": false,
+              "mcreator": "generateAtAnyHeight",
+              "showIf": {
+                "key": "generateFeature",
+                "equals": true
+              }
+            },
+            {
+              "key": "generationType",
+              "type": "select",
+              "label": "Placement style",
+              "default": "Flower",
+              "options": [
+                {
+                  "value": "Flower",
+                  "label": "Flower"
+                },
+                {
+                  "value": "Grass",
+                  "label": "Grass"
+                }
+              ],
+              "mcreator": "generationType",
+              "showIf": {
+                "key": "generateFeature",
+                "equals": true
+              }
+            },
+            {
+              "key": "restrictionBiomes",
+              "type": "list",
+              "label": "Biomes",
+              "default": [],
+              "fields": [
+                {
+                  "key": "biome",
+                  "type": "biome",
+                  "label": "Biome",
+                  "default": "",
+                  "allowTags": true
+                }
+              ],
+              "mcreator": "restrictionBiomes",
+              "showIf": {
+                "key": "generateFeature",
+                "equals": true
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

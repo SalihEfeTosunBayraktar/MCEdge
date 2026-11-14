@@ -1,0 +1,235 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "gui",
+  "folder": "guis",
+  "name": "GUI",
+  "description": "A screen or container menu laid out in the visual editor.",
+  "icon": "layout",
+  "langKey": null,
+  "mcreator": "gui",
+  "pages": [
+    {
+      "id": "editor",
+      "title": "Editor",
+      "groups": [
+        {
+          "title": "Screen",
+          "fields": [
+            {
+              "key": "type",
+              "type": "select",
+              "label": "Screen type",
+              "help": "A plain screen, or a container with item slots and the player inventory.",
+              "default": 0,
+              "options": [
+                {
+                  "value": 0,
+                  "label": "Without slots"
+                },
+                {
+                  "value": 1,
+                  "label": "With slots"
+                }
+              ],
+              "mcreator": "type"
+            },
+            {
+              "key": "width",
+              "type": "integer",
+              "label": "Width",
+              "help": "Background width in pixels.",
+              "default": 176,
+              "min": 0,
+              "max": 512,
+              "step": 1,
+              "mcreator": "width"
+            },
+            {
+              "key": "height",
+              "type": "integer",
+              "label": "Height",
+              "help": "Background height in pixels.",
+              "default": 166,
+              "min": 0,
+              "max": 512,
+              "step": 1,
+              "mcreator": "height"
+            },
+            {
+              "key": "inventoryOffsetX",
+              "type": "integer",
+              "label": "Player inventory offset X",
+              "help": "Horizontal shift of the player inventory slots.",
+              "default": 0,
+              "step": 1,
+              "showIf": {
+                "key": "type",
+                "equals": 1
+              },
+              "mcreator": "inventoryOffsetX"
+            },
+            {
+              "key": "inventoryOffsetY",
+              "type": "integer",
+              "label": "Player inventory offset Y",
+              "help": "Vertical shift of the player inventory slots.",
+              "default": 0,
+              "step": 1,
+              "showIf": {
+                "key": "type",
+                "equals": 1
+              },
+              "mcreator": "inventoryOffsetY"
+            },
+            {
+              "key": "renderBgLayer",
+              "type": "boolean",
+              "label": "Draw background",
+              "help": "Draw the default panel background behind the widgets.",
+              "default": true,
+              "mcreator": "renderBgLayer"
+            },
+            {
+              "key": "anyDistance",
+              "type": "boolean",
+              "label": "Stay open at any distance",
+              "help": "Keeps the GUI open when the player moves away from its block.",
+              "default": false
+            },
+            {
+              "key": "doesPauseGame",
+              "type": "boolean",
+              "label": "Pause game",
+              "help": "Pause single player while the screen is open.",
+              "default": false,
+              "mcreator": "doesPauseGame"
+            }
+          ]
+        },
+        {
+          "title": "Layout",
+          "fields": [
+            {
+              "key": "components",
+              "type": "gui_layout",
+              "label": "Widgets",
+              "help": "Labels, buttons, slots, images, text fields and other widgets placed on the screen.",
+              "default": [],
+              "mcreator": "components"
+            }
+          ]
+        },
+        {
+          "title": "Grid",
+          "fields": [
+            {
+              "key": "gridSx",
+              "type": "integer",
+              "label": "Grid cell width",
+              "help": "Horizontal grid spacing used for snapping.",
+              "default": 18,
+              "min": 1,
+              "step": 1,
+              "mcreator": "gridSettings.sx"
+            },
+            {
+              "key": "gridSy",
+              "type": "integer",
+              "label": "Grid cell height",
+              "help": "Vertical grid spacing used for snapping.",
+              "default": 18,
+              "min": 1,
+              "step": 1,
+              "mcreator": "gridSettings.sy"
+            },
+            {
+              "key": "gridOx",
+              "type": "integer",
+              "label": "Grid offset X",
+              "help": "Horizontal grid offset.",
+              "default": 11,
+              "step": 1,
+              "mcreator": "gridSettings.ox"
+            },
+            {
+              "key": "gridOy",
+              "type": "integer",
+              "label": "Grid offset Y",
+              "help": "Vertical grid offset.",
+              "default": 15,
+              "step": 1,
+              "mcreator": "gridSettings.oy"
+            },
+            {
+              "key": "snapOnGrid",
+              "type": "boolean",
+              "label": "Snap to grid",
+              "help": "Snap widgets to the grid while editing.",
+              "default": false,
+              "mcreator": "gridSettings.snapOnGrid"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "triggers",
+      "title": "Triggers",
+      "groups": [
+        {
+          "title": "Screen events",
+          "fields": [
+            {
+              "key": "onOpen",
+              "type": "procedure",
+              "label": "When opened",
+              "help": "Runs on the server when the screen opens.",
+              "default": "",
+              "trigger": "gui_opened",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity"
+              ],
+              "mcreator": "onOpen"
+            },
+            {
+              "key": "onTick",
+              "type": "procedure",
+              "label": "While open (every tick)",
+              "help": "Runs on the server every tick while the screen is open.",
+              "default": "",
+              "trigger": "gui_tick",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity"
+              ],
+              "mcreator": "onTick"
+            },
+            {
+              "key": "onClosed",
+              "type": "procedure",
+              "label": "When closed",
+              "help": "Runs when the screen is closed.",
+              "default": "",
+              "trigger": "gui_closed",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity"
+              ],
+              "mcreator": "onClosed"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mcedge/elements/recipe.schema.json",
+  "title": "MCEdge Recipe element",
+  "description": "Crafting (shaped or shapeless), smelting, blasting, smoking, campfire, stonecutting, smithing and brewing recipes.",
+  "type": "object",
+  "required": [
+    "id"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "title": {
+      "type": "string"
+    },
+    "recipeType": {
+      "title": "Recipe type",
+      "enum": [
+        "Crafting",
+        "Smelting",
+        "Blasting",
+        "Smoking",
+        "Stone cutting",
+        "Campfire cooking",
+        "Smithing",
+        "Brewing"
+      ]
+    },
+    "name": {
+      "title": "Recipe id",
+      "description": "Registry path of the recipe; defaults to the element name. Reusing a vanilla id overrides it.",
+      "type": "string"
+    },
+    "namespace": {
+      "title": "Namespace",
+      "enum": [
+        "mod",
+        "minecraft"
+      ]
+    },
+    "group": {
+      "title": "Recipe book group",
+      "description": "Recipes with the same group are shown together.",
+      "type": "string"
+    },
+    "unlockingItems": {
+      "title": "Unlocked by obtaining",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "title": "Item or block",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "recipeShapeless": {
+      "title": "Shapeless",
+      "type": "boolean"
+    },
+    "craftingBookCategory": {
+      "title": "Recipe book tab",
+      "enum": [
+        "MISC",
+        "BUILDING",
+        "REDSTONE",
+        "EQUIPMENT"
+      ]
+    },
+    "recipeSlots": {
+      "title": "Ingredients",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 9,
+      "maxItems": 9
+    },
+    "recipeReturnStack": {
+      "title": "Result",
+      "type": "string"
+    },
+    "recipeRetstackSize": {
+      "title": "Result count",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 99
+    },
+    "smeltingInputStack": {
+      "title": "Input",
+      "type": "string"
+    },
+    "smeltingReturnStack": {
+      "title": "Result",
+      "type": "string"
+    },
+    "blastingInputStack": {
+      "title": "Input",
+      "type": "string"
+    },
+    "blastingReturnStack": {
+      "title": "Result",
+      "type": "string"
+    },
+    "smokingInputStack": {
+      "title": "Input",
+      "type": "string"
+    },
+    "smokingReturnStack": {
+      "title": "Result",
+      "type": "string"
+    },
+    "campfireCookingInputStack": {
+      "title": "Input",
+      "type": "string"
+    },
+    "campfireCookingReturnStack": {
+      "title": "Result",
+      "type": "string"
+    },
+    "xpReward": {
+      "title": "Experience reward",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 256
+    },
+    "cookingTime": {
+      "title": "Cooking time (ticks)",
+      "description": "Vanilla uses 200 for smelting, 600 for campfires, and 100 for blasting/smoking before 26.3.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "cookingBookCategory": {
+      "title": "Recipe book tab",
+      "enum": [
+        "MISC",
+        "FOOD",
+        "BLOCKS"
+      ]
+    },
+    "stoneCuttingInputStack": {
+      "title": "Input",
+      "type": "string"
+    },
+    "stoneCuttingReturnStack": {
+      "title": "Result",
+      "type": "string"
+    },
+    "smithingInputTemplateStack": {
+      "title": "Template",
+      "type": "string"
+    },
+    "smithingInputStack": {
+      "title": "Base item",
+      "type": "string"
+    },
+    "smithingInputAdditionStack": {
+      "title": "Addition",
+      "type": "string"
+    },
+    "smithingReturnStack": {
+      "title": "Result",
+      "type": "string"
+    },
+    "brewingInputStack": {
+      "title": "Bottle input",
+      "type": "string"
+    },
+    "brewingIngredientStack": {
+      "title": "Ingredient",
+      "type": "string"
+    },
+    "brewingReturnStack": {
+      "title": "Result",
+      "type": "string"
+    }
+  }
+}

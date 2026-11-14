@@ -1,0 +1,12 @@
+ruby hello 42
+rubyop
+forceload add 0 0
+setblock 0 100 0 wavethree:ruby_chest
+setblock 1 100 0 wavethree:ruby_safe
+item replace block 0 100 0 container.2 with wavethree:ruby 5
+data get block 0 100 0
+data get block 1 100 0
+@wait 3
+stop
+@wait 20
+@kill

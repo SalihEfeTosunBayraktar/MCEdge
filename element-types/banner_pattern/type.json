@@ -1,0 +1,65 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "banner_pattern",
+  "folder": "banner_patterns",
+  "name": "Banner pattern",
+  "description": "A loom pattern for banners and shields.",
+  "icon": "flag",
+  "langKey": "banner_pattern",
+  "mcreator": "bannerpattern",
+  "pages": [
+    {
+      "id": "main",
+      "title": "Banner pattern",
+      "groups": [
+        {
+          "title": "Textures",
+          "fields": [
+            {
+              "key": "texture",
+              "type": "texture",
+              "label": "Banner texture",
+              "help": "64x64 pattern mask applied to banners.",
+              "default": "",
+              "textureKind": "other",
+              "required": true,
+              "mcreator": "texture"
+            },
+            {
+              "key": "shieldTexture",
+              "type": "texture",
+              "label": "Shield texture",
+              "help": "64x64 pattern mask applied to shields.",
+              "default": "",
+              "textureKind": "other",
+              "required": true,
+              "mcreator": "shieldTexture"
+            }
+          ]
+        },
+        {
+          "title": "Properties",
+          "fields": [
+            {
+              "key": "name",
+              "type": "text",
+              "label": "Name",
+              "help": "Pattern name shown on banner tooltips.",
+              "default": "",
+              "required": true,
+              "mcreator": "name"
+            },
+            {
+              "key": "requireItem",
+              "type": "boolean",
+              "label": "Needs pattern item",
+              "help": "Only selectable in the loom when a banner pattern item is inserted.",
+              "default": false,
+              "mcreator": "requireItem"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

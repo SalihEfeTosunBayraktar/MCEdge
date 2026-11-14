@@ -1,0 +1,7 @@
+newmtl crystal
+Kd 1 1 1
+map_Kd ruby_gem_face.png
+
+newmtl ember
+Kd 1 1 1
+map_Kd ../textures/ruby_block.png

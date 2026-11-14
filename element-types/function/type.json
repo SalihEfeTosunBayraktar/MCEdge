@@ -1,0 +1,59 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "function",
+  "folder": "functions",
+  "name": "Function",
+  "description": "An mcfunction file: a list of commands run together.",
+  "icon": "list",
+  "langKey": null,
+  "mcreator": "function",
+  "pages": [
+    {
+      "id": "main",
+      "title": "Function",
+      "groups": [
+        {
+          "title": "Function",
+          "fields": [
+            {
+              "key": "name",
+              "type": "text",
+              "label": "Registry name",
+              "help": "Path of the function, lowercase; slashes create sub folders.",
+              "default": "",
+              "required": true,
+              "pattern": "^[a-z0-9_/]+$",
+              "mcreator": "name"
+            },
+            {
+              "key": "namespace",
+              "type": "select",
+              "label": "Namespace",
+              "help": "Namespace the function lives in. \"minecraft\" lets it hook into vanilla function tags.",
+              "default": "mod",
+              "options": [
+                {
+                  "value": "mod",
+                  "label": "This mod"
+                },
+                {
+                  "value": "minecraft",
+                  "label": "minecraft"
+                }
+              ],
+              "mcreator": "namespace"
+            },
+            {
+              "key": "code",
+              "type": "multiline",
+              "label": "Commands",
+              "help": "One command per line, without a leading slash. Lines starting with # are comments.",
+              "default": "# Enter the function code here",
+              "mcreator": "code"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

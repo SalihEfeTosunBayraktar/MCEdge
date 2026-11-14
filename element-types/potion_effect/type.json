@@ -1,0 +1,277 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "potion_effect",
+  "folder": "potion_effects",
+  "name": "Potion effect",
+  "icon": "effect",
+  "langKey": "effect",
+  "mcreator": "potioneffect",
+  "description": "A status effect with icon, color, attribute modifiers and procedures while active.",
+  "pages": [
+    {
+      "id": "properties",
+      "title": "Properties",
+      "groups": [
+        {
+          "title": "Effect",
+          "fields": [
+            {
+              "key": "effectName",
+              "type": "text",
+              "label": "Display name",
+              "default": "",
+              "mcreator": "effectName",
+              "required": true
+            },
+            {
+              "key": "icon",
+              "type": "texture",
+              "label": "Icon",
+              "default": "",
+              "textureKind": "effect",
+              "mcreator": "icon",
+              "required": true
+            },
+            {
+              "key": "color",
+              "type": "color",
+              "label": "Color",
+              "default": "#ffffff",
+              "mcreator": "color"
+            },
+            {
+              "key": "isInstant",
+              "type": "boolean",
+              "label": "Instant effect",
+              "default": false,
+              "mcreator": "isInstant"
+            },
+            {
+              "key": "particle",
+              "type": "particle",
+              "label": "Custom particle",
+              "default": "",
+              "mcreator": "particle",
+              "showIf": {
+                "key": "isInstant",
+                "equals": false
+              }
+            },
+            {
+              "key": "onAddedSound",
+              "type": "sound",
+              "label": "Sound when applied",
+              "default": "",
+              "mcreator": "onAddedSound"
+            },
+            {
+              "key": "mobEffectCategory",
+              "type": "select",
+              "label": "Category",
+              "default": "NEUTRAL",
+              "options": [
+                {
+                  "value": "NEUTRAL",
+                  "label": "Neutral"
+                },
+                {
+                  "value": "HARMFUL",
+                  "label": "Harmful"
+                },
+                {
+                  "value": "BENEFICIAL",
+                  "label": "Beneficial"
+                }
+              ],
+              "mcreator": "mobEffectCategory"
+            },
+            {
+              "key": "renderStatusInInventory",
+              "type": "boolean",
+              "label": "Show in inventory",
+              "default": true,
+              "mcreator": "renderStatusInInventory"
+            },
+            {
+              "key": "renderStatusInHUD",
+              "type": "boolean",
+              "label": "Show on HUD",
+              "default": true,
+              "mcreator": "renderStatusInHUD"
+            },
+            {
+              "key": "isCuredbyHoney",
+              "type": "boolean",
+              "label": "Cured by honey",
+              "default": false,
+              "mcreator": "isCuredbyHoney"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "attributes",
+      "title": "Attribute modifiers",
+      "groups": [
+        {
+          "title": "Modifiers",
+          "fields": [
+            {
+              "key": "modifiers",
+              "type": "list",
+              "label": "Attribute modifiers",
+              "default": [],
+              "fields": [
+                {
+                  "key": "attribute",
+                  "type": "attribute",
+                  "label": "Attribute",
+                  "default": "minecraft:attack_damage"
+                },
+                {
+                  "key": "amount",
+                  "type": "number",
+                  "label": "Amount",
+                  "default": 0,
+                  "min": -1024,
+                  "max": 1024,
+                  "step": 0.001
+                },
+                {
+                  "key": "operation",
+                  "type": "select",
+                  "label": "Operation",
+                  "default": "ADD_VALUE",
+                  "options": [
+                    {
+                      "value": "ADD_VALUE",
+                      "label": "Add to base value"
+                    },
+                    {
+                      "value": "ADD_MULTIPLIED_BASE",
+                      "label": "Add percentage of base"
+                    },
+                    {
+                      "value": "ADD_MULTIPLIED_TOTAL",
+                      "label": "Multiply total"
+                    }
+                  ]
+                }
+              ],
+              "mcreator": "modifiers",
+              "help": "Changes entity attributes while this is active."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "triggers",
+      "title": "Triggers",
+      "groups": [
+        {
+          "title": "Events",
+          "fields": [
+            {
+              "key": "onStarted",
+              "type": "procedure",
+              "label": "Applied",
+              "default": "",
+              "trigger": "effect_started",
+              "dependencies": [
+                "entity",
+                "x",
+                "y",
+                "z",
+                "world",
+                "amplifier"
+              ],
+              "mcreator": "onStarted"
+            },
+            {
+              "key": "onActiveTick",
+              "type": "procedure",
+              "label": "Every active tick",
+              "default": "",
+              "trigger": "effect_tick",
+              "dependencies": [
+                "entity",
+                "x",
+                "y",
+                "z",
+                "world",
+                "amplifier"
+              ],
+              "mcreator": "onActiveTick"
+            },
+            {
+              "key": "onExpired",
+              "type": "procedure",
+              "label": "Expired",
+              "default": "",
+              "trigger": "effect_expired",
+              "dependencies": [
+                "entity",
+                "x",
+                "y",
+                "z",
+                "world",
+                "amplifier"
+              ],
+              "mcreator": "onExpired"
+            },
+            {
+              "key": "activeTickCondition",
+              "type": "procedure",
+              "label": "Tick condition",
+              "default": "",
+              "trigger": "effect_tick_condition",
+              "dependencies": [
+                "duration",
+                "amplifier"
+              ],
+              "mcreator": "activeTickCondition",
+              "returns": "logic",
+              "help": "Decides on which ticks the tick procedure runs."
+            },
+            {
+              "key": "onMobHurt",
+              "type": "procedure",
+              "label": "Affected entity hurt",
+              "default": "",
+              "trigger": "effect_mob_hurt",
+              "dependencies": [
+                "entity",
+                "x",
+                "y",
+                "z",
+                "world",
+                "amplifier",
+                "damagesource",
+                "amount"
+              ],
+              "mcreator": "onMobHurt"
+            },
+            {
+              "key": "onMobRemoved",
+              "type": "procedure",
+              "label": "Affected entity removed",
+              "default": "",
+              "trigger": "effect_mob_removed",
+              "dependencies": [
+                "entity",
+                "x",
+                "y",
+                "z",
+                "world",
+                "amplifier"
+              ],
+              "mcreator": "onMobRemoved"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

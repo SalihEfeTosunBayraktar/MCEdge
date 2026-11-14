@@ -1,0 +1,219 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "projectile",
+  "folder": "projectiles",
+  "name": "Projectile",
+  "icon": "arrow",
+  "langKey": "entity",
+  "mcreator": "projectile",
+  "description": "A shootable projectile with model, damage and hit procedures.",
+  "pages": [
+    {
+      "id": "properties",
+      "title": "Properties",
+      "groups": [
+        {
+          "title": "Appearance",
+          "fields": [
+            {
+              "key": "projectileItem",
+              "type": "item",
+              "label": "Projectile item",
+              "default": "",
+              "mcreator": "projectileItem",
+              "required": true,
+              "help": "Item rendered when using the default model, and used as ammo."
+            },
+            {
+              "key": "entityModel",
+              "type": "model",
+              "label": "Model",
+              "default": "Default",
+              "modelKinds": [
+                "builtin",
+                "java"
+              ],
+              "mcreator": "entityModel"
+            },
+            {
+              "key": "customModelTexture",
+              "type": "texture",
+              "label": "Model texture",
+              "default": "",
+              "textureKind": "entity",
+              "mcreator": "customModelTexture",
+              "help": "Used with a custom model."
+            },
+            {
+              "key": "modelWidth",
+              "type": "number",
+              "label": "Hitbox width",
+              "default": 0.5,
+              "min": 0,
+              "max": 1024,
+              "step": 0.1,
+              "mcreator": "modelWidth"
+            },
+            {
+              "key": "modelHeight",
+              "type": "number",
+              "label": "Hitbox height",
+              "default": 0.5,
+              "min": 0,
+              "max": 1024,
+              "step": 0.1,
+              "mcreator": "modelHeight"
+            },
+            {
+              "key": "showParticles",
+              "type": "boolean",
+              "label": "Trail particles",
+              "default": false,
+              "mcreator": "showParticles"
+            },
+            {
+              "key": "actionSound",
+              "type": "sound",
+              "label": "Shoot sound",
+              "default": "minecraft:entity.arrow.shoot",
+              "mcreator": "actionSound"
+            }
+          ]
+        },
+        {
+          "title": "Behavior",
+          "fields": [
+            {
+              "key": "power",
+              "type": "number",
+              "label": "Speed",
+              "default": 1,
+              "min": 0,
+              "max": 100,
+              "step": 0.1,
+              "mcreator": "power"
+            },
+            {
+              "key": "damage",
+              "type": "number",
+              "label": "Damage",
+              "default": 5,
+              "min": 0,
+              "max": 10000,
+              "step": 0.1,
+              "mcreator": "damage"
+            },
+            {
+              "key": "knockback",
+              "type": "integer",
+              "label": "Knockback",
+              "default": 5,
+              "min": 0,
+              "max": 500,
+              "step": 1,
+              "mcreator": "knockback"
+            },
+            {
+              "key": "igniteFire",
+              "type": "boolean",
+              "label": "Sets targets on fire",
+              "default": false,
+              "mcreator": "igniteFire"
+            },
+            {
+              "key": "disableGravity",
+              "type": "boolean",
+              "label": "No gravity",
+              "default": false,
+              "mcreator": "disableGravity"
+            },
+            {
+              "key": "disableDiscarding",
+              "type": "boolean",
+              "label": "Stays after hitting",
+              "default": false,
+              "mcreator": "disableDiscarding"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "triggers",
+      "title": "Triggers",
+      "groups": [
+        {
+          "title": "Events",
+          "fields": [
+            {
+              "key": "onHitsBlock",
+              "type": "procedure",
+              "label": "Hits a block",
+              "default": "",
+              "trigger": "projectile_hits_block",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "immediatesourceentity"
+              ],
+              "mcreator": "onHitsBlock"
+            },
+            {
+              "key": "onHitsPlayer",
+              "type": "procedure",
+              "label": "Hits a player",
+              "default": "",
+              "trigger": "projectile_hits_player",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "sourceentity",
+                "immediatesourceentity"
+              ],
+              "mcreator": "onHitsPlayer"
+            },
+            {
+              "key": "onHitsEntity",
+              "type": "procedure",
+              "label": "Hits an entity",
+              "default": "",
+              "trigger": "projectile_hits_entity",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "sourceentity",
+                "immediatesourceentity"
+              ],
+              "mcreator": "onHitsEntity"
+            },
+            {
+              "key": "onFlyingTick",
+              "type": "procedure",
+              "label": "Every tick while flying",
+              "default": "",
+              "trigger": "projectile_tick",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "immediatesourceentity"
+              ],
+              "mcreator": "onFlyingTick"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

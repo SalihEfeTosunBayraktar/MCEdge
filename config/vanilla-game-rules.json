@@ -1,0 +1,19 @@
+{
+  "$comment": "Game rules of Minecraft, for the check that a world_game_rule_* block names a rule that exists (src/ir/gameRules.ts). Names are compared without underscores and case, so the camelCase names of 1.16.5 to 1.21.5 and the snake_case ids of 26.x share one list.",
+  "rules": [
+    "announceAdvancements", "blockExplosionDropDecay", "commandBlockOutput", "commandModificationBlockLimit", "disableElytraMovementCheck",
+    "disablePlayerMovementCheck", "disableRaids", "doDaylightCycle", "doEntityDrops", "doFireTick", "doImmediateRespawn", "doInsomnia",
+    "doLimitedCrafting", "doMobLoot", "doMobSpawning", "doPatrolSpawning", "doTileDrops", "doTraderSpawning", "doVinesSpread",
+    "doWardenSpawning", "doWeatherCycle", "drowningDamage", "enderPearlsVanishOnDeath", "fallDamage", "fireDamage", "forgiveDeadPlayers",
+    "freezeDamage", "globalSoundEvents", "keepInventory", "lavaSourceConversion", "logAdminCommands", "maxCommandChainLength",
+    "maxCommandForkCount", "maxEntityCramming", "minecartMaxSpeed", "mobExplosionDropDecay", "mobGriefing", "naturalRegeneration",
+    "playersNetherPortalCreativeDelay", "playersNetherPortalDefaultDelay", "playersSleepingPercentage", "projectilesCanBreakBlocks",
+    "randomTickSpeed", "reducedDebugInfo", "sendCommandFeedback", "showDeathMessages", "snowAccumulationHeight", "spawnChunkRadius",
+    "spawnRadius", "spectatorsGenerateChunks", "tntExplodes", "tntExplosionDropDecay", "universalAnger", "waterSourceConversion",
+    "advance_time", "advance_weather", "allow_entering_nether_using_portals", "block_drops", "command_blocks_work", "elytra_movement_check",
+    "entity_drops", "fire_spread_radius_around_player", "immediate_respawn", "limited_crafting", "locator_bar", "max_block_modifications",
+    "max_command_forks", "max_command_sequence_length", "max_minecart_speed", "mob_drops", "natural_health_regeneration", "player_movement_check",
+    "pvp", "raids", "respawn_radius", "show_advancement_messages", "spawn_monsters", "spawn_patrols", "spawn_phantoms", "spawn_wandering_traders",
+    "spawn_wardens", "spread_vines"
+  ]
+}

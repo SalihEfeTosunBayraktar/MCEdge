@@ -1,0 +1,29 @@
+/**
+ * Minecraft's languages (code -> name in that language), for the Localization screen's language picker and the MCP
+ * tools. Codes are the lang file names the game loads (assets/<mod>/lang/<code>.json).
+ */
+export const MINECRAFT_LANGUAGES: Record<string, string> = {
+  af_za: "Afrikaans", ar_sa: "العربية", ast_es: "Asturianu", az_az: "Azərbaycanca", ba_ru: "Башҡортса",
+  be_by: "Беларуская", bg_bg: "Български", br_fr: "Brezhoneg", bs_ba: "Bosanski", ca_es: "Català",
+  cs_cz: "Čeština", cy_gb: "Cymraeg", da_dk: "Dansk", de_at: "Deutsch (Österreich)", de_ch: "Schwiizerdutsch",
+  de_de: "Deutsch", el_gr: "Ελληνικά", en_au: "English (Australia)", en_ca: "English (Canada)", en_gb: "English (UK)",
+  en_nz: "English (New Zealand)", en_pt: "Pirate Speak", en_ud: "ɥsᴉlᵷuƎ (upside down)", en_us: "English (US)",
+  eo_uy: "Esperanto", es_ar: "Español (Argentina)", es_cl: "Español (Chile)", es_ec: "Español (Ecuador)",
+  es_es: "Español (España)", es_mx: "Español (México)", es_uy: "Español (Uruguay)", es_ve: "Español (Venezuela)",
+  et_ee: "Eesti", eu_es: "Euskara", fa_ir: "فارسی", fi_fi: "Suomi", fil_ph: "Filipino", fo_fo: "Føroyskt",
+  fr_ca: "Français (Canada)", fr_fr: "Français (France)", fy_nl: "Frysk", ga_ie: "Gaeilge", gd_gb: "Gàidhlig",
+  gl_es: "Galego", haw_us: "ʻŌlelo Hawaiʻi", he_il: "עברית", hi_in: "हिन्दी", hr_hr: "Hrvatski", hu_hu: "Magyar",
+  hy_am: "Հայերեն", id_id: "Bahasa Indonesia", ig_ng: "Igbo", io_en: "Ido", is_is: "Íslenska", it_it: "Italiano",
+  ja_jp: "日本語", jbo_en: "la .lojban.", ka_ge: "ქართული", kk_kz: "Қазақша", kn_in: "ಕನ್ನಡ", ko_kr: "한국어",
+  kw_gb: "Kernewek", la_la: "Latina", lb_lu: "Lëtzebuergesch", li_li: "Limburgs", lol_us: "LOLCAT",
+  lt_lt: "Lietuvių", lv_lv: "Latviešu", mk_mk: "Македонски", mn_mn: "Монгол", ms_my: "Bahasa Melayu", mt_mt: "Malti",
+  nb_no: "Norsk bokmål", nl_be: "Nederlands (België)", nl_nl: "Nederlands", nn_no: "Norsk nynorsk", oc_fr: "Occitan",
+  pl_pl: "Polski", pt_br: "Português (Brasil)", pt_pt: "Português (Portugal)", ro_ro: "Română", ru_ru: "Русский",
+  sk_sk: "Slovenčina", sl_si: "Slovenščina", so_so: "Af-Soomaali", sq_al: "Shqip", sr_sp: "Српски",
+  sv_se: "Svenska", ta_in: "தமிழ்", th_th: "ไทย", tl_ph: "Tagalog", tr_tr: "Türkçe", tt_ru: "Татарча",
+  uk_ua: "Українська", val_es: "Català (Valencià)", vi_vn: "Tiếng Việt", yi_de: "ייִדיש", yo_ng: "Yorùbá",
+  zh_cn: "简体中文", zh_hk: "繁體中文 (香港)", zh_tw: "繁體中文 (台灣)",
+};
+
+/** A lang file name: two or three letters, underscore, two or three letters. */
+export const LANGUAGE_CODE = /^[a-z]{2,3}_[a-z]{2,3}$/;

@@ -1,0 +1,969 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "dimension",
+  "folder": "dimensions",
+  "name": "Dimension",
+  "description": "A new world with its terrain generator, sky, rules and an optional portal with igniter.",
+  "icon": "globe",
+  "langKey": "item",
+  "mcreator": "dimension",
+  "pages": [
+    {
+      "id": "generation",
+      "title": "Generation",
+      "groups": [
+        {
+          "title": "Terrain",
+          "fields": [
+            {
+              "key": "worldGenType",
+              "type": "select",
+              "label": "Generator",
+              "help": "Terrain style of the dimension.",
+              "default": "Normal world gen",
+              "options": [
+                {
+                  "value": "Normal world gen",
+                  "label": "Overworld-like"
+                },
+                {
+                  "value": "Nether like gen",
+                  "label": "Nether-like"
+                },
+                {
+                  "value": "End like gen",
+                  "label": "End-like"
+                },
+                {
+                  "value": "Void gen",
+                  "label": "Void"
+                }
+              ],
+              "mcreator": "worldGenType"
+            },
+            {
+              "key": "mainFillerBlock",
+              "type": "block",
+              "label": "Main filler block",
+              "help": "Block the terrain is made of (stone in the Overworld). Unused for void worlds.",
+              "default": "minecraft:stone",
+              "required": true,
+              "mcreator": "mainFillerBlock"
+            },
+            {
+              "key": "fluidBlock",
+              "type": "block",
+              "label": "Sea fluid",
+              "help": "Block filling oceans and lakes.",
+              "default": "minecraft:water",
+              "required": true,
+              "mcreator": "fluidBlock"
+            },
+            {
+              "key": "biomesInDimension",
+              "type": "list",
+              "label": "Biomes",
+              "help": "Biomes generated in the dimension.",
+              "default": [],
+              "required": true,
+              "fields": [
+                {
+                  "key": "biome",
+                  "type": "biome",
+                  "label": "Biome",
+                  "default": ""
+                }
+              ],
+              "mcreator": "biomesInDimension"
+            },
+            {
+              "key": "biomesInDimensionCaves",
+              "type": "list",
+              "label": "Cave biomes",
+              "help": "Underground biomes; only for the Overworld-like generator.",
+              "default": [],
+              "showIf": {
+                "key": "worldGenType",
+                "equals": "Normal world gen"
+              },
+              "fields": [
+                {
+                  "key": "biome",
+                  "type": "biome",
+                  "label": "Biome",
+                  "default": ""
+                }
+              ],
+              "mcreator": "biomesInDimensionCaves"
+            },
+            {
+              "key": "seaLevel",
+              "type": "integer",
+              "label": "Sea level",
+              "help": "Y level oceans fill up to. Suggested: 63 Overworld-like, 32 Nether-like, 0 End-like and void.",
+              "default": 63,
+              "min": -1024,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "seaLevel"
+            },
+            {
+              "key": "generateOreVeins",
+              "type": "boolean",
+              "label": "Large ore veins",
+              "help": "Overworld-like only.",
+              "default": true,
+              "showIf": {
+                "key": "worldGenType",
+                "equals": "Normal world gen"
+              },
+              "mcreator": "generateOreVeins"
+            },
+            {
+              "key": "generateAquifers",
+              "type": "boolean",
+              "label": "Aquifers",
+              "help": "Underground water and lava pockets; Overworld-like only.",
+              "default": true,
+              "showIf": {
+                "key": "worldGenType",
+                "equals": "Normal world gen"
+              },
+              "mcreator": "generateAquifers"
+            },
+            {
+              "key": "horizontalNoiseSize",
+              "type": "select",
+              "label": "Horizontal noise size",
+              "help": "Larger values stretch terrain horizontally. Suggested 1, or 2 for End-like.",
+              "default": 1,
+              "options": [
+                {
+                  "value": 1,
+                  "label": "1"
+                },
+                {
+                  "value": 2,
+                  "label": "2"
+                },
+                {
+                  "value": 4,
+                  "label": "4"
+                }
+              ],
+              "mcreator": "horizontalNoiseSize"
+            },
+            {
+              "key": "verticalNoiseSize",
+              "type": "select",
+              "label": "Vertical noise size",
+              "help": "Larger values stretch terrain vertically. Suggested 2, or 1 for End-like.",
+              "default": 2,
+              "options": [
+                {
+                  "value": 1,
+                  "label": "1"
+                },
+                {
+                  "value": 2,
+                  "label": "2"
+                },
+                {
+                  "value": 4,
+                  "label": "4"
+                }
+              ],
+              "mcreator": "verticalNoiseSize"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "properties",
+      "title": "Properties",
+      "groups": [
+        {
+          "title": "Dimension type",
+          "fields": [
+            {
+              "key": "bedWorks",
+              "type": "boolean",
+              "label": "Beds work",
+              "help": "Beds set spawn instead of exploding.",
+              "default": true,
+              "mcreator": "bedWorks"
+            },
+            {
+              "key": "imitateOverworldBehaviour",
+              "type": "boolean",
+              "label": "Overworld-like behavior",
+              "help": "Compasses, clocks and similar work as in the Overworld.",
+              "default": true,
+              "mcreator": "imitateOverworldBehaviour"
+            },
+            {
+              "key": "canRespawnHere",
+              "type": "boolean",
+              "label": "Respawn anchors work",
+              "default": false,
+              "mcreator": "canRespawnHere"
+            },
+            {
+              "key": "hasSkyLight",
+              "type": "boolean",
+              "label": "Sky light",
+              "help": "The sky lights up the world.",
+              "default": true,
+              "mcreator": "hasSkyLight"
+            },
+            {
+              "key": "ambientLight",
+              "type": "number",
+              "label": "Ambient light",
+              "help": "Minimum light everywhere (0 to 1).",
+              "default": 0,
+              "min": 0,
+              "max": 1,
+              "step": 0.01,
+              "mcreator": "ambientLight"
+            },
+            {
+              "key": "doesWaterVaporize",
+              "type": "boolean",
+              "label": "Water evaporates",
+              "help": "Water cannot be placed, like the Nether.",
+              "default": false,
+              "mcreator": "doesWaterVaporize"
+            },
+            {
+              "key": "hasFixedTime",
+              "type": "boolean",
+              "label": "Fixed time of day",
+              "help": "Freeze the sun and moon. Only works with an Overworld-style sky.",
+              "default": false,
+              "mcreator": "hasFixedTime",
+              "showIf": {
+                "key": "skyType",
+                "equals": "NORMAL"
+              }
+            },
+            {
+              "key": "fixedTimeValue",
+              "type": "integer",
+              "label": "Time of day",
+              "help": "Frozen time in ticks (0-24000).",
+              "default": 0,
+              "min": 0,
+              "max": 24000,
+              "step": 1,
+              "showIf": {
+                "key": "hasFixedTime",
+                "equals": true
+              },
+              "mcreator": "fixedTimeValue"
+            },
+            {
+              "key": "coordinateScale",
+              "type": "number",
+              "label": "Coordinate scale",
+              "help": "Distance multiplier when travelling between dimensions (8 for the Nether).",
+              "default": 1,
+              "min": 0.01,
+              "max": 1000,
+              "step": 0.01,
+              "mcreator": "coordinateScale"
+            },
+            {
+              "key": "infiniburnTag",
+              "type": "tag",
+              "label": "Infinite burn blocks",
+              "help": "Block tag on which fire never goes out.",
+              "default": "minecraft:infiniburn_overworld",
+              "tagKind": "block",
+              "mcreator": "infiniburnTag"
+            }
+          ]
+        },
+        {
+          "title": "Sky and fog",
+          "fields": [
+            {
+              "key": "skyType",
+              "type": "select",
+              "label": "Sky",
+              "help": "Kind of sky drawn.",
+              "default": "NORMAL",
+              "options": [
+                {
+                  "value": "NORMAL",
+                  "label": "Overworld sky"
+                },
+                {
+                  "value": "NONE",
+                  "label": "No sky"
+                },
+                {
+                  "value": "END",
+                  "label": "End sky"
+                }
+              ],
+              "mcreator": "skyType"
+            },
+            {
+              "key": "hasClouds",
+              "type": "boolean",
+              "label": "Clouds",
+              "default": true,
+              "mcreator": "hasClouds"
+            },
+            {
+              "key": "cloudHeight",
+              "type": "integer",
+              "label": "Cloud height",
+              "default": 192,
+              "min": -2032,
+              "max": 2031,
+              "step": 16,
+              "showIf": {
+                "key": "hasClouds",
+                "equals": true
+              },
+              "mcreator": "cloudHeight"
+            },
+            {
+              "key": "useCustomEffects",
+              "type": "boolean",
+              "label": "Custom visual effects",
+              "help": "Set fog and sky details yourself instead of copying a vanilla dimension.",
+              "default": true,
+              "mcreator": "useCustomEffects"
+            },
+            {
+              "key": "defaultEffects",
+              "type": "select",
+              "label": "Copy effects from",
+              "help": "Vanilla dimension whose look is reused.",
+              "default": "overworld",
+              "options": [
+                {
+                  "value": "overworld",
+                  "label": "Overworld"
+                },
+                {
+                  "value": "the_nether",
+                  "label": "Nether"
+                },
+                {
+                  "value": "the_end",
+                  "label": "End"
+                }
+              ],
+              "showIf": {
+                "key": "useCustomEffects",
+                "equals": false
+              },
+              "mcreator": "defaultEffects"
+            },
+            {
+              "key": "airColor",
+              "type": "color",
+              "label": "Fog color",
+              "help": "Empty uses the default.",
+              "default": "",
+              "showIf": {
+                "key": "useCustomEffects",
+                "equals": true
+              },
+              "mcreator": "airColor"
+            },
+            {
+              "key": "sunHeightAffectsFog",
+              "type": "boolean",
+              "label": "Fog follows sun",
+              "help": "Fog color changes with the time of day.",
+              "default": true,
+              "showIf": {
+                "key": "useCustomEffects",
+                "equals": true
+              },
+              "mcreator": "sunHeightAffectsFog"
+            },
+            {
+              "key": "hasFog",
+              "type": "boolean",
+              "label": "Thick fog",
+              "help": "Dense fog close to the player, like the Nether.",
+              "default": false,
+              "showIf": {
+                "key": "useCustomEffects",
+                "equals": true
+              },
+              "mcreator": "hasFog"
+            }
+          ]
+        },
+        {
+          "title": "Mobs",
+          "fields": [
+            {
+              "key": "piglinSafe",
+              "type": "boolean",
+              "label": "Piglins safe",
+              "help": "Piglins do not turn into zombified piglins.",
+              "default": false,
+              "mcreator": "piglinSafe"
+            },
+            {
+              "key": "hasRaids",
+              "type": "boolean",
+              "label": "Raids",
+              "help": "Bad Omen can start raids here.",
+              "default": true,
+              "mcreator": "hasRaids"
+            },
+            {
+              "key": "minMonsterSpawnLightLimit",
+              "type": "integer",
+              "label": "Monster spawn light: minimum",
+              "default": 0,
+              "min": 0,
+              "max": 15,
+              "step": 1,
+              "mcreator": "minMonsterSpawnLightLimit"
+            },
+            {
+              "key": "maxMonsterSpawnLightLimit",
+              "type": "integer",
+              "label": "Monster spawn light: maximum",
+              "default": 7,
+              "min": 0,
+              "max": 15,
+              "step": 1,
+              "mcreator": "maxMonsterSpawnLightLimit"
+            },
+            {
+              "key": "monsterSpawnBlockLightLimit",
+              "type": "integer",
+              "label": "Monster block light limit",
+              "help": "Monsters do not spawn above this block light.",
+              "default": 0,
+              "min": 0,
+              "max": 15,
+              "step": 1,
+              "mcreator": "monsterSpawnBlockLightLimit"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "skybox",
+      "title": "Skybox",
+      "groups": [
+        {
+          "title": "Skybox",
+          "fields": [
+            {
+              "key": "enableCustomSkyboxTextures",
+              "type": "boolean",
+              "label": "Custom skybox",
+              "help": "Draw six textures as the sky. Not available without a sky.",
+              "default": false,
+              "mcreator": "enableCustomSkyboxTextures"
+            },
+            {
+              "key": "skyboxTextureUp",
+              "type": "texture",
+              "label": "Up",
+              "default": "",
+              "textureKind": "other",
+              "required": true,
+              "showIf": {
+                "key": "enableCustomSkyboxTextures",
+                "equals": true
+              },
+              "mcreator": "skyboxTextureUp"
+            },
+            {
+              "key": "skyboxTextureDown",
+              "type": "texture",
+              "label": "Down",
+              "default": "",
+              "textureKind": "other",
+              "required": true,
+              "showIf": {
+                "key": "enableCustomSkyboxTextures",
+                "equals": true
+              },
+              "mcreator": "skyboxTextureDown"
+            },
+            {
+              "key": "skyboxTextureNorth",
+              "type": "texture",
+              "label": "North",
+              "default": "",
+              "textureKind": "other",
+              "required": true,
+              "showIf": {
+                "key": "enableCustomSkyboxTextures",
+                "equals": true
+              },
+              "mcreator": "skyboxTextureNorth"
+            },
+            {
+              "key": "skyboxTextureSouth",
+              "type": "texture",
+              "label": "South",
+              "default": "",
+              "textureKind": "other",
+              "required": true,
+              "showIf": {
+                "key": "enableCustomSkyboxTextures",
+                "equals": true
+              },
+              "mcreator": "skyboxTextureSouth"
+            },
+            {
+              "key": "skyboxTextureWest",
+              "type": "texture",
+              "label": "West",
+              "default": "",
+              "textureKind": "other",
+              "required": true,
+              "showIf": {
+                "key": "enableCustomSkyboxTextures",
+                "equals": true
+              },
+              "mcreator": "skyboxTextureWest"
+            },
+            {
+              "key": "skyboxTextureEast",
+              "type": "texture",
+              "label": "East",
+              "default": "",
+              "textureKind": "other",
+              "required": true,
+              "showIf": {
+                "key": "enableCustomSkyboxTextures",
+                "equals": true
+              },
+              "mcreator": "skyboxTextureEast"
+            }
+          ]
+        },
+        {
+          "title": "Sun and moon",
+          "fields": [
+            {
+              "key": "enableCustomSunMoonTextures",
+              "type": "boolean",
+              "label": "Custom sun and moon",
+              "default": false,
+              "mcreator": "enableCustomSunMoonTextures"
+            },
+            {
+              "key": "sunTexture",
+              "type": "texture",
+              "label": "Sun texture",
+              "default": "",
+              "textureKind": "other",
+              "required": true,
+              "showIf": {
+                "key": "enableCustomSunMoonTextures",
+                "equals": true
+              },
+              "mcreator": "sunTexture"
+            },
+            {
+              "key": "moonTexture",
+              "type": "texture",
+              "label": "Moon texture",
+              "default": "",
+              "textureKind": "other",
+              "required": true,
+              "showIf": {
+                "key": "enableCustomSunMoonTextures",
+                "equals": true
+              },
+              "mcreator": "moonTexture"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "portal",
+      "title": "Portal",
+      "groups": [
+        {
+          "title": "Portal",
+          "fields": [
+            {
+              "key": "enablePortal",
+              "type": "boolean",
+              "label": "Portal",
+              "help": "Create a portal block leading into the dimension.",
+              "default": true,
+              "mcreator": "enablePortal"
+            },
+            {
+              "key": "portalFrame",
+              "type": "block",
+              "label": "Frame block",
+              "default": "",
+              "required": true,
+              "showIf": {
+                "key": "enablePortal",
+                "equals": true
+              },
+              "mcreator": "portalFrame"
+            },
+            {
+              "key": "portalTexture",
+              "type": "texture",
+              "label": "Portal texture",
+              "default": "",
+              "textureKind": "block",
+              "required": true,
+              "showIf": {
+                "key": "enablePortal",
+                "equals": true
+              },
+              "mcreator": "portalTexture"
+            },
+            {
+              "key": "portalParticles",
+              "type": "particle",
+              "label": "Portal particles",
+              "default": "",
+              "required": true,
+              "showIf": {
+                "key": "enablePortal",
+                "equals": true
+              },
+              "mcreator": "portalParticles"
+            },
+            {
+              "key": "portalSound",
+              "type": "sound",
+              "label": "Portal sound",
+              "default": "",
+              "required": true,
+              "showIf": {
+                "key": "enablePortal",
+                "equals": true
+              },
+              "mcreator": "portalSound"
+            },
+            {
+              "key": "portalLuminance",
+              "type": "integer",
+              "label": "Portal light",
+              "default": 0,
+              "min": 0,
+              "max": 15,
+              "step": 1,
+              "showIf": {
+                "key": "enablePortal",
+                "equals": true
+              },
+              "mcreator": "portalLuminance"
+            },
+            {
+              "key": "portalUseCondition",
+              "type": "procedure",
+              "label": "Can travel",
+              "help": "Optional; return false to block travelling.",
+              "default": "",
+              "trigger": "portal_use_check",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity"
+              ],
+              "returns": "logic",
+              "showIf": {
+                "key": "enablePortal",
+                "equals": true
+              },
+              "mcreator": "portalUseCondition"
+            }
+          ]
+        },
+        {
+          "title": "Igniter",
+          "fields": [
+            {
+              "key": "enableIgniter",
+              "type": "boolean",
+              "label": "Igniter item",
+              "help": "Create an item that lights the portal.",
+              "default": true,
+              "showIf": {
+                "key": "enablePortal",
+                "equals": true
+              },
+              "mcreator": "enableIgniter"
+            },
+            {
+              "key": "igniterName",
+              "type": "text",
+              "label": "Igniter name",
+              "default": "",
+              "required": true,
+              "showIf": {
+                "key": "enableIgniter",
+                "equals": true
+              },
+              "mcreator": "igniterName"
+            },
+            {
+              "key": "texture",
+              "type": "texture",
+              "label": "Igniter texture",
+              "default": "",
+              "textureKind": "item",
+              "required": true,
+              "showIf": {
+                "key": "enableIgniter",
+                "equals": true
+              },
+              "mcreator": "texture"
+            },
+            {
+              "key": "igniterRarity",
+              "type": "select",
+              "label": "Igniter rarity",
+              "default": "COMMON",
+              "options": [
+                {
+                  "value": "COMMON",
+                  "label": "Common"
+                },
+                {
+                  "value": "UNCOMMON",
+                  "label": "Uncommon"
+                },
+                {
+                  "value": "RARE",
+                  "label": "Rare"
+                },
+                {
+                  "value": "EPIC",
+                  "label": "Epic"
+                }
+              ],
+              "showIf": {
+                "key": "enableIgniter",
+                "equals": true
+              },
+              "mcreator": "igniterRarity"
+            },
+            {
+              "key": "creativeTabs",
+              "type": "multiselect",
+              "elementTypes": [
+                "creative_tab"
+              ],
+              "label": "Creative tabs",
+              "help": "Creative inventory tabs that list this element. Tabs defined in this mod are offered as well.",
+              "default": [],
+              "options": [
+                {
+                  "value": "BUILDING_BLOCKS",
+                  "label": "Building blocks"
+                },
+                {
+                  "value": "DECORATIONS",
+                  "label": "Natural blocks"
+                },
+                {
+                  "value": "REDSTONE",
+                  "label": "Redstone"
+                },
+                {
+                  "value": "FOOD",
+                  "label": "Food and drinks"
+                },
+                {
+                  "value": "TOOLS",
+                  "label": "Tools and utilities"
+                },
+                {
+                  "value": "COMBAT",
+                  "label": "Combat"
+                },
+                {
+                  "value": "MATERIALS",
+                  "label": "Ingredients"
+                },
+                {
+                  "value": "MISC",
+                  "label": "Spawn eggs"
+                },
+                {
+                  "value": "TRANSPORTATION",
+                  "label": "Functional blocks"
+                },
+                {
+                  "value": "BREWING",
+                  "label": "Colored blocks"
+                },
+                {
+                  "value": "OP_BLOCKS",
+                  "label": "Operator items"
+                }
+              ],
+              "showIf": {
+                "key": "enableIgniter",
+                "equals": true
+              },
+              "mcreator": "creativeTabs"
+            },
+            {
+              "key": "specialInformation",
+              "type": "multiline",
+              "label": "Tooltip lines",
+              "help": "Extra tooltip lines under the name, one per row.",
+              "default": "",
+              "mcreator": "specialInformation.fixedValue",
+              "showIf": {
+                "key": "enableIgniter",
+                "equals": true
+              }
+            },
+            {
+              "key": "specialInformationProcedure",
+              "type": "procedure",
+              "label": "Tooltip lines procedure",
+              "help": "Optional procedure that returns the tooltip lines instead of the fixed list.",
+              "default": "",
+              "trigger": "tooltip",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "returns": "string_list",
+              "mcreator": "specialInformation.name",
+              "showIf": {
+                "key": "enableIgniter",
+                "equals": true
+              }
+            },
+            {
+              "key": "portalMakeCondition",
+              "type": "procedure",
+              "label": "Can light portal",
+              "help": "Optional; return false to block lighting the portal.",
+              "default": "",
+              "trigger": "portal_make_check",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "returns": "logic",
+              "showIf": {
+                "key": "enableIgniter",
+                "equals": true
+              },
+              "mcreator": "portalMakeCondition"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "triggers",
+      "title": "Triggers",
+      "groups": [
+        {
+          "title": "Events",
+          "fields": [
+            {
+              "key": "onPlayerEntersDimension",
+              "type": "procedure",
+              "label": "Player enters",
+              "default": "",
+              "trigger": "dimension_enter",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity"
+              ],
+              "mcreator": "onPlayerEntersDimension"
+            },
+            {
+              "key": "onPlayerLeavesDimension",
+              "type": "procedure",
+              "label": "Player leaves",
+              "default": "",
+              "trigger": "dimension_leave",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity"
+              ],
+              "mcreator": "onPlayerLeavesDimension"
+            },
+            {
+              "key": "whenPortaTriggerlUsed",
+              "type": "procedure",
+              "label": "Igniter used",
+              "help": "Runs when the igniter is used; may return a result.",
+              "default": "",
+              "trigger": "portal_igniter_used",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "returns": "actionresulttype",
+              "showIf": {
+                "key": "enableIgniter",
+                "equals": true
+              },
+              "mcreator": "whenPortaTriggerlUsed"
+            },
+            {
+              "key": "onPortalTickUpdate",
+              "type": "procedure",
+              "label": "Portal tick",
+              "default": "",
+              "trigger": "portal_tick",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "blockstate"
+              ],
+              "showIf": {
+                "key": "enablePortal",
+                "equals": true
+              },
+              "mcreator": "onPortalTickUpdate"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

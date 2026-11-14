@@ -1,0 +1,79 @@
+{
+  "$comment": "Element types and fields these templates generate; see src/engines/coverage.ts.",
+  "generates": {
+    "item": [
+      "animation=none|eat|drink|block|bow|trident|crossbow",
+      "attributeModifiers.equipmentSlot=mainhand|offhand|feet|legs|chest|head",
+      "isPiglinCurrency"
+    ],
+    "block": [
+      "displayFluidOverlay",
+      "beaconColorModifier",
+      "enchantPowerBonus",
+      "soundOnStep=GROUND|WOOD|PLANT|LILY_PADS|STONE|METAL|GLASS|CLOTH|SAND|SNOW|LADDER|ANVIL|SLIME|WET_GRASS|CORAL|BAMBOO|BAMBOO_SAPLING|SCAFFOLDING|SWEET_BERRY_BUSH|CROP|STEM|VINE|NETHER_WART|LANTERN|HONEY|HYPHAE|NYLIUM|FUNGUS|ROOT|SHROOMLIGHT|NETHER_VINE|NETHER_VINE_LOWER_PITCH|SOUL_SAND|SOUL_SOIL|BASALT|WART|NETHERRACK|NETHER_BRICK|NETHER_SPROUT|NETHER_ORE|BONE|NETHERITE|ANCIENT_DEBRIS|LODESTONE|CHAIN|NETHER_GOLD|GILDED_BLACKSTONE",
+      "tintType=No tint|Grass|Foliage|Birch foliage|Spruce foliage|Default foliage|Water|Sky|Fog|Water fog",
+      "transparencyType",
+      "aiPathNodeType=DEFAULT|BLOCKED|OPEN|WALKABLE|WALKABLE_DOOR|TRAPDOOR|FENCE|LAVA|WATER|WATER_BORDER|RAIL|UNPASSABLE_RAIL|DANGER_FIRE|DAMAGE_FIRE|DANGER_OTHER|DAMAGE_OTHER|DOOR_OPEN|DOOR_WOOD_CLOSED|DOOR_IRON_CLOSED|BREACH|LEAVES|STICKY_HONEY|COCOA",
+      "blockBase=Sign",
+      "signEntityTexture"
+    ],
+    "tool": [
+      "attributeModifiers.equipmentSlot=mainhand|offhand|feet|legs|chest|head"
+    ],
+    "creative_tab": [
+      "showSearch"
+    ],
+    "armor": [
+      "attributeModifiers.equipmentSlot=mainhand|offhand|feet|legs|chest|head"
+    ],
+    "recipe": [
+      "recipeType",
+      "brewingInputStack",
+      "brewingIngredientStack",
+      "brewingReturnStack"
+    ],
+    "loot_table": [
+      "type=Block|Entity|Generic|Chest|Fishing|Empty|Advancement reward|Gift|Barter"
+    ],
+    "procedure": [
+      "globalTrigger=no_ext_trigger|mod_load|mod_serverload|world_load|world_unload|player_log_in|player_log_out|player_respawn|player_ticks|world_ticks|server_ticks|block_break|block_place|player_right_click_block|player_right_click_item|player_left_click_block|player_use_hoe|player_right_click_entity|entity_dies|entity_attacked|entity_joins_world|chat_sent|player_xp_level_change|item_crafted|item_smelted|entity_falls|entity_jumps|entity_healed"
+    ],
+    "overlay": [
+      "priority",
+      "overlayTarget=AbstractCommandBlock|AbstractContainer|AbstractFurnace|AccessibilityOptions|AddServer|Advancements|Alert|Anvil|Beacon|BlastFurnace|BrewingStand|CartographyTable|Chat|ChatOptions|Chest|CommandBlock|Confirm|ConfirmBackup|ConfirmOpenLink|Connecting|Controls|Crafting|CreateBuffetWorld|CreateFlatWorld|CreateWorld|Creative|CustomizeSkin|DatapackFailure|Death|DirtMessage|Disconnected|Dispenser|EditBook|EditGamerules|EditMinecartCommandBlock|EditSign|EditStructure|EditWorld|Enchantment|Error|FlatPresets|Furnace|GPUWarning|GamemodeSelection|Grindstone|Hopper|HorseInventory|IngameMenu|Inventory|ItemCombiner|Jigsaw|KeyBinds|Language|Lectern|Loom|MainMenu|MemoryError|Merchant|MouseSettings|Multiplayer|MultiplayerWarning|OptimizeWorld|Options|OptionsSounds|Pack|ReadBook|Realms|ServerList|Settings|ShulkerBox|SleepInMultiplayer|SmithingTable|Smoker|SocialInteractions|Stats|Stonecutter|VideoSettings|Win|Working|WorldLoadProgress|WorldSelection"
+    ],
+    "item_extension": [
+      "item",
+      "enableFuel",
+      "fuelPower",
+      "compostLayerChance"
+    ],
+    "special_entity": [
+      "entityType=Boat",
+      "name",
+      "entityTexture",
+      "itemTexture",
+      "rarity",
+      "creativeTabs",
+      "onTickUpdate",
+      "onPlayerCollidesWith"
+    ],
+    "fluid": [
+      "hasFog",
+      "fogColor",
+      "fogStartDistance",
+      "fogStartDistanceProcedure",
+      "fogEndDistance",
+      "fogEndDistanceProcedure",
+      "luminosity",
+      "density",
+      "viscosity",
+      "temperature"
+    ],
+    "plant": [
+      "soundOnStep=GROUND|WOOD|PLANT|LILY_PADS|STONE|METAL|GLASS|CLOTH|SAND|SNOW|LADDER|ANVIL|SLIME|WET_GRASS|CORAL|BAMBOO|BAMBOO_SAPLING|SCAFFOLDING|SWEET_BERRY_BUSH|CROP|STEM|VINE|NETHER_WART|LANTERN|HONEY|HYPHAE|NYLIUM|FUNGUS|ROOT|SHROOMLIGHT|NETHER_VINE|NETHER_VINE_LOWER_PITCH|SOUL_SAND|SOUL_SOIL|BASALT|WART|NETHERRACK|NETHER_BRICK|NETHER_SPROUT|NETHER_ORE|BONE|NETHERITE|ANCIENT_DEBRIS|LODESTONE|CHAIN|NETHER_GOLD|GILDED_BLACKSTONE",
+      "tintType=No tint|Grass|Foliage|Birch foliage|Spruce foliage|Default foliage|Water|Sky|Fog|Water fog",
+      "aiPathNodeType=DEFAULT|BLOCKED|OPEN|WALKABLE|WALKABLE_DOOR|TRAPDOOR|FENCE|LAVA|WATER|WATER_BORDER|RAIL|UNPASSABLE_RAIL|DANGER_FIRE|DAMAGE_FIRE|DANGER_OTHER|DAMAGE_OTHER|DOOR_OPEN|DOOR_WOOD_CLOSED|DOOR_IRON_CLOSED|BREACH|LEAVES|STICKY_HONEY|COCOA"
+    ]
+  }
+}

@@ -1,0 +1,278 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "loot_table",
+  "folder": "loot_tables",
+  "name": "Loot table",
+  "icon": "chest",
+  "langKey": null,
+  "mcreator": "loottable",
+  "description": "Defines or overrides what blocks, entities, chests, fishing and other sources drop.",
+  "pages": [
+    {
+      "id": "table",
+      "title": "Loot table",
+      "groups": [
+        {
+          "title": "Identity",
+          "fields": [
+            {
+              "key": "name",
+              "type": "text",
+              "label": "Table path",
+              "default": "blocks/",
+              "mcreator": "name",
+              "required": true,
+              "pattern": "^[a-z0-9_/.-]+$",
+              "help": "Path such as blocks/my_block, entities/my_mob or chests/my_chest. Reusing a vanilla path overrides it."
+            },
+            {
+              "key": "namespace",
+              "type": "select",
+              "label": "Namespace",
+              "default": "mod",
+              "options": [
+                {
+                  "value": "mod",
+                  "label": "This mod"
+                },
+                {
+                  "value": "minecraft",
+                  "label": "Minecraft"
+                }
+              ],
+              "mcreator": "namespace",
+              "help": "A custom namespace can be typed too."
+            },
+            {
+              "key": "type",
+              "type": "select",
+              "label": "Table type",
+              "default": "Block",
+              "mcreator": "type",
+              "options": [
+                {
+                  "value": "Block",
+                  "label": "Block"
+                },
+                {
+                  "value": "Entity",
+                  "label": "Entity"
+                },
+                {
+                  "value": "Generic",
+                  "label": "Generic"
+                },
+                {
+                  "value": "Chest",
+                  "label": "Chest"
+                },
+                {
+                  "value": "Fishing",
+                  "label": "Fishing"
+                },
+                {
+                  "value": "Empty",
+                  "label": "Empty"
+                },
+                {
+                  "value": "Advancement reward",
+                  "label": "Advancement reward"
+                },
+                {
+                  "value": "Gift",
+                  "label": "Gift"
+                },
+                {
+                  "value": "Barter",
+                  "label": "Barter"
+                },
+                {
+                  "value": "Archaeology",
+                  "label": "Archaeology"
+                }
+              ],
+              "help": "Decides which context data the table can use."
+            },
+            {
+              "key": "lootTableToModify",
+              "type": "text",
+              "label": "Add to existing table",
+              "default": "",
+              "mcreator": "lootTableToModify",
+              "help": "Resource location of a table to inject these pools into (loot modifier). Empty creates a normal table."
+            }
+          ]
+        },
+        {
+          "title": "Pools",
+          "fields": [
+            {
+              "key": "pools",
+              "type": "list",
+              "label": "Pools",
+              "default": [],
+              "fields": [
+                {
+                  "key": "minrolls",
+                  "type": "integer",
+                  "label": "Min rolls",
+                  "default": 1,
+                  "min": 0,
+                  "max": 64000,
+                  "step": 1
+                },
+                {
+                  "key": "maxrolls",
+                  "type": "integer",
+                  "label": "Max rolls",
+                  "default": 1,
+                  "min": 0,
+                  "max": 64000,
+                  "step": 1
+                },
+                {
+                  "key": "hasbonusrolls",
+                  "type": "boolean",
+                  "label": "Luck adds rolls",
+                  "default": false
+                },
+                {
+                  "key": "minbonusrolls",
+                  "type": "integer",
+                  "label": "Min bonus rolls",
+                  "default": 1,
+                  "min": 0,
+                  "max": 64000,
+                  "step": 1,
+                  "showIf": {
+                    "key": "hasbonusrolls",
+                    "equals": true
+                  }
+                },
+                {
+                  "key": "maxbonusrolls",
+                  "type": "integer",
+                  "label": "Max bonus rolls",
+                  "default": 1,
+                  "min": 0,
+                  "max": 64000,
+                  "step": 1,
+                  "showIf": {
+                    "key": "hasbonusrolls",
+                    "equals": true
+                  }
+                },
+                {
+                  "key": "entries",
+                  "type": "list",
+                  "label": "Entries",
+                  "default": [],
+                  "fields": [
+                    {
+                      "key": "type",
+                      "type": "select",
+                      "label": "Entry type",
+                      "default": "item",
+                      "options": [
+                        {
+                          "value": "item",
+                          "label": "Item"
+                        }
+                      ]
+                    },
+                    {
+                      "key": "item",
+                      "type": "item",
+                      "label": "Item",
+                      "default": ""
+                    },
+                    {
+                      "key": "weight",
+                      "type": "integer",
+                      "label": "Weight",
+                      "default": 1,
+                      "min": 0,
+                      "max": 64000,
+                      "step": 1
+                    },
+                    {
+                      "key": "minCount",
+                      "type": "integer",
+                      "label": "Min count",
+                      "default": 1,
+                      "min": 0,
+                      "max": 64000,
+                      "step": 1
+                    },
+                    {
+                      "key": "maxCount",
+                      "type": "integer",
+                      "label": "Max count",
+                      "default": 1,
+                      "min": 0,
+                      "max": 64000,
+                      "step": 1
+                    },
+                    {
+                      "key": "minEnchantmentLevel",
+                      "type": "integer",
+                      "label": "Min enchant level",
+                      "default": 0,
+                      "min": 0,
+                      "max": 64000,
+                      "step": 1
+                    },
+                    {
+                      "key": "maxEnchantmentLevel",
+                      "type": "integer",
+                      "label": "Max enchant level",
+                      "default": 0,
+                      "min": 0,
+                      "max": 64000,
+                      "step": 1,
+                      "help": "0 means not enchanted."
+                    },
+                    {
+                      "key": "affectedByFortune",
+                      "type": "boolean",
+                      "label": "Fortune increases count",
+                      "default": false
+                    },
+                    {
+                      "key": "explosionDecay",
+                      "type": "boolean",
+                      "label": "Reduced by explosions",
+                      "default": false
+                    },
+                    {
+                      "key": "silkTouchMode",
+                      "type": "select",
+                      "label": "Silk touch",
+                      "default": 0,
+                      "options": [
+                        {
+                          "value": 0,
+                          "label": "Does not matter"
+                        },
+                        {
+                          "value": 1,
+                          "label": "Only with silk touch"
+                        },
+                        {
+                          "value": 2,
+                          "label": "Only without silk touch"
+                        }
+                      ],
+                      "help": "Stored as a number."
+                    }
+                  ]
+                }
+              ],
+              "mcreator": "pools"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1572 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "armor",
+  "folder": "armors",
+  "name": "Armor",
+  "description": "A set of up to four armor pieces sharing one material.",
+  "icon": "shield",
+  "langKey": "item",
+  "mcreator": "armor",
+  "pages": [
+    {
+      "id": "visual",
+      "title": "Visual",
+      "groups": [
+        {
+          "title": "Helmet",
+          "fields": [
+            {
+              "key": "enableHelmet",
+              "type": "boolean",
+              "label": "Include helmet",
+              "help": "Generate the helmet item.",
+              "default": true,
+              "mcreator": "enableHelmet"
+            },
+            {
+              "key": "textureHelmet",
+              "type": "texture",
+              "label": "Item texture",
+              "help": "Inventory icon of the helmet.",
+              "default": "",
+              "textureKind": "item",
+              "required": true,
+              "mcreator": "textureHelmet",
+              "showIf": {
+                "key": "enableHelmet",
+                "equals": true
+              }
+            },
+            {
+              "key": "helmetName",
+              "type": "text",
+              "label": "Name",
+              "help": "Display name of the helmet.",
+              "default": "",
+              "required": true,
+              "mcreator": "helmetName",
+              "showIf": {
+                "key": "enableHelmet",
+                "equals": true
+              }
+            }
+          ]
+        },
+        {
+          "title": "Helmet: advanced",
+          "fields": [
+            {
+              "key": "helmetModelName",
+              "type": "model",
+              "label": "Worn model",
+              "help": "Java entity model drawn when worn; \"Default\" uses the vanilla armor shape.",
+              "default": "Default",
+              "modelKinds": [
+                "builtin",
+                "java"
+              ],
+              "mcreator": "helmetModelName",
+              "showIf": {
+                "key": "enableHelmet",
+                "equals": true
+              }
+            },
+            {
+              "key": "helmetModelPart",
+              "type": "text",
+              "label": "Model part: helmet",
+              "help": "Name of the custom model part attached to this body part.",
+              "default": "Helmet",
+              "mcreator": "helmetModelPart",
+              "showIf": {
+                "key": "enableHelmet",
+                "equals": true
+              }
+            },
+            {
+              "key": "helmetTranslucency",
+              "type": "boolean",
+              "label": "Translucent model",
+              "help": "Render the custom worn model with transparency.",
+              "default": false,
+              "mcreator": "helmetTranslucency",
+              "showIf": {
+                "all": [
+                  {
+                    "key": "enableHelmet",
+                    "equals": true
+                  },
+                  {
+                    "key": "helmetModelName",
+                    "notEquals": "Default"
+                  }
+                ]
+              }
+            },
+            {
+              "key": "helmetModelTexture",
+              "type": "texture",
+              "label": "Model texture",
+              "help": "Texture for the custom worn model; empty reuses the armor layer texture.",
+              "default": "",
+              "textureKind": "entity",
+              "mcreator": "helmetModelTexture",
+              "showIf": {
+                "key": "enableHelmet",
+                "equals": true
+              }
+            },
+            {
+              "key": "helmetItemRenderType",
+              "type": "select",
+              "label": "Item model type",
+              "help": "Kind of model used for the item in hand and inventory.",
+              "default": 0,
+              "options": [
+                {
+                  "value": 0,
+                  "label": "Built-in"
+                },
+                {
+                  "value": 1,
+                  "label": "JSON model"
+                },
+                {
+                  "value": 2,
+                  "label": "OBJ model"
+                }
+              ],
+              "mcreator": "helmetItemRenderType",
+              "showIf": {
+                "key": "enableHelmet",
+                "equals": true
+              }
+            },
+            {
+              "key": "helmetItemCustomModelName",
+              "type": "model",
+              "label": "Item model",
+              "help": "\"Normal\" or \"Tool\" for built-in shapes, otherwise a JSON or OBJ model.",
+              "default": "Normal",
+              "modelKinds": [
+                "builtin",
+                "json",
+                "obj"
+              ],
+              "mcreator": "helmetItemCustomModelName",
+              "showIf": {
+                "key": "enableHelmet",
+                "equals": true
+              }
+            },
+            {
+              "key": "helmetImmuneToFire",
+              "type": "boolean",
+              "label": "Fireproof",
+              "help": "Dropped item does not burn in fire or lava.",
+              "default": false,
+              "mcreator": "helmetImmuneToFire",
+              "showIf": {
+                "key": "enableHelmet",
+                "equals": true
+              }
+            },
+            {
+              "key": "helmetGlowCondition",
+              "type": "boolean",
+              "label": "Enchanted glint",
+              "help": "Always show the enchantment glint.",
+              "default": false,
+              "mcreator": "helmetGlowCondition.fixedValue",
+              "showIf": {
+                "key": "enableHelmet",
+                "equals": true
+              }
+            },
+            {
+              "key": "helmetGlowConditionProcedure",
+              "type": "procedure",
+              "label": "Glint condition",
+              "help": "Optional procedure deciding when the glint shows.",
+              "default": "",
+              "trigger": "item_glow",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "returns": "logic",
+              "mcreator": "helmetGlowCondition.name",
+              "showIf": {
+                "key": "enableHelmet",
+                "equals": true
+              }
+            },
+            {
+              "key": "helmetSpecialInformation",
+              "type": "multiline",
+              "label": "Tooltip lines",
+              "help": "Extra tooltip lines under the name, one per row.",
+              "default": "",
+              "mcreator": "helmetSpecialInformation.fixedValue",
+              "showIf": {
+                "key": "enableHelmet",
+                "equals": true
+              }
+            },
+            {
+              "key": "helmetSpecialInformationProcedure",
+              "type": "procedure",
+              "label": "Tooltip lines procedure",
+              "help": "Optional procedure that returns the tooltip lines instead of the fixed list.",
+              "default": "",
+              "trigger": "tooltip",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "returns": "string_list",
+              "mcreator": "helmetSpecialInformation.name",
+              "showIf": {
+                "key": "enableHelmet",
+                "equals": true
+              }
+            },
+            {
+              "key": "helmetPiglinNeutral",
+              "type": "boolean",
+              "label": "Keeps piglins calm",
+              "help": "Piglins stay neutral while this piece is worn, like gold armor.",
+              "default": false,
+              "mcreator": "helmetPiglinNeutral.fixedValue",
+              "showIf": {
+                "key": "enableHelmet",
+                "equals": true
+              }
+            },
+            {
+              "key": "helmetPiglinNeutralProcedure",
+              "type": "procedure",
+              "label": "Piglin neutral condition",
+              "help": "Optional procedure deciding when piglins stay neutral.",
+              "default": "",
+              "trigger": "armor_piglin_neutral",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "returns": "logic",
+              "mcreator": "helmetPiglinNeutral.name",
+              "showIf": {
+                "key": "enableHelmet",
+                "equals": true
+              }
+            }
+          ]
+        },
+        {
+          "title": "Chestplate",
+          "fields": [
+            {
+              "key": "enableBody",
+              "type": "boolean",
+              "label": "Include chestplate",
+              "help": "Generate the chestplate item.",
+              "default": true,
+              "mcreator": "enableBody"
+            },
+            {
+              "key": "textureBody",
+              "type": "texture",
+              "label": "Item texture",
+              "help": "Inventory icon of the chestplate.",
+              "default": "",
+              "textureKind": "item",
+              "required": true,
+              "mcreator": "textureBody",
+              "showIf": {
+                "key": "enableBody",
+                "equals": true
+              }
+            },
+            {
+              "key": "bodyName",
+              "type": "text",
+              "label": "Name",
+              "help": "Display name of the chestplate.",
+              "default": "",
+              "required": true,
+              "mcreator": "bodyName",
+              "showIf": {
+                "key": "enableBody",
+                "equals": true
+              }
+            }
+          ]
+        },
+        {
+          "title": "Chestplate: advanced",
+          "fields": [
+            {
+              "key": "bodyModelName",
+              "type": "model",
+              "label": "Worn model",
+              "help": "Java entity model drawn when worn; \"Default\" uses the vanilla armor shape.",
+              "default": "Default",
+              "modelKinds": [
+                "builtin",
+                "java"
+              ],
+              "mcreator": "bodyModelName",
+              "showIf": {
+                "key": "enableBody",
+                "equals": true
+              }
+            },
+            {
+              "key": "bodyModelPart",
+              "type": "text",
+              "label": "Model part: body",
+              "help": "Name of the custom model part attached to this body part.",
+              "default": "Body",
+              "mcreator": "bodyModelPart",
+              "showIf": {
+                "key": "enableBody",
+                "equals": true
+              }
+            },
+            {
+              "key": "armsModelPartL",
+              "type": "text",
+              "label": "Model part: arms left",
+              "help": "Name of the custom model part attached to this body part.",
+              "default": "Arms L",
+              "mcreator": "armsModelPartL",
+              "showIf": {
+                "key": "enableBody",
+                "equals": true
+              }
+            },
+            {
+              "key": "armsModelPartR",
+              "type": "text",
+              "label": "Model part: arms right",
+              "help": "Name of the custom model part attached to this body part.",
+              "default": "Arms R",
+              "mcreator": "armsModelPartR",
+              "showIf": {
+                "key": "enableBody",
+                "equals": true
+              }
+            },
+            {
+              "key": "bodyTranslucency",
+              "type": "boolean",
+              "label": "Translucent model",
+              "help": "Render the custom worn model with transparency.",
+              "default": false,
+              "mcreator": "bodyTranslucency",
+              "showIf": {
+                "all": [
+                  {
+                    "key": "enableBody",
+                    "equals": true
+                  },
+                  {
+                    "key": "bodyModelName",
+                    "notEquals": "Default"
+                  }
+                ]
+              }
+            },
+            {
+              "key": "bodyModelTexture",
+              "type": "texture",
+              "label": "Model texture",
+              "help": "Texture for the custom worn model; empty reuses the armor layer texture.",
+              "default": "",
+              "textureKind": "entity",
+              "mcreator": "bodyModelTexture",
+              "showIf": {
+                "key": "enableBody",
+                "equals": true
+              }
+            },
+            {
+              "key": "bodyItemRenderType",
+              "type": "select",
+              "label": "Item model type",
+              "help": "Kind of model used for the item in hand and inventory.",
+              "default": 0,
+              "options": [
+                {
+                  "value": 0,
+                  "label": "Built-in"
+                },
+                {
+                  "value": 1,
+                  "label": "JSON model"
+                },
+                {
+                  "value": 2,
+                  "label": "OBJ model"
+                }
+              ],
+              "mcreator": "bodyItemRenderType",
+              "showIf": {
+                "key": "enableBody",
+                "equals": true
+              }
+            },
+            {
+              "key": "bodyItemCustomModelName",
+              "type": "model",
+              "label": "Item model",
+              "help": "\"Normal\" or \"Tool\" for built-in shapes, otherwise a JSON or OBJ model.",
+              "default": "Normal",
+              "modelKinds": [
+                "builtin",
+                "json",
+                "obj"
+              ],
+              "mcreator": "bodyItemCustomModelName",
+              "showIf": {
+                "key": "enableBody",
+                "equals": true
+              }
+            },
+            {
+              "key": "bodyImmuneToFire",
+              "type": "boolean",
+              "label": "Fireproof",
+              "help": "Dropped item does not burn in fire or lava.",
+              "default": false,
+              "mcreator": "bodyImmuneToFire",
+              "showIf": {
+                "key": "enableBody",
+                "equals": true
+              }
+            },
+            {
+              "key": "bodyGlowCondition",
+              "type": "boolean",
+              "label": "Enchanted glint",
+              "help": "Always show the enchantment glint.",
+              "default": false,
+              "mcreator": "bodyGlowCondition.fixedValue",
+              "showIf": {
+                "key": "enableBody",
+                "equals": true
+              }
+            },
+            {
+              "key": "bodyGlowConditionProcedure",
+              "type": "procedure",
+              "label": "Glint condition",
+              "help": "Optional procedure deciding when the glint shows.",
+              "default": "",
+              "trigger": "item_glow",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "returns": "logic",
+              "mcreator": "bodyGlowCondition.name",
+              "showIf": {
+                "key": "enableBody",
+                "equals": true
+              }
+            },
+            {
+              "key": "bodySpecialInformation",
+              "type": "multiline",
+              "label": "Tooltip lines",
+              "help": "Extra tooltip lines under the name, one per row.",
+              "default": "",
+              "mcreator": "bodySpecialInformation.fixedValue",
+              "showIf": {
+                "key": "enableBody",
+                "equals": true
+              }
+            },
+            {
+              "key": "bodySpecialInformationProcedure",
+              "type": "procedure",
+              "label": "Tooltip lines procedure",
+              "help": "Optional procedure that returns the tooltip lines instead of the fixed list.",
+              "default": "",
+              "trigger": "tooltip",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "returns": "string_list",
+              "mcreator": "bodySpecialInformation.name",
+              "showIf": {
+                "key": "enableBody",
+                "equals": true
+              }
+            },
+            {
+              "key": "bodyPiglinNeutral",
+              "type": "boolean",
+              "label": "Keeps piglins calm",
+              "help": "Piglins stay neutral while this piece is worn, like gold armor.",
+              "default": false,
+              "mcreator": "bodyPiglinNeutral.fixedValue",
+              "showIf": {
+                "key": "enableBody",
+                "equals": true
+              }
+            },
+            {
+              "key": "bodyPiglinNeutralProcedure",
+              "type": "procedure",
+              "label": "Piglin neutral condition",
+              "help": "Optional procedure deciding when piglins stay neutral.",
+              "default": "",
+              "trigger": "armor_piglin_neutral",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "returns": "logic",
+              "mcreator": "bodyPiglinNeutral.name",
+              "showIf": {
+                "key": "enableBody",
+                "equals": true
+              }
+            }
+          ]
+        },
+        {
+          "title": "Leggings",
+          "fields": [
+            {
+              "key": "enableLeggings",
+              "type": "boolean",
+              "label": "Include leggings",
+              "help": "Generate the leggings item.",
+              "default": true,
+              "mcreator": "enableLeggings"
+            },
+            {
+              "key": "textureLeggings",
+              "type": "texture",
+              "label": "Item texture",
+              "help": "Inventory icon of the leggings.",
+              "default": "",
+              "textureKind": "item",
+              "required": true,
+              "mcreator": "textureLeggings",
+              "showIf": {
+                "key": "enableLeggings",
+                "equals": true
+              }
+            },
+            {
+              "key": "leggingsName",
+              "type": "text",
+              "label": "Name",
+              "help": "Display name of the leggings.",
+              "default": "",
+              "required": true,
+              "mcreator": "leggingsName",
+              "showIf": {
+                "key": "enableLeggings",
+                "equals": true
+              }
+            }
+          ]
+        },
+        {
+          "title": "Leggings: advanced",
+          "fields": [
+            {
+              "key": "leggingsModelName",
+              "type": "model",
+              "label": "Worn model",
+              "help": "Java entity model drawn when worn; \"Default\" uses the vanilla armor shape.",
+              "default": "Default",
+              "modelKinds": [
+                "builtin",
+                "java"
+              ],
+              "mcreator": "leggingsModelName",
+              "showIf": {
+                "key": "enableLeggings",
+                "equals": true
+              }
+            },
+            {
+              "key": "leggingsModelPartL",
+              "type": "text",
+              "label": "Model part: leggings left",
+              "help": "Name of the custom model part attached to this body part.",
+              "default": "Leggings L",
+              "mcreator": "leggingsModelPartL",
+              "showIf": {
+                "key": "enableLeggings",
+                "equals": true
+              }
+            },
+            {
+              "key": "leggingsModelPartR",
+              "type": "text",
+              "label": "Model part: leggings right",
+              "help": "Name of the custom model part attached to this body part.",
+              "default": "Leggings R",
+              "mcreator": "leggingsModelPartR",
+              "showIf": {
+                "key": "enableLeggings",
+                "equals": true
+              }
+            },
+            {
+              "key": "leggingsTranslucency",
+              "type": "boolean",
+              "label": "Translucent model",
+              "help": "Render the custom worn model with transparency.",
+              "default": false,
+              "mcreator": "leggingsTranslucency",
+              "showIf": {
+                "all": [
+                  {
+                    "key": "enableLeggings",
+                    "equals": true
+                  },
+                  {
+                    "key": "leggingsModelName",
+                    "notEquals": "Default"
+                  }
+                ]
+              }
+            },
+            {
+              "key": "leggingsModelTexture",
+              "type": "texture",
+              "label": "Model texture",
+              "help": "Texture for the custom worn model; empty reuses the armor layer texture.",
+              "default": "",
+              "textureKind": "entity",
+              "mcreator": "leggingsModelTexture",
+              "showIf": {
+                "key": "enableLeggings",
+                "equals": true
+              }
+            },
+            {
+              "key": "leggingsItemRenderType",
+              "type": "select",
+              "label": "Item model type",
+              "help": "Kind of model used for the item in hand and inventory.",
+              "default": 0,
+              "options": [
+                {
+                  "value": 0,
+                  "label": "Built-in"
+                },
+                {
+                  "value": 1,
+                  "label": "JSON model"
+                },
+                {
+                  "value": 2,
+                  "label": "OBJ model"
+                }
+              ],
+              "mcreator": "leggingsItemRenderType",
+              "showIf": {
+                "key": "enableLeggings",
+                "equals": true
+              }
+            },
+            {
+              "key": "leggingsItemCustomModelName",
+              "type": "model",
+              "label": "Item model",
+              "help": "\"Normal\" or \"Tool\" for built-in shapes, otherwise a JSON or OBJ model.",
+              "default": "Normal",
+              "modelKinds": [
+                "builtin",
+                "json",
+                "obj"
+              ],
+              "mcreator": "leggingsItemCustomModelName",
+              "showIf": {
+                "key": "enableLeggings",
+                "equals": true
+              }
+            },
+            {
+              "key": "leggingsImmuneToFire",
+              "type": "boolean",
+              "label": "Fireproof",
+              "help": "Dropped item does not burn in fire or lava.",
+              "default": false,
+              "mcreator": "leggingsImmuneToFire",
+              "showIf": {
+                "key": "enableLeggings",
+                "equals": true
+              }
+            },
+            {
+              "key": "leggingsGlowCondition",
+              "type": "boolean",
+              "label": "Enchanted glint",
+              "help": "Always show the enchantment glint.",
+              "default": false,
+              "mcreator": "leggingsGlowCondition.fixedValue",
+              "showIf": {
+                "key": "enableLeggings",
+                "equals": true
+              }
+            },
+            {
+              "key": "leggingsGlowConditionProcedure",
+              "type": "procedure",
+              "label": "Glint condition",
+              "help": "Optional procedure deciding when the glint shows.",
+              "default": "",
+              "trigger": "item_glow",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "returns": "logic",
+              "mcreator": "leggingsGlowCondition.name",
+              "showIf": {
+                "key": "enableLeggings",
+                "equals": true
+              }
+            },
+            {
+              "key": "leggingsSpecialInformation",
+              "type": "multiline",
+              "label": "Tooltip lines",
+              "help": "Extra tooltip lines under the name, one per row.",
+              "default": "",
+              "mcreator": "leggingsSpecialInformation.fixedValue",
+              "showIf": {
+                "key": "enableLeggings",
+                "equals": true
+              }
+            },
+            {
+              "key": "leggingsSpecialInformationProcedure",
+              "type": "procedure",
+              "label": "Tooltip lines procedure",
+              "help": "Optional procedure that returns the tooltip lines instead of the fixed list.",
+              "default": "",
+              "trigger": "tooltip",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "returns": "string_list",
+              "mcreator": "leggingsSpecialInformation.name",
+              "showIf": {
+                "key": "enableLeggings",
+                "equals": true
+              }
+            },
+            {
+              "key": "leggingsPiglinNeutral",
+              "type": "boolean",
+              "label": "Keeps piglins calm",
+              "help": "Piglins stay neutral while this piece is worn, like gold armor.",
+              "default": false,
+              "mcreator": "leggingsPiglinNeutral.fixedValue",
+              "showIf": {
+                "key": "enableLeggings",
+                "equals": true
+              }
+            },
+            {
+              "key": "leggingsPiglinNeutralProcedure",
+              "type": "procedure",
+              "label": "Piglin neutral condition",
+              "help": "Optional procedure deciding when piglins stay neutral.",
+              "default": "",
+              "trigger": "armor_piglin_neutral",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "returns": "logic",
+              "mcreator": "leggingsPiglinNeutral.name",
+              "showIf": {
+                "key": "enableLeggings",
+                "equals": true
+              }
+            }
+          ]
+        },
+        {
+          "title": "Boots",
+          "fields": [
+            {
+              "key": "enableBoots",
+              "type": "boolean",
+              "label": "Include boots",
+              "help": "Generate the boots item.",
+              "default": true,
+              "mcreator": "enableBoots"
+            },
+            {
+              "key": "textureBoots",
+              "type": "texture",
+              "label": "Item texture",
+              "help": "Inventory icon of the boots.",
+              "default": "",
+              "textureKind": "item",
+              "required": true,
+              "mcreator": "textureBoots",
+              "showIf": {
+                "key": "enableBoots",
+                "equals": true
+              }
+            },
+            {
+              "key": "bootsName",
+              "type": "text",
+              "label": "Name",
+              "help": "Display name of the boots.",
+              "default": "",
+              "required": true,
+              "mcreator": "bootsName",
+              "showIf": {
+                "key": "enableBoots",
+                "equals": true
+              }
+            }
+          ]
+        },
+        {
+          "title": "Boots: advanced",
+          "fields": [
+            {
+              "key": "bootsModelName",
+              "type": "model",
+              "label": "Worn model",
+              "help": "Java entity model drawn when worn; \"Default\" uses the vanilla armor shape.",
+              "default": "Default",
+              "modelKinds": [
+                "builtin",
+                "java"
+              ],
+              "mcreator": "bootsModelName",
+              "showIf": {
+                "key": "enableBoots",
+                "equals": true
+              }
+            },
+            {
+              "key": "bootsModelPartL",
+              "type": "text",
+              "label": "Model part: boots left",
+              "help": "Name of the custom model part attached to this body part.",
+              "default": "Boots L",
+              "mcreator": "bootsModelPartL",
+              "showIf": {
+                "key": "enableBoots",
+                "equals": true
+              }
+            },
+            {
+              "key": "bootsModelPartR",
+              "type": "text",
+              "label": "Model part: boots right",
+              "help": "Name of the custom model part attached to this body part.",
+              "default": "Boots R",
+              "mcreator": "bootsModelPartR",
+              "showIf": {
+                "key": "enableBoots",
+                "equals": true
+              }
+            },
+            {
+              "key": "bootsTranslucency",
+              "type": "boolean",
+              "label": "Translucent model",
+              "help": "Render the custom worn model with transparency.",
+              "default": false,
+              "mcreator": "bootsTranslucency",
+              "showIf": {
+                "all": [
+                  {
+                    "key": "enableBoots",
+                    "equals": true
+                  },
+                  {
+                    "key": "bootsModelName",
+                    "notEquals": "Default"
+                  }
+                ]
+              }
+            },
+            {
+              "key": "bootsModelTexture",
+              "type": "texture",
+              "label": "Model texture",
+              "help": "Texture for the custom worn model; empty reuses the armor layer texture.",
+              "default": "",
+              "textureKind": "entity",
+              "mcreator": "bootsModelTexture",
+              "showIf": {
+                "key": "enableBoots",
+                "equals": true
+              }
+            },
+            {
+              "key": "bootsItemRenderType",
+              "type": "select",
+              "label": "Item model type",
+              "help": "Kind of model used for the item in hand and inventory.",
+              "default": 0,
+              "options": [
+                {
+                  "value": 0,
+                  "label": "Built-in"
+                },
+                {
+                  "value": 1,
+                  "label": "JSON model"
+                },
+                {
+                  "value": 2,
+                  "label": "OBJ model"
+                }
+              ],
+              "mcreator": "bootsItemRenderType",
+              "showIf": {
+                "key": "enableBoots",
+                "equals": true
+              }
+            },
+            {
+              "key": "bootsItemCustomModelName",
+              "type": "model",
+              "label": "Item model",
+              "help": "\"Normal\" or \"Tool\" for built-in shapes, otherwise a JSON or OBJ model.",
+              "default": "Normal",
+              "modelKinds": [
+                "builtin",
+                "json",
+                "obj"
+              ],
+              "mcreator": "bootsItemCustomModelName",
+              "showIf": {
+                "key": "enableBoots",
+                "equals": true
+              }
+            },
+            {
+              "key": "bootsImmuneToFire",
+              "type": "boolean",
+              "label": "Fireproof",
+              "help": "Dropped item does not burn in fire or lava.",
+              "default": false,
+              "mcreator": "bootsImmuneToFire",
+              "showIf": {
+                "key": "enableBoots",
+                "equals": true
+              }
+            },
+            {
+              "key": "bootsGlowCondition",
+              "type": "boolean",
+              "label": "Enchanted glint",
+              "help": "Always show the enchantment glint.",
+              "default": false,
+              "mcreator": "bootsGlowCondition.fixedValue",
+              "showIf": {
+                "key": "enableBoots",
+                "equals": true
+              }
+            },
+            {
+              "key": "bootsGlowConditionProcedure",
+              "type": "procedure",
+              "label": "Glint condition",
+              "help": "Optional procedure deciding when the glint shows.",
+              "default": "",
+              "trigger": "item_glow",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "returns": "logic",
+              "mcreator": "bootsGlowCondition.name",
+              "showIf": {
+                "key": "enableBoots",
+                "equals": true
+              }
+            },
+            {
+              "key": "bootsSpecialInformation",
+              "type": "multiline",
+              "label": "Tooltip lines",
+              "help": "Extra tooltip lines under the name, one per row.",
+              "default": "",
+              "mcreator": "bootsSpecialInformation.fixedValue",
+              "showIf": {
+                "key": "enableBoots",
+                "equals": true
+              }
+            },
+            {
+              "key": "bootsSpecialInformationProcedure",
+              "type": "procedure",
+              "label": "Tooltip lines procedure",
+              "help": "Optional procedure that returns the tooltip lines instead of the fixed list.",
+              "default": "",
+              "trigger": "tooltip",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "returns": "string_list",
+              "mcreator": "bootsSpecialInformation.name",
+              "showIf": {
+                "key": "enableBoots",
+                "equals": true
+              }
+            },
+            {
+              "key": "bootsPiglinNeutral",
+              "type": "boolean",
+              "label": "Keeps piglins calm",
+              "help": "Piglins stay neutral while this piece is worn, like gold armor.",
+              "default": false,
+              "mcreator": "bootsPiglinNeutral.fixedValue",
+              "showIf": {
+                "key": "enableBoots",
+                "equals": true
+              }
+            },
+            {
+              "key": "bootsPiglinNeutralProcedure",
+              "type": "procedure",
+              "label": "Piglin neutral condition",
+              "help": "Optional procedure deciding when piglins stay neutral.",
+              "default": "",
+              "trigger": "armor_piglin_neutral",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "returns": "logic",
+              "mcreator": "bootsPiglinNeutral.name",
+              "showIf": {
+                "key": "enableBoots",
+                "equals": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "properties",
+      "title": "Properties",
+      "groups": [
+        {
+          "title": "Material",
+          "fields": [
+            {
+              "key": "armorTextureFile",
+              "type": "texture",
+              "label": "Armor layer texture",
+              "help": "Texture pair (layer 1 for head, chest and feet; layer 2 for legs) drawn on the player.",
+              "default": "",
+              "textureKind": "armor",
+              "required": true,
+              "mcreator": "armorTextureFile"
+            },
+            {
+              "key": "rarity",
+              "type": "select",
+              "label": "Rarity",
+              "help": "Color of the item name.",
+              "default": "COMMON",
+              "options": [
+                {
+                  "value": "COMMON",
+                  "label": "Common"
+                },
+                {
+                  "value": "UNCOMMON",
+                  "label": "Uncommon"
+                },
+                {
+                  "value": "RARE",
+                  "label": "Rare"
+                },
+                {
+                  "value": "EPIC",
+                  "label": "Epic"
+                }
+              ],
+              "mcreator": "rarity"
+            },
+            {
+              "key": "creativeTabs",
+              "type": "multiselect",
+              "elementTypes": [
+                "creative_tab"
+              ],
+              "label": "Creative tabs",
+              "help": "Creative inventory tabs that list this element. Tabs defined in this mod are offered as well.",
+              "default": [],
+              "options": [
+                {
+                  "value": "BUILDING_BLOCKS",
+                  "label": "Building blocks"
+                },
+                {
+                  "value": "DECORATIONS",
+                  "label": "Natural blocks"
+                },
+                {
+                  "value": "REDSTONE",
+                  "label": "Redstone"
+                },
+                {
+                  "value": "FOOD",
+                  "label": "Food and drinks"
+                },
+                {
+                  "value": "TOOLS",
+                  "label": "Tools and utilities"
+                },
+                {
+                  "value": "COMBAT",
+                  "label": "Combat"
+                },
+                {
+                  "value": "MATERIALS",
+                  "label": "Ingredients"
+                },
+                {
+                  "value": "MISC",
+                  "label": "Spawn eggs"
+                },
+                {
+                  "value": "TRANSPORTATION",
+                  "label": "Functional blocks"
+                },
+                {
+                  "value": "BREWING",
+                  "label": "Colored blocks"
+                },
+                {
+                  "value": "OP_BLOCKS",
+                  "label": "Operator items"
+                }
+              ],
+              "mcreator": "creativeTabs"
+            },
+            {
+              "key": "equipSound",
+              "type": "sound",
+              "label": "Equip sound",
+              "help": "Sound played when a piece is put on. Leave empty for the default.",
+              "default": "",
+              "mcreator": "equipSound"
+            },
+            {
+              "key": "maxDamage",
+              "type": "integer",
+              "label": "Durability factor",
+              "help": "Multiplied by a per-slot base to get each piece's durability.",
+              "default": 15,
+              "min": 0,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "maxDamage"
+            },
+            {
+              "key": "damageValueHelmet",
+              "type": "integer",
+              "label": "Armor points: helmet",
+              "default": 2,
+              "min": 0,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "damageValueHelmet"
+            },
+            {
+              "key": "damageValueBody",
+              "type": "integer",
+              "label": "Armor points: chestplate",
+              "default": 6,
+              "min": 0,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "damageValueBody"
+            },
+            {
+              "key": "damageValueLeggings",
+              "type": "integer",
+              "label": "Armor points: leggings",
+              "default": 5,
+              "min": 0,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "damageValueLeggings"
+            },
+            {
+              "key": "damageValueBoots",
+              "type": "integer",
+              "label": "Armor points: boots",
+              "default": 2,
+              "min": 0,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "damageValueBoots"
+            },
+            {
+              "key": "enchantability",
+              "type": "integer",
+              "label": "Enchantability",
+              "help": "How good the enchantments rolled on an enchanting table are.",
+              "default": 9,
+              "min": 1,
+              "max": 128000,
+              "step": 1,
+              "mcreator": "enchantability"
+            },
+            {
+              "key": "toughness",
+              "type": "number",
+              "label": "Toughness",
+              "help": "Reduces damage from strong hits.",
+              "default": 0,
+              "min": 0,
+              "max": 1024,
+              "step": 0.1,
+              "mcreator": "toughness"
+            },
+            {
+              "key": "knockbackResistance",
+              "type": "number",
+              "label": "Knockback resistance",
+              "help": "Share of knockback ignored per piece (0.1 = 10%).",
+              "default": 0,
+              "min": 0,
+              "max": 5,
+              "step": 0.1,
+              "mcreator": "knockbackResistance"
+            },
+            {
+              "key": "repairItems",
+              "type": "list",
+              "label": "Repair items",
+              "help": "Items (or tags) that repair the armor in an anvil.",
+              "default": [],
+              "fields": [
+                {
+                  "key": "item",
+                  "type": "item",
+                  "label": "Item",
+                  "default": "",
+                  "allowTags": true
+                }
+              ],
+              "mcreator": "repairItems"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "attribute_modifiers",
+      "title": "Attribute modifiers",
+      "groups": [
+        {
+          "title": "Modifiers",
+          "fields": [
+            {
+              "key": "attributeModifiers",
+              "type": "list",
+              "label": "Attribute modifiers",
+              "help": "Attribute changes applied while the selected pieces are worn.",
+              "default": [],
+              "fields": [
+                {
+                  "key": "attribute",
+                  "type": "attribute",
+                  "label": "Attribute",
+                  "default": "",
+                  "required": true,
+                  "mcreator": "attribute"
+                },
+                {
+                  "key": "equipmentSlot",
+                  "type": "select",
+                  "label": "Slot",
+                  "help": "Slot the modifier is tied to.",
+                  "default": "any",
+                  "options": [
+                    {
+                      "value": "any",
+                      "label": "Any slot"
+                    },
+                    {
+                      "value": "mainhand",
+                      "label": "Main hand"
+                    },
+                    {
+                      "value": "offhand",
+                      "label": "Off hand"
+                    },
+                    {
+                      "value": "hand",
+                      "label": "Either hand"
+                    },
+                    {
+                      "value": "feet",
+                      "label": "Feet"
+                    },
+                    {
+                      "value": "legs",
+                      "label": "Legs"
+                    },
+                    {
+                      "value": "chest",
+                      "label": "Chest"
+                    },
+                    {
+                      "value": "head",
+                      "label": "Head"
+                    },
+                    {
+                      "value": "armor",
+                      "label": "Any armor slot"
+                    },
+                    {
+                      "value": "body",
+                      "label": "Body (animal armor)"
+                    },
+                    {
+                      "value": "saddle",
+                      "label": "Saddle"
+                    }
+                  ],
+                  "mcreator": "equipmentSlot"
+                },
+                {
+                  "key": "amount",
+                  "type": "number",
+                  "label": "Amount",
+                  "default": 0,
+                  "min": -1024,
+                  "max": 1024,
+                  "step": 0.001,
+                  "mcreator": "amount"
+                },
+                {
+                  "key": "operation",
+                  "type": "select",
+                  "label": "Operation",
+                  "help": "How the amount is applied to the attribute.",
+                  "default": "ADD_VALUE",
+                  "options": [
+                    {
+                      "value": "ADD_VALUE",
+                      "label": "Add"
+                    },
+                    {
+                      "value": "ADD_MULTIPLIED_BASE",
+                      "label": "Add multiplied base"
+                    },
+                    {
+                      "value": "ADD_MULTIPLIED_TOTAL",
+                      "label": "Multiply total"
+                    }
+                  ],
+                  "mcreator": "operation"
+                },
+                {
+                  "key": "armorPieces",
+                  "type": "multiselect",
+                  "label": "Pieces",
+                  "help": "Armor pieces that carry this modifier.",
+                  "default": [
+                    "helmet",
+                    "body",
+                    "leggings",
+                    "boots"
+                  ],
+                  "options": [
+                    {
+                      "value": "helmet",
+                      "label": "Helmet"
+                    },
+                    {
+                      "value": "body",
+                      "label": "Chestplate"
+                    },
+                    {
+                      "value": "leggings",
+                      "label": "Leggings"
+                    },
+                    {
+                      "value": "boots",
+                      "label": "Boots"
+                    }
+                  ],
+                  "mcreator": "armorPieces"
+                }
+              ],
+              "mcreator": "attributeModifiers"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "triggers",
+      "title": "Triggers",
+      "groups": [
+        {
+          "title": "While worn",
+          "fields": [
+            {
+              "key": "onHelmetTick",
+              "type": "procedure",
+              "label": "Helmet tick",
+              "help": "Runs every tick while the helmet is worn.",
+              "default": "",
+              "trigger": "armor_tick",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "showIf": {
+                "key": "enableHelmet",
+                "equals": true
+              },
+              "mcreator": "onHelmetTick"
+            },
+            {
+              "key": "onBodyTick",
+              "type": "procedure",
+              "label": "Chestplate tick",
+              "help": "Runs every tick while the chestplate is worn.",
+              "default": "",
+              "trigger": "armor_tick",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "showIf": {
+                "key": "enableBody",
+                "equals": true
+              },
+              "mcreator": "onBodyTick"
+            },
+            {
+              "key": "onLeggingsTick",
+              "type": "procedure",
+              "label": "Leggings tick",
+              "help": "Runs every tick while the leggings are worn.",
+              "default": "",
+              "trigger": "armor_tick",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "showIf": {
+                "key": "enableLeggings",
+                "equals": true
+              },
+              "mcreator": "onLeggingsTick"
+            },
+            {
+              "key": "onBootsTick",
+              "type": "procedure",
+              "label": "Boots tick",
+              "help": "Runs every tick while the boots are worn.",
+              "default": "",
+              "trigger": "armor_tick",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "showIf": {
+                "key": "enableBoots",
+                "equals": true
+              },
+              "mcreator": "onBootsTick"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

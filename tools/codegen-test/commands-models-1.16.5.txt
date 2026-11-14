@@ -1,0 +1,421 @@
+forceload add 0 0 15 15
+setworldspawn 8 100 4
+time set noon
+gamerule spawnRadius 0
+gamerule doDaylightCycle false
+weather clear
+fill 0 99 0 15 99 15 minecraft:grass_block
+fill 0 100 0 15 112 15 minecraft:air
+setblock 4 100 10 wavethree:ruby_lamp
+setblock 6 100 11 wavethree:ruby_lamp_recolored
+setblock 9 100 11 wavethree:ruby_gem_recolored
+setblock 2 100 11 wavethree:ruby_gem_block
+setblock 13 100 11 wavethree:ruby_pedestal
+setblock 11 100 10 wavethree:ruby_bloom
+setblock 8 100 13 wavethree:missing_model_block
+setblock 5 100 7 wavethree:ruby_statue[facing=east]
+setblock 3 102 12 wavethree:ruby_switch
+setblock 5 102 12 wavethree:ruby_switch[lit=true]
+setblock 10 102 12 wavethree:ruby_switch[mood=angry,facing=north]
+setblock 12 102 12 wavethree:ruby_switch[level=3,facing=east]
+setblock 14 100 12 wavethree:ruby_layers
+summon minecraft:armor_stand 7.5 100 9.5 {ShowArms:1b,NoGravity:1b,Rotation:[180f,0f],ArmorItems:[{id:"wavethree:crown_armor_boots",Count:1b},{id:"wavethree:crown_armor_leggings",Count:1b},{id:"wavethree:crown_armor_chestplate",Count:1b},{id:"wavethree:crown_armor_helmet",Count:1b}],HandItems:[{id:"wavethree:ruby_scepter",Count:1b},{id:"wavethree:ruby_shield",Count:1b}]}
+summon minecraft:armor_stand 9.5 100 9.5 {ShowArms:1b,NoGravity:1b,Rotation:[180f,0f],ArmorItems:[{},{},{id:"wavethree:ruby_armor_chestplate",Count:1b},{id:"wavethree:ruby_armor_helmet",Count:1b}],HandItems:[{id:"wavethree:ruby_sword",Count:1b},{id:"wavethree:ruby_beacon",Count:1b}]}
+summon minecraft:armor_stand 11.5 100 8.5 {ShowArms:1b,NoGravity:1b,Rotation:[180f,0f],ArmorItems:[{},{},{},{id:"wavethree:ruby_club",Count:1b}],HandItems:[{id:"wavethree:ruby_idol",Count:1b},{id:"wavethree:ruby_buckler",Count:1b}]}
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+@wait 5
+tp @a 8.0 100 4.0 0 12
+replaceitem entity @a hotbar.0 wavethree:ruby_scepter
+replaceitem entity @a hotbar.1 wavethree:ruby_lamp
+replaceitem entity @a hotbar.2 wavethree:ruby_gem_block
+replaceitem entity @a hotbar.3 wavethree:ruby_statue
+replaceitem entity @a hotbar.4 wavethree:ruby_idol
+replaceitem entity @a hotbar.5 wavethree:ruby_buckler
+replaceitem entity @a hotbar.6 wavethree:ruby_charm
+replaceitem entity @a hotbar.7 wavethree:crown_armor_helmet
+replaceitem entity @a hotbar.8 wavethree:crown_armor_boots
+stop

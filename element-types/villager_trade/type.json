@@ -1,0 +1,135 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "villager_trade",
+  "folder": "villager_trades",
+  "name": "Villager trades",
+  "icon": "trade",
+  "langKey": null,
+  "mcreator": "villagertrade",
+  "description": "Extra trades added to a villager profession or the wandering trader.",
+  "pages": [
+    {
+      "id": "trades",
+      "title": "Trades",
+      "groups": [
+        {
+          "title": "Trades",
+          "fields": [
+            {
+              "key": "villagerProfession",
+              "type": "villager_profession",
+              "label": "Profession",
+              "default": "minecraft:farmer",
+              "mcreator": "villagerProfession",
+              "help": "Vanilla, wandering trader or a profession from this mod."
+            },
+            {
+              "key": "trades",
+              "type": "list",
+              "label": "Trades",
+              "default": [
+                {
+                  "price1": "",
+                  "countPrice1": 1,
+                  "price2": "",
+                  "countPrice2": 1,
+                  "offer": "",
+                  "countOffer": 1,
+                  "level": 1,
+                  "maxTrades": 10,
+                  "xp": 5,
+                  "priceMultiplier": 0.05
+                }
+              ],
+              "fields": [
+                {
+                  "key": "price1",
+                  "type": "item",
+                  "label": "Price",
+                  "default": ""
+                },
+                {
+                  "key": "countPrice1",
+                  "type": "integer",
+                  "label": "Price count",
+                  "default": 1,
+                  "min": 1,
+                  "max": 99,
+                  "step": 1
+                },
+                {
+                  "key": "price2",
+                  "type": "item",
+                  "label": "Second price",
+                  "default": ""
+                },
+                {
+                  "key": "countPrice2",
+                  "type": "integer",
+                  "label": "Second price count",
+                  "default": 1,
+                  "min": 1,
+                  "max": 99,
+                  "step": 1
+                },
+                {
+                  "key": "offer",
+                  "type": "item",
+                  "label": "Sold item",
+                  "default": ""
+                },
+                {
+                  "key": "countOffer",
+                  "type": "integer",
+                  "label": "Sold count",
+                  "default": 1,
+                  "min": 1,
+                  "max": 99,
+                  "step": 1
+                },
+                {
+                  "key": "level",
+                  "type": "integer",
+                  "label": "Villager level",
+                  "default": 1,
+                  "min": 1,
+                  "max": 5,
+                  "step": 1
+                },
+                {
+                  "key": "maxTrades",
+                  "type": "integer",
+                  "label": "Uses before restock",
+                  "default": 10,
+                  "min": 1,
+                  "max": 72000,
+                  "step": 1
+                },
+                {
+                  "key": "xp",
+                  "type": "integer",
+                  "label": "Villager experience",
+                  "default": 5,
+                  "min": 1,
+                  "max": 72000,
+                  "step": 1
+                },
+                {
+                  "key": "priceMultiplier",
+                  "type": "number",
+                  "label": "Price multiplier",
+                  "default": 0.05,
+                  "min": 0,
+                  "max": 1,
+                  "step": 0.01
+                }
+              ],
+              "mcreator": "trades",
+              "minItems": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

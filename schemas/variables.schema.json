@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mcedge/variables.schema.json",
+  "title": "MCEdge variables",
+  "type": "object",
+  "required": [
+    "variables"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "variables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "scope",
+          "initial"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "type": {
+            "enum": [
+              "number",
+              "logic",
+              "string",
+              "itemstack",
+              "blockstate",
+              "direction"
+            ]
+          },
+          "scope": {
+            "enum": [
+              "global_session",
+              "global_world",
+              "global_map",
+              "player_lifetime",
+              "player_persistent"
+            ]
+          },
+          "initial": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

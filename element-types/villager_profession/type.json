@@ -1,0 +1,88 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "villager_profession",
+  "folder": "villager_professions",
+  "name": "Villager profession",
+  "icon": "villager",
+  "langKey": "entity",
+  "mcreator": "villagerprofession",
+  "description": "A new villager job with its own workstation block, sound and outfit.",
+  "pages": [
+    {
+      "id": "properties",
+      "title": "Properties",
+      "groups": [
+        {
+          "title": "Profession",
+          "fields": [
+            {
+              "key": "displayName",
+              "type": "text",
+              "label": "Display name",
+              "default": "",
+              "mcreator": "displayName",
+              "required": true
+            },
+            {
+              "key": "pointOfInterest",
+              "type": "block",
+              "label": "Workstation block",
+              "default": "",
+              "required": true,
+              "mcreator": "pointOfInterest",
+              "help": "Must not be used by another profession."
+            },
+            {
+              "key": "actionSound",
+              "type": "sound",
+              "label": "Work sound",
+              "default": "",
+              "mcreator": "actionSound",
+              "required": true
+            },
+            {
+              "key": "hat",
+              "type": "select",
+              "label": "Hat",
+              "default": "None",
+              "options": [
+                {
+                  "value": "None",
+                  "label": "None"
+                },
+                {
+                  "value": "Partial",
+                  "label": "Partial"
+                },
+                {
+                  "value": "Full",
+                  "label": "Full"
+                }
+              ],
+              "mcreator": "hat",
+              "help": "How the profession hat covers the biome hat."
+            },
+            {
+              "key": "professionTextureFile",
+              "type": "texture",
+              "label": "Villager outfit texture",
+              "default": "",
+              "textureKind": "entity",
+              "required": true,
+              "mcreator": "professionTextureFile"
+            },
+            {
+              "key": "zombifiedProfessionTextureFile",
+              "type": "texture",
+              "label": "Zombie villager outfit texture",
+              "default": "",
+              "textureKind": "entity",
+              "required": true,
+              "mcreator": "zombifiedProfessionTextureFile"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

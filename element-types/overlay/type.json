@@ -1,0 +1,745 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "overlay",
+  "folder": "overlays",
+  "name": "Overlay",
+  "icon": "layers",
+  "langKey": null,
+  "mcreator": "overlay",
+  "description": "Text and images drawn on top of the game screen or another screen.",
+  "pages": [
+    {
+      "id": "layout",
+      "title": "Layout",
+      "groups": [
+        {
+          "title": "Overlay",
+          "fields": [
+            {
+              "key": "components",
+              "type": "gui_layout",
+              "label": "Overlay contents",
+              "default": [],
+              "mcreator": "components"
+            },
+            {
+              "key": "baseTexture",
+              "type": "texture",
+              "label": "Background image",
+              "default": "",
+              "textureKind": "screen",
+              "mcreator": "baseTexture"
+            },
+            {
+              "key": "overlayTarget",
+              "type": "select",
+              "label": "Draw on",
+              "default": "Ingame",
+              "options": [
+                {
+                  "value": "Ingame",
+                  "label": "Ingame"
+                },
+                {
+                  "value": "MainMenu",
+                  "label": "Main Menu"
+                },
+                {
+                  "value": "IngameMenu",
+                  "label": "Ingame Menu"
+                },
+                {
+                  "value": "AbstractCommandBlock",
+                  "label": "Abstract Command Block"
+                },
+                {
+                  "value": "AbstractContainer",
+                  "label": "Abstract Container"
+                },
+                {
+                  "value": "AbstractEditSign",
+                  "label": "Abstract Edit Sign"
+                },
+                {
+                  "value": "AbstractFurnace",
+                  "label": "Abstract Furnace"
+                },
+                {
+                  "value": "Anvil",
+                  "label": "Anvil"
+                },
+                {
+                  "value": "Beacon",
+                  "label": "Beacon"
+                },
+                {
+                  "value": "BlastFurnace",
+                  "label": "Blast Furnace"
+                },
+                {
+                  "value": "BrewingStand",
+                  "label": "Brewing Stand"
+                },
+                {
+                  "value": "CartographyTable",
+                  "label": "Cartography Table"
+                },
+                {
+                  "value": "Chest",
+                  "label": "Chest"
+                },
+                {
+                  "value": "CommandBlock",
+                  "label": "Command Block"
+                },
+                {
+                  "value": "Crafter",
+                  "label": "Crafter"
+                },
+                {
+                  "value": "Crafting",
+                  "label": "Crafting"
+                },
+                {
+                  "value": "Dispenser",
+                  "label": "Dispenser"
+                },
+                {
+                  "value": "EditBook",
+                  "label": "Edit Book"
+                },
+                {
+                  "value": "EditMinecartCommandBlock",
+                  "label": "Edit Minecart Command Block"
+                },
+                {
+                  "value": "EditSign",
+                  "label": "Edit Sign"
+                },
+                {
+                  "value": "EditStructure",
+                  "label": "Edit Structure"
+                },
+                {
+                  "value": "Enchantment",
+                  "label": "Enchantment"
+                },
+                {
+                  "value": "Furnace",
+                  "label": "Furnace"
+                },
+                {
+                  "value": "Grindstone",
+                  "label": "Grindstone"
+                },
+                {
+                  "value": "HangingSignEdit",
+                  "label": "Hanging Sign Edit"
+                },
+                {
+                  "value": "Hopper",
+                  "label": "Hopper"
+                },
+                {
+                  "value": "HorseInventory",
+                  "label": "Horse Inventory"
+                },
+                {
+                  "value": "Jigsaw",
+                  "label": "Jigsaw"
+                },
+                {
+                  "value": "Lectern",
+                  "label": "Lectern"
+                },
+                {
+                  "value": "Loom",
+                  "label": "Loom"
+                },
+                {
+                  "value": "Merchant",
+                  "label": "Merchant"
+                },
+                {
+                  "value": "ReadBook",
+                  "label": "Read Book"
+                },
+                {
+                  "value": "ShulkerBox",
+                  "label": "Shulker Box"
+                },
+                {
+                  "value": "SmithingTable",
+                  "label": "Smithing Table"
+                },
+                {
+                  "value": "Smoker",
+                  "label": "Smoker"
+                },
+                {
+                  "value": "Stonecutter",
+                  "label": "Stonecutter"
+                },
+                {
+                  "value": "AbstractReport",
+                  "label": "Abstract Report"
+                },
+                {
+                  "value": "AccessibilityOnboarding",
+                  "label": "Accessibility Onboarding"
+                },
+                {
+                  "value": "AccessibilityOptions",
+                  "label": "Accessibility Options"
+                },
+                {
+                  "value": "AddServer",
+                  "label": "Add Server"
+                },
+                {
+                  "value": "Advancements",
+                  "label": "Advancements"
+                },
+                {
+                  "value": "Alert",
+                  "label": "Alert"
+                },
+                {
+                  "value": "Chat",
+                  "label": "Chat"
+                },
+                {
+                  "value": "ChatOptions",
+                  "label": "Chat Options"
+                },
+                {
+                  "value": "ChatReport",
+                  "label": "Chat Report"
+                },
+                {
+                  "value": "ChatSelection",
+                  "label": "Chat Selection"
+                },
+                {
+                  "value": "Confirm",
+                  "label": "Confirm"
+                },
+                {
+                  "value": "ConfirmBackup",
+                  "label": "Confirm Backup"
+                },
+                {
+                  "value": "ConfirmExperimentalFeatures",
+                  "label": "Confirm Experimental Features"
+                },
+                {
+                  "value": "ConfirmOpenLink",
+                  "label": "Confirm Open Link"
+                },
+                {
+                  "value": "Connecting",
+                  "label": "Connecting"
+                },
+                {
+                  "value": "Controls",
+                  "label": "Controls"
+                },
+                {
+                  "value": "CreateBuffetWorld",
+                  "label": "Create Buffet World"
+                },
+                {
+                  "value": "CreateFlatWorld",
+                  "label": "Create Flat World"
+                },
+                {
+                  "value": "CreateWorld",
+                  "label": "Create World"
+                },
+                {
+                  "value": "Creative",
+                  "label": "Creative"
+                },
+                {
+                  "value": "CreditsAndAttribution",
+                  "label": "Credits And Attribution"
+                },
+                {
+                  "value": "CustomizeSkin",
+                  "label": "Customize Skin"
+                },
+                {
+                  "value": "DatapackFailure",
+                  "label": "Datapack Failure"
+                },
+                {
+                  "value": "Death",
+                  "label": "Death"
+                },
+                {
+                  "value": "DirtMessage",
+                  "label": "Dirt Message"
+                },
+                {
+                  "value": "Disconnected",
+                  "label": "Disconnected"
+                },
+                {
+                  "value": "EditGamerules",
+                  "label": "Edit Gamerules"
+                },
+                {
+                  "value": "EditWorld",
+                  "label": "Edit World"
+                },
+                {
+                  "value": "AbstractRecipeBook",
+                  "label": "Abstract Recipe Book"
+                },
+                {
+                  "value": "Error",
+                  "label": "Error"
+                },
+                {
+                  "value": "Experiments",
+                  "label": "Experiments"
+                },
+                {
+                  "value": "FlatPresets",
+                  "label": "Flat Presets"
+                },
+                {
+                  "value": "GamemodeSelection",
+                  "label": "Gamemode Selection"
+                },
+                {
+                  "value": "GenericWaiting",
+                  "label": "Generic Waiting"
+                },
+                {
+                  "value": "GPUWarning",
+                  "label": "GPUWarning"
+                },
+                {
+                  "value": "Inventory",
+                  "label": "Inventory"
+                },
+                {
+                  "value": "ItemCombiner",
+                  "label": "Item Combiner"
+                },
+                {
+                  "value": "KeyBinds",
+                  "label": "Key Binds"
+                },
+                {
+                  "value": "Language",
+                  "label": "Language"
+                },
+                {
+                  "value": "MemoryError",
+                  "label": "Memory Error"
+                },
+                {
+                  "value": "MouseSettings",
+                  "label": "Mouse Settings"
+                },
+                {
+                  "value": "Multiplayer",
+                  "label": "Multiplayer"
+                },
+                {
+                  "value": "MultiplayerWarning",
+                  "label": "Multiplayer Warning"
+                },
+                {
+                  "value": "NameReport",
+                  "label": "Name Report"
+                },
+                {
+                  "value": "OnlineOptions",
+                  "label": "Online Options"
+                },
+                {
+                  "value": "OptimizeWorld",
+                  "label": "Optimize World"
+                },
+                {
+                  "value": "Options",
+                  "label": "Options"
+                },
+                {
+                  "value": "OptionsSounds",
+                  "label": "Options Sounds"
+                },
+                {
+                  "value": "Pack",
+                  "label": "Pack"
+                },
+                {
+                  "value": "Realms",
+                  "label": "Realms"
+                },
+                {
+                  "value": "RecoverWorldData",
+                  "label": "Recover World Data"
+                },
+                {
+                  "value": "ReportPlayer",
+                  "label": "Report Player"
+                },
+                {
+                  "value": "ReportReasonSelection",
+                  "label": "Report Reason Selection"
+                },
+                {
+                  "value": "ServerList",
+                  "label": "Server List"
+                },
+                {
+                  "value": "ServerReconfig",
+                  "label": "Server Reconfig"
+                },
+                {
+                  "value": "ServerLinks",
+                  "label": "Server Links"
+                },
+                {
+                  "value": "Settings",
+                  "label": "Settings"
+                },
+                {
+                  "value": "SkinReport",
+                  "label": "Skin Report"
+                },
+                {
+                  "value": "SleepInMultiplayer",
+                  "label": "Sleep In Multiplayer"
+                },
+                {
+                  "value": "SocialInteractions",
+                  "label": "Social Interactions"
+                },
+                {
+                  "value": "Stats",
+                  "label": "Stats"
+                },
+                {
+                  "value": "SymlinkWarning",
+                  "label": "Symlink Warning"
+                },
+                {
+                  "value": "TelemetryInfo",
+                  "label": "Telemetry Info"
+                },
+                {
+                  "value": "UnsupportedGraphicsWarning",
+                  "label": "Unsupported Graphics Warning"
+                },
+                {
+                  "value": "VideoSettings",
+                  "label": "Video Settings"
+                },
+                {
+                  "value": "Warning",
+                  "label": "Warning"
+                },
+                {
+                  "value": "Win",
+                  "label": "Win"
+                },
+                {
+                  "value": "Working",
+                  "label": "Working"
+                },
+                {
+                  "value": "WorldLoadProgress",
+                  "label": "World Load Progress"
+                },
+                {
+                  "value": "WorldSelection",
+                  "label": "World Selection"
+                },
+                {
+                  "value": "FontOptions",
+                  "label": "Font Options"
+                },
+                {
+                  "value": "ButtonListDialog",
+                  "label": "Button List Dialog"
+                },
+                {
+                  "value": "DialogListDialog",
+                  "label": "Dialog List Dialog"
+                },
+                {
+                  "value": "Dialog",
+                  "label": "Dialog"
+                },
+                {
+                  "value": "MultiButtonDialog",
+                  "label": "Multi Button Dialog"
+                },
+                {
+                  "value": "SimpleDialog",
+                  "label": "Simple Dialog"
+                },
+                {
+                  "value": "WaitingForResponse",
+                  "label": "Waiting For Response"
+                },
+                {
+                  "value": "BookSign",
+                  "label": "Book Sign"
+                },
+                {
+                  "value": "TestBlockEdit",
+                  "label": "Test Block Edit"
+                },
+                {
+                  "value": "TestInstanceBlockEdit",
+                  "label": "Test Instance Block Edit"
+                },
+                {
+                  "value": "DebugOptions",
+                  "label": "Debug Options"
+                },
+                {
+                  "value": "AbstractMountInventory",
+                  "label": "Abstract Mount Inventory"
+                },
+                {
+                  "value": "NautilusInventory",
+                  "label": "Nautilus Inventory"
+                },
+                {
+                  "value": "CodeOfConduct",
+                  "label": "Code Of Conduct"
+                },
+                {
+                  "value": "Restrictions",
+                  "label": "Restrictions"
+                },
+                {
+                  "value": "InWorldGameRules",
+                  "label": "In World Game Rules"
+                },
+                {
+                  "value": "WorldOptions",
+                  "label": "World Options"
+                },
+                {
+                  "value": "AbstractGameRules",
+                  "label": "Abstract Game Rules"
+                },
+                {
+                  "value": "FileFixerProgress",
+                  "label": "File Fixer Progress"
+                },
+                {
+                  "value": "FileFixerAborted",
+                  "label": "File Fixer Aborted"
+                },
+                {
+                  "value": "FriendsListConfirm",
+                  "label": "Friends List Confirm"
+                },
+                {
+                  "value": "FriendsOverlay",
+                  "label": "Friends Overlay"
+                },
+                {
+                  "value": "PrivacyConfirmLink",
+                  "label": "Privacy Confirm Link"
+                }
+              ],
+              "mcreator": "overlayTarget"
+            },
+            {
+              "key": "priority",
+              "type": "select",
+              "label": "Render priority",
+              "default": "NORMAL",
+              "options": [
+                {
+                  "value": "NORMAL",
+                  "label": "Normal"
+                },
+                {
+                  "value": "HIGH",
+                  "label": "High"
+                },
+                {
+                  "value": "HIGHEST",
+                  "label": "Highest"
+                },
+                {
+                  "value": "LOW",
+                  "label": "Low"
+                },
+                {
+                  "value": "LOWEST",
+                  "label": "Lowest"
+                }
+              ],
+              "mcreator": "priority"
+            },
+            {
+              "key": "displayCondition",
+              "type": "procedure",
+              "label": "Display condition",
+              "default": "",
+              "trigger": "overlay_display",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity"
+              ],
+              "mcreator": "displayCondition",
+              "returns": "logic"
+            }
+          ]
+        },
+        {
+          "title": "Screen size",
+          "fields": [
+            {
+              "key": "anchor",
+              "type": "select",
+              "label": "Anchor",
+              "help": "Where the contents stay on a screen larger or smaller than the 427x240 canvas: each widget keeps its distance to this point of the screen. A widget can pick its own anchor.",
+              "default": "center",
+              "options": [
+                {
+                  "value": "top_left",
+                  "label": "Top left"
+                },
+                {
+                  "value": "top",
+                  "label": "Top"
+                },
+                {
+                  "value": "top_right",
+                  "label": "Top right"
+                },
+                {
+                  "value": "left",
+                  "label": "Left"
+                },
+                {
+                  "value": "center",
+                  "label": "Center"
+                },
+                {
+                  "value": "right",
+                  "label": "Right"
+                },
+                {
+                  "value": "bottom_left",
+                  "label": "Bottom left"
+                },
+                {
+                  "value": "bottom",
+                  "label": "Bottom"
+                },
+                {
+                  "value": "bottom_right",
+                  "label": "Bottom right"
+                }
+              ]
+            },
+            {
+              "key": "scaleMode",
+              "type": "select",
+              "label": "Size",
+              "help": "Follow the GUI scale: one canvas pixel is one GUI pixel, so the player's GUI scale sets the size. Fixed GUI scale: the same size whatever the player's setting. Fill the screen: the canvas grows and shrinks with the window.",
+              "default": "gui",
+              "options": [
+                {
+                  "value": "gui",
+                  "label": "Follow the GUI scale"
+                },
+                {
+                  "value": "fixed",
+                  "label": "Fixed GUI scale"
+                },
+                {
+                  "value": "fit",
+                  "label": "Fill the screen"
+                }
+              ]
+            },
+            {
+              "key": "fixedScale",
+              "type": "integer",
+              "label": "GUI scale",
+              "help": "Window pixels per canvas pixel.",
+              "default": 2,
+              "min": 1,
+              "max": 8,
+              "step": 1,
+              "showIf": {
+                "key": "scaleMode",
+                "equals": "fixed"
+              }
+            }
+          ]
+        },
+        {
+          "title": "Editor grid",
+          "fields": [
+            {
+              "key": "gridSx",
+              "type": "integer",
+              "label": "Grid width",
+              "default": 18,
+              "min": 1,
+              "max": 512,
+              "step": 1,
+              "mcreator": "gridSettings.sx"
+            },
+            {
+              "key": "gridSy",
+              "type": "integer",
+              "label": "Grid height",
+              "default": 18,
+              "min": 1,
+              "max": 512,
+              "step": 1,
+              "mcreator": "gridSettings.sy"
+            },
+            {
+              "key": "gridOx",
+              "type": "integer",
+              "label": "Grid offset X",
+              "default": 11,
+              "min": -512,
+              "max": 512,
+              "step": 1,
+              "mcreator": "gridSettings.ox"
+            },
+            {
+              "key": "gridOy",
+              "type": "integer",
+              "label": "Grid offset Y",
+              "default": 15,
+              "min": -512,
+              "max": 512,
+              "step": 1,
+              "mcreator": "gridSettings.oy"
+            },
+            {
+              "key": "gridSnap",
+              "type": "boolean",
+              "label": "Snap to grid",
+              "default": false,
+              "mcreator": "gridSettings.snapOnGrid"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

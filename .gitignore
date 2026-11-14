@@ -1,0 +1,14 @@
+node_modules/
+.toolchains/
+out/
+*.log
+design/reference/
+/release/
+tools/codegen-test/project/out/
+tools/codegen-test/project/elements/
+tools/codegen-test/project/mcedge.json
+tools/codegen-test/project/schemas/
+tools/codegen-test/logs/
+tools/ui-test/last-failure.png
+tools/codegen-test/project/sounds/
+tools/import-mcreator/java-ast/work/

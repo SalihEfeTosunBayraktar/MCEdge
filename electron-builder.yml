@@ -1,0 +1,66 @@
+appId: dev.mcedge.app
+productName: MCEdge
+copyright: Copyright (c) 2026 Salih Efe Tosun
+directories:
+  output: release
+  buildResources: build-resources
+files:
+  - out/**
+  - package.json
+  # Vite bundles these into out/renderer; the main process only loads electron-updater at runtime.
+  - "!node_modules/{monaco-editor,blockly,three,react,react-dom,scheduler,dompurify,marked}/**"
+# The core reads these folders at runtime (element-types: type.json per element type); the app points MCEDGE_ROOT at resources/core when packaged.
+extraResources:
+  - from: config
+    to: core/config
+  - from: engines
+    to: core/engines
+  - from: layers
+    to: core/layers
+  - from: schemas
+    to: core/schemas
+  - from: element-types
+    to: core/element-types
+  # Help > User guide reads docs/guide. The release is public: the queue, audits, roadmap and perf notes stay out.
+  - from: docs
+    to: core/docs
+    filter:
+      - "**/*"
+      - "!queue/**"
+      - "!perf/**"
+      - "!ETR-AUDIT.md"
+      - "!ETR-EKSIKLER.md"
+      - "!AUDIT-2026-11-10.md"
+      - "!USABILITY-2026-11-08.md"
+      - "!ROADMAP.md"
+  - from: examples/hello
+    to: core/examples/hello
+    filter: ["**/*", "!out/**"]
+win:
+  icon: build-resources/icon.png
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  artifactName: MCEdge-Setup-${version}.${ext}
+  shortcutName: MCEdge
+  createStartMenuShortcut: true
+  # The desktop shortcut is a checkbox on the finish page (build-resources/installer.nsh), so it stays optional.
+  createDesktopShortcut: false
+  uninstallDisplayName: MCEdge
+  # English and Turkish; the installer asks which one to use.
+  installerLanguages: [en_US, tr_TR]
+  multiLanguageInstaller: true
+  displayLanguageSelector: true
+portable:
+  artifactName: MCEdge-Portable-${version}.${ext}
+publish:
+  provider: github
+  owner: SalihEfeTosunBayraktar
+  repo: MCEdge
+  releaseType: release

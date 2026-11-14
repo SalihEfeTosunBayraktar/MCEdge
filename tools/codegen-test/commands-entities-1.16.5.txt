@@ -1,0 +1,11 @@
+forceload add 0 0
+summon wavethree:ruby_boat 0 100 0
+summon minecraft:pig 8 100 0 {NoAI:1b}
+summon wavethree:ruby_arrow 8 112 0 {Motion:[0.0,-1.0,0.0]}
+summon wavethree:floating_shard 4 110 0
+@wait 6
+execute if entity @e[type=wavethree:ruby_boat] run say boat-ok
+execute if entity @e[type=wavethree:floating_shard] run say shard-ok
+data get entity @e[type=wavethree:floating_shard,limit=1] NoGravity
+@wait 3
+stop

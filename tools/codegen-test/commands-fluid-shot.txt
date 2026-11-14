@@ -1,0 +1,4 @@
+@wait 22
+@shot fluid-overlay
+@wait 2
+@kill

@@ -1,0 +1,29 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license={{licenseJson}}
+
+[[mods]]
+modId="{{mod.id}}"
+version="{{mod.version}}"
+displayName={{nameJson}}
+authors={{authorsJoinedJson}}
+description={{descriptionJson}}
+{{#if mod.website}}displayURL={{websiteJson}}
+{{/if}}{{#if mod.credits}}credits={{creditsJson}}
+{{/if}}{{#if logoFile}}{{logoKey}}="{{logoFile}}"
+{{/if}}{{#if enumExtensions}}enumExtensions="META-INF/enumextensions.json"
+{{/if}}
+[[dependencies.{{mod.id}}]]
+    modId="minecraft"
+    type="required"
+    versionRange="[{{minecraft}}]"
+    ordering="NONE"
+    side="BOTH"
+{{#each dependencies}}
+[[dependencies.{{mod.id}}]]
+    modId="{{modId}}"
+    type="{{neoforgeType}}"
+    versionRange="{{mavenRange}}"
+    ordering="NONE"
+    side="{{sideUpper}}"
+{{/each}}

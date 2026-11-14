@@ -1,0 +1,201 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "special_entity",
+  "folder": "special_entities",
+  "name": "Boat or raft",
+  "icon": "boat",
+  "langKey": "entity",
+  "mcreator": "specialentity",
+  "description": "A custom boat or raft, with or without a chest, and its placing item.",
+  "pages": [
+    {
+      "id": "properties",
+      "title": "Properties",
+      "groups": [
+        {
+          "title": "Entity",
+          "fields": [
+            {
+              "key": "entityType",
+              "type": "select",
+              "label": "Kind",
+              "default": "Boat",
+              "options": [
+                {
+                  "value": "Boat",
+                  "label": "Boat"
+                },
+                {
+                  "value": "ChestBoat",
+                  "label": "Boat with chest"
+                },
+                {
+                  "value": "Raft",
+                  "label": "Raft"
+                },
+                {
+                  "value": "ChestRaft",
+                  "label": "Raft with chest"
+                }
+              ],
+              "mcreator": "entityType"
+            },
+            {
+              "key": "name",
+              "type": "text",
+              "label": "Display name",
+              "default": "",
+              "mcreator": "name",
+              "required": true
+            },
+            {
+              "key": "entityTexture",
+              "type": "texture",
+              "label": "Entity texture",
+              "default": "",
+              "textureKind": "entity",
+              "required": true,
+              "mcreator": "entityTexture"
+            },
+            {
+              "key": "itemTexture",
+              "type": "texture",
+              "label": "Item texture",
+              "default": "",
+              "textureKind": "item",
+              "mcreator": "itemTexture",
+              "required": true
+            },
+            {
+              "key": "rarity",
+              "type": "select",
+              "label": "Rarity",
+              "default": "COMMON",
+              "options": [
+                {
+                  "value": "COMMON",
+                  "label": "Common"
+                },
+                {
+                  "value": "UNCOMMON",
+                  "label": "Uncommon"
+                },
+                {
+                  "value": "RARE",
+                  "label": "Rare"
+                },
+                {
+                  "value": "EPIC",
+                  "label": "Epic"
+                }
+              ],
+              "mcreator": "rarity",
+              "help": "Colors the item name."
+            },
+            {
+              "key": "creativeTabs",
+              "type": "multiselect",
+              "elementTypes": [
+                "creative_tab"
+              ],
+              "label": "Creative tabs",
+              "default": [
+                "TOOLS"
+              ],
+              "mcreator": "creativeTabs",
+              "options": [
+                {
+                  "value": "BUILDING_BLOCKS",
+                  "label": "Building blocks"
+                },
+                {
+                  "value": "DECORATIONS",
+                  "label": "Natural blocks"
+                },
+                {
+                  "value": "REDSTONE",
+                  "label": "Redstone"
+                },
+                {
+                  "value": "FOOD",
+                  "label": "Food and drinks"
+                },
+                {
+                  "value": "TOOLS",
+                  "label": "Tools and utilities"
+                },
+                {
+                  "value": "COMBAT",
+                  "label": "Combat"
+                },
+                {
+                  "value": "MATERIALS",
+                  "label": "Ingredients"
+                },
+                {
+                  "value": "MISC",
+                  "label": "Spawn eggs"
+                },
+                {
+                  "value": "TRANSPORTATION",
+                  "label": "Functional blocks"
+                },
+                {
+                  "value": "BREWING",
+                  "label": "Colored blocks"
+                },
+                {
+                  "value": "OP_BLOCKS",
+                  "label": "Operator items"
+                }
+              ],
+              "help": "Creative inventory tabs that list this element. Tabs defined in this mod are offered as well."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "triggers",
+      "title": "Triggers",
+      "groups": [
+        {
+          "title": "Events",
+          "fields": [
+            {
+              "key": "onTickUpdate",
+              "type": "procedure",
+              "label": "Every tick",
+              "default": "",
+              "trigger": "entity_tick",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity"
+              ],
+              "mcreator": "onTickUpdate"
+            },
+            {
+              "key": "onPlayerCollidesWith",
+              "type": "procedure",
+              "label": "Player collides with it",
+              "default": "",
+              "trigger": "entity_player_collides",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "sourceentity"
+              ],
+              "mcreator": "onPlayerCollidesWith"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

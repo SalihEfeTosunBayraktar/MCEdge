@@ -1,0 +1,8 @@
+{
+  "$schema": "../../schemas/elements/creative_tab.schema.json",
+  "id": "ruby_tab",
+  "name": "Rubies",
+  "icon": "ruby",
+  "showSearch": false,
+  "hideTitle": false
+}

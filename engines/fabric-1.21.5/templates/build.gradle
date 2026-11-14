@@ -1,0 +1,23 @@
+plugins {
+    id 'fabric-loom' version '{{versions.loom}}'
+}
+
+version = '{{mod.version}}'
+group = '{{mod.package}}'
+base { archivesName = '{{mod.id}}' }
+
+{{#if integrationRepositories}}repositories {
+{{#each integrationRepositories}}    maven { url = '{{url}}' }
+{{/each}}}
+
+{{/if}}dependencies {
+    minecraft 'com.mojang:minecraft:{{minecraft}}'
+    mappings loom.officialMojangMappings()
+    modImplementation 'net.fabricmc:fabric-loader:{{versions.loader}}'
+    modImplementation 'net.fabricmc.fabric-api:fabric-api:{{versions.fabricApi}}'
+{{#each integrationGradle}}    {{line}}
+{{/each}}}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of({{java}})
+
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }

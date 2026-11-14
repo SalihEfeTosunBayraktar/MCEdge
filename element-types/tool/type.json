@@ -1,0 +1,792 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "tool",
+  "folder": "tools",
+  "name": "Tool",
+  "icon": "pickaxe",
+  "langKey": "item",
+  "mcreator": "tool",
+  "description": "Pickaxes, axes, swords, shovels, hoes, shields, shears, fishing rods, multi-tools and special tools.",
+  "pages": [
+    {
+      "id": "visual",
+      "title": "Visual",
+      "groups": [
+        {
+          "title": "Appearance",
+          "fields": [
+            {
+              "key": "texture",
+              "type": "texture",
+              "label": "Texture",
+              "default": "",
+              "textureKind": "item",
+              "mcreator": "texture",
+              "required": true
+            },
+            {
+              "key": "model",
+              "type": "model",
+              "label": "Model",
+              "default": "Normal",
+              "modelKinds": [
+                "builtin",
+                "json",
+                "obj",
+                "java"
+              ],
+              "mcreator": "customModelName",
+              "help": "Model kind is stored as renderType."
+            },
+            {
+              "key": "blockingModel",
+              "type": "model",
+              "label": "Blocking model",
+              "default": "Normal blocking",
+              "modelKinds": [
+                "builtin",
+                "json",
+                "obj",
+                "java"
+              ],
+              "mcreator": "blockingModelName",
+              "help": "Model used while the shield is raised. Model kind is stored as blockingRenderType.",
+              "showIf": {
+                "key": "toolType",
+                "equals": "Shield"
+              }
+            },
+            {
+              "key": "guiTexture",
+              "type": "texture",
+              "label": "Inventory texture",
+              "default": "",
+              "textureKind": "item",
+              "mcreator": "guiTexture"
+            }
+          ]
+        },
+        {
+          "title": "Effects and tooltip",
+          "fields": [
+            {
+              "key": "glowCondition",
+              "type": "boolean",
+              "label": "Enchanted glint",
+              "default": false,
+              "mcreator": "glowCondition.fixedValue"
+            },
+            {
+              "key": "glowConditionProcedure",
+              "type": "procedure",
+              "label": "Enchanted glint (procedure)",
+              "default": "",
+              "trigger": "item_glow",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "mcreator": "glowCondition.name",
+              "returns": "logic",
+              "help": "When set, this procedure decides the value instead of the checkbox."
+            },
+            {
+              "key": "specialInformation",
+              "type": "multiline",
+              "label": "Tooltip lines",
+              "default": "",
+              "mcreator": "specialInformation.fixedValue",
+              "help": "One tooltip line per row."
+            },
+            {
+              "key": "specialInformationProcedure",
+              "type": "procedure",
+              "label": "Tooltip lines (procedure)",
+              "default": "",
+              "trigger": "item_tooltip",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "mcreator": "specialInformation.name",
+              "returns": "string_list",
+              "help": "When set, this procedure returns the tooltip lines instead."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "properties",
+      "title": "Properties",
+      "groups": [
+        {
+          "title": "General",
+          "fields": [
+            {
+              "key": "name",
+              "type": "text",
+              "label": "Display name",
+              "default": "",
+              "mcreator": "name",
+              "required": true
+            },
+            {
+              "key": "rarity",
+              "type": "select",
+              "label": "Rarity",
+              "default": "COMMON",
+              "options": [
+                {
+                  "value": "COMMON",
+                  "label": "Common"
+                },
+                {
+                  "value": "UNCOMMON",
+                  "label": "Uncommon"
+                },
+                {
+                  "value": "RARE",
+                  "label": "Rare"
+                },
+                {
+                  "value": "EPIC",
+                  "label": "Epic"
+                }
+              ],
+              "mcreator": "rarity",
+              "help": "Colors the item name."
+            },
+            {
+              "key": "creativeTabs",
+              "type": "multiselect",
+              "elementTypes": [
+                "creative_tab"
+              ],
+              "label": "Creative tabs",
+              "default": [
+                "TOOLS"
+              ],
+              "mcreator": "creativeTabs",
+              "options": [
+                {
+                  "value": "BUILDING_BLOCKS",
+                  "label": "Building blocks"
+                },
+                {
+                  "value": "DECORATIONS",
+                  "label": "Natural blocks"
+                },
+                {
+                  "value": "REDSTONE",
+                  "label": "Redstone"
+                },
+                {
+                  "value": "FOOD",
+                  "label": "Food and drinks"
+                },
+                {
+                  "value": "TOOLS",
+                  "label": "Tools and utilities"
+                },
+                {
+                  "value": "COMBAT",
+                  "label": "Combat"
+                },
+                {
+                  "value": "MATERIALS",
+                  "label": "Ingredients"
+                },
+                {
+                  "value": "MISC",
+                  "label": "Spawn eggs"
+                },
+                {
+                  "value": "TRANSPORTATION",
+                  "label": "Functional blocks"
+                },
+                {
+                  "value": "BREWING",
+                  "label": "Colored blocks"
+                },
+                {
+                  "value": "OP_BLOCKS",
+                  "label": "Operator items"
+                }
+              ],
+              "help": "Creative inventory tabs that list this element. Tabs defined in this mod are offered as well."
+            },
+            {
+              "key": "enchantability",
+              "type": "integer",
+              "label": "Enchantability",
+              "default": 2,
+              "min": 1,
+              "max": 128000,
+              "step": 1,
+              "mcreator": "enchantability"
+            },
+            {
+              "key": "usageCount",
+              "type": "integer",
+              "label": "Durability",
+              "default": 100,
+              "min": 0,
+              "max": 2147483647,
+              "warnAbove": 128000,
+              "step": 1,
+              "mcreator": "usageCount"
+            },
+            {
+              "key": "repairItems",
+              "type": "list",
+              "label": "Repair items",
+              "default": [],
+              "fields": [
+                {
+                  "key": "item",
+                  "type": "item",
+                  "label": "Item or block",
+                  "default": "",
+                  "allowTags": true
+                }
+              ],
+              "mcreator": "repairItems"
+            },
+            {
+              "key": "immuneToFire",
+              "type": "boolean",
+              "label": "Immune to fire and lava",
+              "default": false,
+              "mcreator": "immuneToFire"
+            },
+            {
+              "key": "stayInGridWhenCrafting",
+              "type": "boolean",
+              "label": "Stays in the crafting grid",
+              "default": false,
+              "mcreator": "stayInGridWhenCrafting"
+            },
+            {
+              "key": "damageOnCrafting",
+              "type": "boolean",
+              "label": "Loses durability when crafting",
+              "default": false,
+              "mcreator": "damageOnCrafting",
+              "showIf": {
+                "key": "stayInGridWhenCrafting",
+                "equals": true
+              }
+            }
+          ]
+        },
+        {
+          "title": "Tool",
+          "fields": [
+            {
+              "key": "toolType",
+              "type": "select",
+              "label": "Tool type",
+              "default": "Pickaxe",
+              "options": [
+                {
+                  "value": "Pickaxe",
+                  "label": "Pickaxe"
+                },
+                {
+                  "value": "Axe",
+                  "label": "Axe"
+                },
+                {
+                  "value": "Sword",
+                  "label": "Sword"
+                },
+                {
+                  "value": "Spade",
+                  "label": "Shovel"
+                },
+                {
+                  "value": "Hoe",
+                  "label": "Hoe"
+                },
+                {
+                  "value": "Shield",
+                  "label": "Shield"
+                },
+                {
+                  "value": "Shears",
+                  "label": "Shears"
+                },
+                {
+                  "value": "Fishing rod",
+                  "label": "Fishing rod"
+                },
+                {
+                  "value": "Special",
+                  "label": "Special (custom blocks)"
+                },
+                {
+                  "value": "MultiTool",
+                  "label": "Multi-tool"
+                }
+              ],
+              "mcreator": "toolType"
+            },
+            {
+              "key": "blockDropsTier",
+              "type": "select",
+              "label": "Mining tier",
+              "default": "WOOD",
+              "options": [
+                {
+                  "value": "WOOD",
+                  "label": "Wood"
+                },
+                {
+                  "value": "STONE",
+                  "label": "Stone"
+                },
+                {
+                  "value": "IRON",
+                  "label": "Iron"
+                },
+                {
+                  "value": "DIAMOND",
+                  "label": "Diamond"
+                },
+                {
+                  "value": "GOLD",
+                  "label": "Gold"
+                },
+                {
+                  "value": "NETHERITE",
+                  "label": "Netherite"
+                }
+              ],
+              "mcreator": "blockDropsTier",
+              "showIf": {
+                "key": "toolType",
+                "in": [
+                  "Pickaxe",
+                  "Axe",
+                  "Sword",
+                  "Spade",
+                  "Hoe",
+                  "MultiTool"
+                ]
+              }
+            },
+            {
+              "key": "additionalDropCondition",
+              "type": "procedure",
+              "label": "Extra drop condition",
+              "default": "",
+              "trigger": "tool_drop_condition",
+              "dependencies": [
+                "itemstack",
+                "blockstate"
+              ],
+              "mcreator": "additionalDropCondition",
+              "returns": "logic",
+              "showIf": {
+                "key": "toolType",
+                "in": [
+                  "Pickaxe",
+                  "Axe",
+                  "Sword",
+                  "Spade",
+                  "Hoe",
+                  "Special",
+                  "MultiTool"
+                ]
+              }
+            },
+            {
+              "key": "efficiency",
+              "type": "number",
+              "label": "Mining speed",
+              "default": 4,
+              "min": 0,
+              "max": 128000,
+              "step": 0.5,
+              "mcreator": "efficiency",
+              "showIf": {
+                "key": "toolType",
+                "in": [
+                  "Pickaxe",
+                  "Axe",
+                  "Sword",
+                  "Spade",
+                  "Hoe",
+                  "Shears",
+                  "Special",
+                  "MultiTool"
+                ]
+              }
+            },
+            {
+              "key": "damageVsEntity",
+              "type": "number",
+              "label": "Attack damage",
+              "default": 4,
+              "min": 0,
+              "max": 128000,
+              "step": 0.1,
+              "mcreator": "damageVsEntity",
+              "showIf": {
+                "key": "toolType",
+                "in": [
+                  "Pickaxe",
+                  "Axe",
+                  "Sword",
+                  "Spade",
+                  "Hoe",
+                  "Special",
+                  "MultiTool"
+                ]
+              }
+            },
+            {
+              "key": "attackSpeed",
+              "type": "number",
+              "label": "Attack speed",
+              "default": 1,
+              "min": 0,
+              "max": 100,
+              "step": 0.1,
+              "mcreator": "attackSpeed",
+              "showIf": {
+                "key": "toolType",
+                "in": [
+                  "Pickaxe",
+                  "Axe",
+                  "Sword",
+                  "Spade",
+                  "Hoe",
+                  "Special",
+                  "MultiTool"
+                ]
+              }
+            },
+            {
+              "key": "blocksAffected",
+              "type": "list",
+              "label": "Blocks it mines",
+              "default": [],
+              "fields": [
+                {
+                  "key": "block",
+                  "type": "block",
+                  "label": "Block",
+                  "default": "",
+                  "allowTags": true
+                }
+              ],
+              "mcreator": "blocksAffected",
+              "showIf": {
+                "key": "toolType",
+                "equals": "Special"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "attributes",
+      "title": "Attribute modifiers",
+      "groups": [
+        {
+          "title": "Modifiers",
+          "fields": [
+            {
+              "key": "attributeModifiers",
+              "type": "list",
+              "label": "Attribute modifiers",
+              "default": [],
+              "fields": [
+                {
+                  "key": "equipmentSlot",
+                  "type": "select",
+                  "label": "Active in slot",
+                  "default": "mainhand",
+                  "options": [
+                    {
+                      "value": "any",
+                      "label": "Any"
+                    },
+                    {
+                      "value": "mainhand",
+                      "label": "Mainhand"
+                    },
+                    {
+                      "value": "offhand",
+                      "label": "Offhand"
+                    },
+                    {
+                      "value": "hand",
+                      "label": "Hand"
+                    },
+                    {
+                      "value": "feet",
+                      "label": "Feet"
+                    },
+                    {
+                      "value": "legs",
+                      "label": "Legs"
+                    },
+                    {
+                      "value": "chest",
+                      "label": "Chest"
+                    },
+                    {
+                      "value": "head",
+                      "label": "Head"
+                    },
+                    {
+                      "value": "armor",
+                      "label": "Armor"
+                    },
+                    {
+                      "value": "body",
+                      "label": "Body"
+                    },
+                    {
+                      "value": "saddle",
+                      "label": "Saddle"
+                    }
+                  ]
+                },
+                {
+                  "key": "attribute",
+                  "type": "attribute",
+                  "label": "Attribute",
+                  "default": "minecraft:attack_damage"
+                },
+                {
+                  "key": "amount",
+                  "type": "number",
+                  "label": "Amount",
+                  "default": 0,
+                  "min": -1024,
+                  "max": 1024,
+                  "step": 0.001
+                },
+                {
+                  "key": "operation",
+                  "type": "select",
+                  "label": "Operation",
+                  "default": "ADD_VALUE",
+                  "options": [
+                    {
+                      "value": "ADD_VALUE",
+                      "label": "Add to base value"
+                    },
+                    {
+                      "value": "ADD_MULTIPLIED_BASE",
+                      "label": "Add percentage of base"
+                    },
+                    {
+                      "value": "ADD_MULTIPLIED_TOTAL",
+                      "label": "Multiply total"
+                    }
+                  ]
+                }
+              ],
+              "mcreator": "attributeModifiers",
+              "help": "Changes entity attributes while this is active."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "triggers",
+      "title": "Triggers",
+      "groups": [
+        {
+          "title": "Events",
+          "fields": [
+            {
+              "key": "onRightClickedInAir",
+              "type": "procedure",
+              "label": "Right-clicked in the air",
+              "default": "",
+              "trigger": "item_right_clicked",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "mcreator": "onRightClickedInAir"
+            },
+            {
+              "key": "onRightClickedOnBlock",
+              "type": "procedure",
+              "label": "Right-clicked on a block",
+              "default": "",
+              "trigger": "item_right_clicked_block",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack",
+                "direction",
+                "blockstate"
+              ],
+              "mcreator": "onRightClickedOnBlock",
+              "returns": "actionresulttype",
+              "help": "May return an interaction result; returning nothing keeps the default."
+            },
+            {
+              "key": "onCrafted",
+              "type": "procedure",
+              "label": "Crafted or smelted",
+              "default": "",
+              "trigger": "item_crafted",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "mcreator": "onCrafted"
+            },
+            {
+              "key": "onEntityHitWith",
+              "type": "procedure",
+              "label": "Entity hit with this",
+              "default": "",
+              "trigger": "item_entity_hit",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack",
+                "sourceentity"
+              ],
+              "mcreator": "onEntityHitWith"
+            },
+            {
+              "key": "onItemInInventoryTick",
+              "type": "procedure",
+              "label": "Every tick in inventory",
+              "default": "",
+              "trigger": "item_inventory_tick",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack",
+                "slot"
+              ],
+              "mcreator": "onItemInInventoryTick"
+            },
+            {
+              "key": "onItemInUseTick",
+              "type": "procedure",
+              "label": "Every tick while held",
+              "default": "",
+              "trigger": "item_hand_tick",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack",
+                "slot"
+              ],
+              "mcreator": "onItemInUseTick"
+            },
+            {
+              "key": "onBlockDestroyedWithTool",
+              "type": "procedure",
+              "label": "Block mined with it",
+              "default": "",
+              "trigger": "tool_block_destroyed",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack",
+                "blockstate"
+              ],
+              "mcreator": "onBlockDestroyedWithTool"
+            },
+            {
+              "key": "onEntitySwing",
+              "type": "procedure",
+              "label": "Entity swings it",
+              "default": "",
+              "trigger": "item_swing",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "mcreator": "onEntitySwing"
+            },
+            {
+              "key": "onDroppedByPlayer",
+              "type": "procedure",
+              "label": "Dropped by a player",
+              "default": "",
+              "trigger": "item_dropped",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "mcreator": "onDroppedByPlayer"
+            },
+            {
+              "key": "onItemEntityDestroyed",
+              "type": "procedure",
+              "label": "Dropped item destroyed",
+              "default": "",
+              "trigger": "item_entity_destroyed",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack",
+                "damagesource"
+              ],
+              "mcreator": "onItemEntityDestroyed"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

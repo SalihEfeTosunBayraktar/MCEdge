@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mcedge/project.schema.json",
+  "title": "MCEdge project",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "mod"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 2
+    },
+    "mod": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "version",
+        "package",
+        "authors",
+        "description"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "package": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"
+        },
+        "authors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": "string"
+        },
+        "license": {
+          "type": "string"
+        },
+        "website": {
+          "type": "string"
+        },
+        "credits": {
+          "type": "string"
+        },
+        "logo": {
+          "type": "string",
+          "description": "PNG path relative to the project root, empty for none"
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "modId",
+              "version",
+              "required",
+              "side"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "modId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_-]{1,63}$"
+              },
+              "version": {
+                "type": "string",
+                "description": "\"*\", \"1.2.0\" or \">=1.2.0\""
+              },
+              "required": {
+                "type": "boolean"
+              },
+              "side": {
+                "enum": [
+                  "both",
+                  "client",
+                  "server"
+                ]
+              },
+              "source": {
+                "type": "object",
+                "description": "Where dev runs get the mod's jar: Modrinth by default (slug = modId, or modrinth), or a Maven artifact (group:artifact:version, {loader} and {mc} filled per engine) from repository",
+                "additionalProperties": false,
+                "properties": {
+                  "modrinth": {
+                    "type": "string"
+                  },
+                  "maven": {
+                    "type": "string",
+                    "pattern": "^[^:\\s]+:[^:\\s]+:[^:\\s]+$"
+                  },
+                  "repository": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "integrations": {
+          "type": "array",
+          "description": "Optional mod integrations the mod uses (config/integrations/<id>.json)",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "required"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "required": {
+                "type": "boolean",
+                "description": "true: players must install the other mod; false: optional"
+              }
+            }
+          }
+        },
+        "engines": {
+          "type": "array",
+          "description": "Engines the project targets; all engines when left out",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

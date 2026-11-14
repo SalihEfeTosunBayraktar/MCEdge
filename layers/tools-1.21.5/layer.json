@@ -1,0 +1,36 @@
+{
+  "$comment": "Element types and fields these templates generate; see src/engines/coverage.ts.",
+  "generates": {
+    "item": [
+      "animation=none|eat|drink|block|bow|trident|crossbow|spyglass|toot_horn|brush|bundle"
+    ],
+    "block": [
+      "hasPostProcess",
+      "soundOnStep=GROUND|EMPTY|WOOD|PLANT|LILY_PADS|STONE|METAL|GLASS|CLOTH|SAND|SNOW|LADDER|ANVIL|SLIME|WET_GRASS|CORAL|BAMBOO|BAMBOO_SAPLING|SCAFFOLDING|SWEET_BERRY_BUSH|CROP|STEM|VINE|NETHER_WART|LANTERN|HONEY|HYPHAE|NYLIUM|FUNGUS|ROOT|SHROOMLIGHT|NETHER_VINE|NETHER_VINE_LOWER_PITCH|SOUL_SAND|SOUL_SOIL|BASALT|WART|NETHERRACK|NETHER_BRICK|NETHER_SPROUT|NETHER_ORE|BONE|NETHERITE|ANCIENT_DEBRIS|LODESTONE|CHAIN|NETHER_GOLD|GILDED_BLACKSTONE|AMETHYST_BLOCK|AMETHYST_CLUSTER|AZALEA|AZALEA_LEAVES|BIG_DRIPLEAF|CANDLE|CALCITE|CAVE_VINES|COPPER|COPPER_BULB|COPPER_GRATE|DEEPSLATE|DEEPSLATE_BRICKS|DEEPSLATE_TILES|DRIPSTONE_BLOCK|FLOWERING_AZALEA|GLOW_LICHEN|HANGING_ROOTS|LARGE_AMETHYST_BUD|MEDIUM_AMETHYST_BUD|MOSS_CARPET|PINK_PETALS|LEAF_LITTER|MOSS_BLOCK|POINTED_DRIPSTONE|POLISHED_DEEPSLATE|POLISHED_TUFF|POWDER_SNOW|ROOTED_DIRT|SCULK_SENSOR|SCULK_CATALYST|SCULK|SCULK_VEIN|SCULK_SHRIEKER|SMALL_AMETHYST_BUD|SMALL_DRIPLEAF|SPORE_BLOSSOM|CACTUS_FLOWER|TUFF|TUFF_BRICKS|FROGLIGHT|FROGSPAWN|MANGROVE_ROOTS|MUDDY_MANGROVE_ROOTS|MUD|MUD_BRICKS|PACKED_MUD|HANGING_SIGN|NETHER_WOOD_HANGING_SIGN|BAMBOO_WOOD_HANGING_SIGN|BAMBOO_WOOD|NETHER_WOOD|CHERRY_WOOD|CHERRY_SAPLING|CHERRY_LEAVES|CHERRY_WOOD_HANGING_SIGN|CHISELED_BOOKSHELF|SUSPICIOUS_SAND|SUSPICIOUS_GRAVEL|DECORATED_POT|DECORATED_POT_CRACKED|TRIAL_SPAWNER|SPONGE|WET_SPONGE|VAULT|CREAKING_HEART|HEAVY_CORE|COBWEB|SPAWNER|RESIN|RESIN_BRICKS|IRON",
+      "noteBlockInstrument=harp|basedrum|snare|hat|bass|flute|bell|guitar|chime|xylophone|iron_xylophone|cow_bell|didgeridoo|bit|banjo|pling|zombie|skeleton|creeper|dragon|wither_skeleton|piglin|custom_head",
+      "aiPathNodeType=DEFAULT|BLOCKED|OPEN|WALKABLE|WALKABLE_DOOR|TRAPDOOR|POWDER_SNOW|DANGER_POWDER_SNOW|FENCE|LAVA|WATER|WATER_BORDER|RAIL|UNPASSABLE_RAIL|DANGER_FIRE|DAMAGE_FIRE|DANGER_OTHER|DAMAGE_OTHER|DOOR_OPEN|DOOR_WOOD_CLOSED|DOOR_IRON_CLOSED|BREACH|LEAVES|STICKY_HONEY|COCOA|DAMAGE_CAUTIOUS|DANGER_TRAPDOOR",
+      "leavesParticleChance",
+      "leavesParticleType=|minecraft:angry_villager|minecraft:bubble|minecraft:campfire_cosy_smoke|minecraft:cloud|minecraft:crit|minecraft:damage_indicator|minecraft:dolphin|minecraft:dragon_breath|minecraft:dripping_water|minecraft:effect|minecraft:enchant|minecraft:end_rod|minecraft:explosion|minecraft:falling_water|minecraft:firework|minecraft:flame|minecraft:happy_villager|minecraft:heart|minecraft:lava|minecraft:note|minecraft:poof|minecraft:portal|minecraft:rain|minecraft:smoke|minecraft:snowflake|minecraft:soul|minecraft:soul_fire_flame|minecraft:splash|minecraft:witch",
+      "blockBase=Sign|HangingSign",
+      "signEntityTexture",
+      "signGUITexture"
+    ],
+    "tool": [
+      "toolType=Fishing rod"
+    ],
+    "key_binding": [
+      "keyBindingCategoryKey=movement|misc|multiplayer|gameplay|inventory|creative"
+    ],
+    "dimension": [
+      "hasFixedTime",
+      "fixedTimeValue"
+    ],
+    "plant": [
+      "soundOnStep=GROUND|EMPTY|WOOD|PLANT|LILY_PADS|STONE|METAL|GLASS|CLOTH|SAND|SNOW|LADDER|ANVIL|SLIME|WET_GRASS|CORAL|BAMBOO|BAMBOO_SAPLING|SCAFFOLDING|SWEET_BERRY_BUSH|CROP|STEM|VINE|NETHER_WART|LANTERN|HONEY|HYPHAE|NYLIUM|FUNGUS|ROOT|SHROOMLIGHT|NETHER_VINE|NETHER_VINE_LOWER_PITCH|SOUL_SAND|SOUL_SOIL|BASALT|WART|NETHERRACK|NETHER_BRICK|NETHER_SPROUT|NETHER_ORE|BONE|NETHERITE|ANCIENT_DEBRIS|LODESTONE|CHAIN|NETHER_GOLD|GILDED_BLACKSTONE|AMETHYST_BLOCK|AMETHYST_CLUSTER|AZALEA|AZALEA_LEAVES|BIG_DRIPLEAF|CANDLE|CALCITE|CAVE_VINES|COPPER|COPPER_BULB|COPPER_GRATE|DEEPSLATE|DEEPSLATE_BRICKS|DEEPSLATE_TILES|DRIPSTONE_BLOCK|FLOWERING_AZALEA|GLOW_LICHEN|HANGING_ROOTS|LARGE_AMETHYST_BUD|MEDIUM_AMETHYST_BUD|MOSS_CARPET|PINK_PETALS|LEAF_LITTER|MOSS_BLOCK|POINTED_DRIPSTONE|POLISHED_DEEPSLATE|POLISHED_TUFF|POWDER_SNOW|ROOTED_DIRT|SCULK_SENSOR|SCULK_CATALYST|SCULK|SCULK_VEIN|SCULK_SHRIEKER|SMALL_AMETHYST_BUD|SMALL_DRIPLEAF|SPORE_BLOSSOM|CACTUS_FLOWER|TUFF|TUFF_BRICKS|FROGLIGHT|FROGSPAWN|MANGROVE_ROOTS|MUDDY_MANGROVE_ROOTS|MUD|MUD_BRICKS|PACKED_MUD|HANGING_SIGN|NETHER_WOOD_HANGING_SIGN|BAMBOO_WOOD_HANGING_SIGN|BAMBOO_WOOD|NETHER_WOOD|CHERRY_WOOD|CHERRY_SAPLING|CHERRY_LEAVES|CHERRY_WOOD_HANGING_SIGN|CHISELED_BOOKSHELF|SUSPICIOUS_SAND|SUSPICIOUS_GRAVEL|DECORATED_POT|DECORATED_POT_CRACKED|TRIAL_SPAWNER|SPONGE|WET_SPONGE|VAULT|CREAKING_HEART|HEAVY_CORE|COBWEB|SPAWNER|RESIN|RESIN_BRICKS|IRON",
+      "aiPathNodeType=DEFAULT|BLOCKED|OPEN|WALKABLE|WALKABLE_DOOR|TRAPDOOR|POWDER_SNOW|DANGER_POWDER_SNOW|FENCE|LAVA|WATER|WATER_BORDER|RAIL|UNPASSABLE_RAIL|DANGER_FIRE|DAMAGE_FIRE|DANGER_OTHER|DAMAGE_OTHER|DOOR_OPEN|DOOR_WOOD_CLOSED|DOOR_IRON_CLOSED|BREACH|LEAVES|STICKY_HONEY|COCOA|DAMAGE_CAUTIOUS|DANGER_TRAPDOOR"
+    ],
+    "overlay": [
+      "overlayTarget=AbstractCommandBlock|AbstractContainer|AbstractEditSign|AbstractFurnace|AbstractRecipeBook|AbstractReport|AccessibilityOnboarding|AccessibilityOptions|AddServer|Advancements|Alert|Anvil|Beacon|BlastFurnace|BrewingStand|CartographyTable|Chat|ChatOptions|ChatReport|ChatSelection|Chest|CommandBlock|Confirm|ConfirmBackup|ConfirmExperimentalFeatures|ConfirmOpenLink|Connecting|Controls|Crafter|Crafting|CreateBuffetWorld|CreateFlatWorld|CreateWorld|Creative|CreditsAndAttribution|CustomizeSkin|DatapackFailure|Death|DirtMessage|Disconnected|Dispenser|EditBook|EditGamerules|EditMinecartCommandBlock|EditSign|EditStructure|EditWorld|Enchantment|Error|Experiments|FlatPresets|FontOptions|Furnace|GPUWarning|GamemodeSelection|GenericWaiting|Grindstone|HangingSignEdit|Hopper|HorseInventory|IngameMenu|Inventory|ItemCombiner|Jigsaw|KeyBinds|Language|Lectern|Loom|MainMenu|MemoryError|Merchant|MouseSettings|Multiplayer|MultiplayerWarning|NameReport|OnlineOptions|OptimizeWorld|Options|OptionsSounds|Pack|ReadBook|Realms|RecoverWorldData|ReportPlayer|ReportReasonSelection|ServerLinks|ServerList|ServerReconfig|Settings|ShulkerBox|SkinReport|SleepInMultiplayer|SmithingTable|Smoker|SocialInteractions|Stats|Stonecutter|SymlinkWarning|TelemetryInfo|TestBlockEdit|TestInstanceBlockEdit|UnsupportedGraphicsWarning|VideoSettings|Warning|Win|Working|WorldLoadProgress|WorldSelection"
+    ]
+  }
+}

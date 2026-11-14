@@ -1,0 +1,527 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "key_binding",
+  "folder": "key_bindings",
+  "name": "Key binding",
+  "icon": "keyboard",
+  "langKey": "key",
+  "mcreator": "keybind",
+  "description": "A configurable key that runs procedures when pressed or released.",
+  "pages": [
+    {
+      "id": "properties",
+      "title": "Properties",
+      "groups": [
+        {
+          "title": "Key",
+          "fields": [
+            {
+              "key": "triggerKey",
+              "type": "select",
+              "label": "Default key",
+              "default": "NONE",
+              "options": [
+                {
+                  "value": "NONE",
+                  "label": "None"
+                },
+                {
+                  "value": "0",
+                  "label": "0"
+                },
+                {
+                  "value": "1",
+                  "label": "1"
+                },
+                {
+                  "value": "2",
+                  "label": "2"
+                },
+                {
+                  "value": "3",
+                  "label": "3"
+                },
+                {
+                  "value": "4",
+                  "label": "4"
+                },
+                {
+                  "value": "5",
+                  "label": "5"
+                },
+                {
+                  "value": "6",
+                  "label": "6"
+                },
+                {
+                  "value": "7",
+                  "label": "7"
+                },
+                {
+                  "value": "8",
+                  "label": "8"
+                },
+                {
+                  "value": "9",
+                  "label": "9"
+                },
+                {
+                  "value": "A",
+                  "label": "A"
+                },
+                {
+                  "value": "ADD",
+                  "label": "Add"
+                },
+                {
+                  "value": "APOSTROPHE",
+                  "label": "Apostrophe"
+                },
+                {
+                  "value": "B",
+                  "label": "B"
+                },
+                {
+                  "value": "BACK",
+                  "label": "Back"
+                },
+                {
+                  "value": "BACKSLASH",
+                  "label": "Backslash"
+                },
+                {
+                  "value": "C",
+                  "label": "C"
+                },
+                {
+                  "value": "D",
+                  "label": "D"
+                },
+                {
+                  "value": "DECIMAL",
+                  "label": "Decimal"
+                },
+                {
+                  "value": "DELETE",
+                  "label": "Delete"
+                },
+                {
+                  "value": "DIVIDE",
+                  "label": "Divide"
+                },
+                {
+                  "value": "DOWN",
+                  "label": "Down"
+                },
+                {
+                  "value": "E",
+                  "label": "E"
+                },
+                {
+                  "value": "END",
+                  "label": "End"
+                },
+                {
+                  "value": "EQUALS",
+                  "label": "Equals"
+                },
+                {
+                  "value": "ESCAPE",
+                  "label": "Escape"
+                },
+                {
+                  "value": "F",
+                  "label": "F"
+                },
+                {
+                  "value": "F1",
+                  "label": "F1"
+                },
+                {
+                  "value": "F10",
+                  "label": "F10"
+                },
+                {
+                  "value": "F11",
+                  "label": "F11"
+                },
+                {
+                  "value": "F12",
+                  "label": "F12"
+                },
+                {
+                  "value": "F13",
+                  "label": "F13"
+                },
+                {
+                  "value": "F14",
+                  "label": "F14"
+                },
+                {
+                  "value": "F15",
+                  "label": "F15"
+                },
+                {
+                  "value": "F16",
+                  "label": "F16"
+                },
+                {
+                  "value": "F17",
+                  "label": "F17"
+                },
+                {
+                  "value": "F18",
+                  "label": "F18"
+                },
+                {
+                  "value": "F19",
+                  "label": "F19"
+                },
+                {
+                  "value": "F2",
+                  "label": "F2"
+                },
+                {
+                  "value": "F3",
+                  "label": "F3"
+                },
+                {
+                  "value": "F4",
+                  "label": "F4"
+                },
+                {
+                  "value": "F5",
+                  "label": "F5"
+                },
+                {
+                  "value": "F6",
+                  "label": "F6"
+                },
+                {
+                  "value": "F7",
+                  "label": "F7"
+                },
+                {
+                  "value": "F8",
+                  "label": "F8"
+                },
+                {
+                  "value": "F9",
+                  "label": "F9"
+                },
+                {
+                  "value": "G",
+                  "label": "G"
+                },
+                {
+                  "value": "H",
+                  "label": "H"
+                },
+                {
+                  "value": "HOME",
+                  "label": "Home"
+                },
+                {
+                  "value": "I",
+                  "label": "I"
+                },
+                {
+                  "value": "INSERT",
+                  "label": "Insert"
+                },
+                {
+                  "value": "J",
+                  "label": "J"
+                },
+                {
+                  "value": "K",
+                  "label": "K"
+                },
+                {
+                  "value": "L",
+                  "label": "L"
+                },
+                {
+                  "value": "LCONTROL",
+                  "label": "Lcontrol"
+                },
+                {
+                  "value": "LEFT",
+                  "label": "Left"
+                },
+                {
+                  "value": "LSHIFT",
+                  "label": "Lshift"
+                },
+                {
+                  "value": "LWIN",
+                  "label": "Lwin"
+                },
+                {
+                  "value": "MOUSELEFT",
+                  "label": "Mouseleft"
+                },
+                {
+                  "value": "MOUSERIGHT",
+                  "label": "Mouseright"
+                },
+                {
+                  "value": "MOUSEMIDDLE",
+                  "label": "Mousemiddle"
+                },
+                {
+                  "value": "M",
+                  "label": "M"
+                },
+                {
+                  "value": "MINUS",
+                  "label": "Minus"
+                },
+                {
+                  "value": "N",
+                  "label": "N"
+                },
+                {
+                  "value": "NUMLOCK",
+                  "label": "Numlock"
+                },
+                {
+                  "value": "NUMPAD0",
+                  "label": "Numpad0"
+                },
+                {
+                  "value": "NUMPAD1",
+                  "label": "Numpad1"
+                },
+                {
+                  "value": "NUMPAD2",
+                  "label": "Numpad2"
+                },
+                {
+                  "value": "NUMPAD3",
+                  "label": "Numpad3"
+                },
+                {
+                  "value": "NUMPAD4",
+                  "label": "Numpad4"
+                },
+                {
+                  "value": "NUMPAD5",
+                  "label": "Numpad5"
+                },
+                {
+                  "value": "NUMPAD6",
+                  "label": "Numpad6"
+                },
+                {
+                  "value": "NUMPAD7",
+                  "label": "Numpad7"
+                },
+                {
+                  "value": "NUMPAD8",
+                  "label": "Numpad8"
+                },
+                {
+                  "value": "NUMPAD9",
+                  "label": "Numpad9"
+                },
+                {
+                  "value": "NUMPADCOMMA",
+                  "label": "Numpadcomma"
+                },
+                {
+                  "value": "NUMPADENTER",
+                  "label": "Numpadenter"
+                },
+                {
+                  "value": "NUMPADEQUALS",
+                  "label": "Numpadequals"
+                },
+                {
+                  "value": "O",
+                  "label": "O"
+                },
+                {
+                  "value": "P",
+                  "label": "P"
+                },
+                {
+                  "value": "PERIOD",
+                  "label": "Period"
+                },
+                {
+                  "value": "Q",
+                  "label": "Q"
+                },
+                {
+                  "value": "R",
+                  "label": "R"
+                },
+                {
+                  "value": "RCONTROL",
+                  "label": "Rcontrol"
+                },
+                {
+                  "value": "ENTER",
+                  "label": "Enter"
+                },
+                {
+                  "value": "RIGHT",
+                  "label": "Right"
+                },
+                {
+                  "value": "RSHIFT",
+                  "label": "Rshift"
+                },
+                {
+                  "value": "RWIN",
+                  "label": "Rwin"
+                },
+                {
+                  "value": "S",
+                  "label": "S"
+                },
+                {
+                  "value": "SCROLL",
+                  "label": "Scroll"
+                },
+                {
+                  "value": "SLASH",
+                  "label": "Slash"
+                },
+                {
+                  "value": "SPACE",
+                  "label": "Space"
+                },
+                {
+                  "value": "T",
+                  "label": "T"
+                },
+                {
+                  "value": "TAB",
+                  "label": "Tab"
+                },
+                {
+                  "value": "U",
+                  "label": "U"
+                },
+                {
+                  "value": "UP",
+                  "label": "Up"
+                },
+                {
+                  "value": "V",
+                  "label": "V"
+                },
+                {
+                  "value": "W",
+                  "label": "W"
+                },
+                {
+                  "value": "X",
+                  "label": "X"
+                },
+                {
+                  "value": "Y",
+                  "label": "Y"
+                },
+                {
+                  "value": "Z",
+                  "label": "Z"
+                }
+              ],
+              "mcreator": "triggerKey",
+              "help": "Players can rebind it in the controls menu."
+            },
+            {
+              "key": "keyBindingName",
+              "type": "text",
+              "label": "Name in controls menu",
+              "default": "",
+              "mcreator": "keyBindingName",
+              "required": true
+            },
+            {
+              "key": "keyBindingCategoryKey",
+              "type": "select",
+              "label": "Controls category",
+              "default": "misc",
+              "options": [
+                {
+                  "value": "movement",
+                  "label": "Movement"
+                },
+                {
+                  "value": "misc",
+                  "label": "Misc"
+                },
+                {
+                  "value": "multiplayer",
+                  "label": "Multiplayer"
+                },
+                {
+                  "value": "gameplay",
+                  "label": "Gameplay"
+                },
+                {
+                  "value": "inventory",
+                  "label": "Inventory"
+                },
+                {
+                  "value": "creative",
+                  "label": "Creative"
+                },
+                {
+                  "value": "spectator",
+                  "label": "Spectator"
+                },
+                {
+                  "value": "debug",
+                  "label": "Debug"
+                }
+              ],
+              "mcreator": "keyBindingCategoryKey",
+              "help": "A custom category name can be typed too."
+            }
+          ]
+        },
+        {
+          "title": "Events",
+          "fields": [
+            {
+              "key": "onKeyPressed",
+              "type": "procedure",
+              "label": "Key pressed",
+              "default": "",
+              "trigger": "key_pressed",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity"
+              ],
+              "mcreator": "onKeyPressed"
+            },
+            {
+              "key": "onKeyReleased",
+              "type": "procedure",
+              "label": "Key released",
+              "default": "",
+              "trigger": "key_released",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "pressedms"
+              ],
+              "mcreator": "onKeyReleased"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

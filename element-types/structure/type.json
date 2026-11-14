@@ -1,0 +1,402 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "structure",
+  "folder": "structures",
+  "name": "Structure",
+  "icon": "structure",
+  "langKey": null,
+  "mcreator": "structure",
+  "description": "Places an NBT structure template in the world, optionally as a jigsaw structure.",
+  "pages": [
+    {
+      "id": "properties",
+      "title": "Properties",
+      "groups": [
+        {
+          "title": "Template",
+          "fields": [
+            {
+              "key": "structure",
+              "type": "structure",
+              "label": "Structure template",
+              "default": "",
+              "required": true,
+              "mcreator": "structure",
+              "help": "NBT template file imported into this project."
+            },
+            {
+              "key": "projection",
+              "type": "select",
+              "label": "Projection",
+              "default": "rigid",
+              "options": [
+                {
+                  "value": "rigid",
+                  "label": "Rigid"
+                },
+                {
+                  "value": "terrain_matching",
+                  "label": "Follow terrain"
+                }
+              ],
+              "mcreator": "projection"
+            },
+            {
+              "key": "ignoredBlocks",
+              "type": "list",
+              "label": "Blocks not placed",
+              "default": [
+                {
+                  "block": "minecraft:structure_block"
+                }
+              ],
+              "fields": [
+                {
+                  "key": "block",
+                  "type": "block",
+                  "label": "Block",
+                  "default": ""
+                }
+              ],
+              "mcreator": "ignoredBlocks"
+            }
+          ]
+        },
+        {
+          "title": "Placement",
+          "fields": [
+            {
+              "key": "restrictionBiomes",
+              "type": "list",
+              "label": "Biomes",
+              "default": [],
+              "fields": [
+                {
+                  "key": "biome",
+                  "type": "biome",
+                  "label": "Biome",
+                  "default": "",
+                  "allowTags": true
+                }
+              ],
+              "mcreator": "restrictionBiomes",
+              "required": true
+            },
+            {
+              "key": "spacing",
+              "type": "integer",
+              "label": "Spacing (chunks)",
+              "default": 5,
+              "min": 0,
+              "max": 4096,
+              "step": 1,
+              "mcreator": "spacing",
+              "help": "Average distance between structures."
+            },
+            {
+              "key": "separation",
+              "type": "integer",
+              "label": "Separation (chunks)",
+              "default": 2,
+              "min": 0,
+              "max": 4096,
+              "step": 1,
+              "mcreator": "separation",
+              "help": "Minimum distance; must be smaller than spacing."
+            },
+            {
+              "key": "generationStep",
+              "type": "select",
+              "label": "Generation step",
+              "default": "SURFACE_STRUCTURES",
+              "options": [
+                {
+                  "value": "RAW_GENERATION",
+                  "label": "Raw generation"
+                },
+                {
+                  "value": "LAKES",
+                  "label": "Lakes"
+                },
+                {
+                  "value": "LOCAL_MODIFICATIONS",
+                  "label": "Local modifications"
+                },
+                {
+                  "value": "UNDERGROUND_STRUCTURES",
+                  "label": "Underground structures"
+                },
+                {
+                  "value": "SURFACE_STRUCTURES",
+                  "label": "Surface structures"
+                },
+                {
+                  "value": "STRONGHOLDS",
+                  "label": "Strongholds"
+                },
+                {
+                  "value": "UNDERGROUND_ORES",
+                  "label": "Underground ores"
+                },
+                {
+                  "value": "UNDERGROUND_DECORATION",
+                  "label": "Underground decoration"
+                },
+                {
+                  "value": "FLUID_SPRINGS",
+                  "label": "Fluid springs"
+                },
+                {
+                  "value": "VEGETAL_DECORATION",
+                  "label": "Vegetal decoration"
+                },
+                {
+                  "value": "TOP_LAYER_MODIFICATION",
+                  "label": "Top layer modification"
+                }
+              ],
+              "mcreator": "generationStep"
+            },
+            {
+              "key": "terrainAdaptation",
+              "type": "select",
+              "label": "Terrain adaptation",
+              "default": "none",
+              "options": [
+                {
+                  "value": "none",
+                  "label": "None"
+                },
+                {
+                  "value": "beard_thin",
+                  "label": "Beard thin"
+                },
+                {
+                  "value": "beard_box",
+                  "label": "Beard box"
+                },
+                {
+                  "value": "bury",
+                  "label": "Bury"
+                },
+                {
+                  "value": "encapsulate",
+                  "label": "Encapsulate"
+                }
+              ],
+              "mcreator": "terrainAdaptation"
+            },
+            {
+              "key": "useStartHeight",
+              "type": "boolean",
+              "label": "Use fixed start height",
+              "default": false,
+              "mcreator": "useStartHeight"
+            },
+            {
+              "key": "surfaceDetectionType",
+              "type": "select",
+              "label": "Ground detection",
+              "default": "WORLD_SURFACE_WG",
+              "options": [
+                {
+                  "value": "WORLD_SURFACE_WG",
+                  "label": "World surface wg"
+                },
+                {
+                  "value": "WORLD_SURFACE",
+                  "label": "World surface"
+                },
+                {
+                  "value": "OCEAN_FLOOR_WG",
+                  "label": "Ocean floor wg"
+                },
+                {
+                  "value": "OCEAN_FLOOR",
+                  "label": "Ocean floor"
+                },
+                {
+                  "value": "MOTION_BLOCKING",
+                  "label": "Motion blocking"
+                },
+                {
+                  "value": "MOTION_BLOCKING_NO_LEAVES",
+                  "label": "Motion blocking no leaves"
+                }
+              ],
+              "mcreator": "surfaceDetectionType",
+              "showIf": {
+                "key": "useStartHeight",
+                "equals": false
+              }
+            },
+            {
+              "key": "startHeightProviderType",
+              "type": "select",
+              "label": "Height distribution",
+              "default": "UNIFORM",
+              "options": [
+                {
+                  "value": "UNIFORM",
+                  "label": "Uniform"
+                },
+                {
+                  "value": "BIASED_TO_BOTTOM",
+                  "label": "Biased to bottom"
+                },
+                {
+                  "value": "VERY_BIASED_TO_BOTTOM",
+                  "label": "Very biased to bottom"
+                },
+                {
+                  "value": "TRAPEZOID",
+                  "label": "Trapezoid"
+                }
+              ],
+              "mcreator": "startHeightProviderType",
+              "showIf": {
+                "key": "useStartHeight",
+                "equals": true
+              }
+            },
+            {
+              "key": "startHeightMin",
+              "type": "integer",
+              "label": "Min start height",
+              "default": 0,
+              "min": -64,
+              "max": 320,
+              "step": 1,
+              "mcreator": "startHeightMin",
+              "showIf": {
+                "key": "useStartHeight",
+                "equals": true
+              }
+            },
+            {
+              "key": "startHeightMax",
+              "type": "integer",
+              "label": "Max start height",
+              "default": 128,
+              "min": -64,
+              "max": 320,
+              "step": 1,
+              "mcreator": "startHeightMax",
+              "showIf": {
+                "key": "useStartHeight",
+                "equals": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "jigsaw",
+      "title": "Jigsaw",
+      "groups": [
+        {
+          "title": "Jigsaw",
+          "fields": [
+            {
+              "key": "size",
+              "type": "integer",
+              "label": "Jigsaw depth",
+              "default": 1,
+              "min": 0,
+              "max": 20,
+              "step": 1,
+              "mcreator": "size",
+              "help": "How many jigsaw steps to expand."
+            },
+            {
+              "key": "maxDistanceFromCenter",
+              "type": "integer",
+              "label": "Max distance from center",
+              "default": 64,
+              "min": 1,
+              "max": 128,
+              "step": 1,
+              "mcreator": "maxDistanceFromCenter",
+              "help": "Max 116 when terrain adaptation is used."
+            },
+            {
+              "key": "jigsawPools",
+              "type": "list",
+              "label": "Pools",
+              "default": [],
+              "fields": [
+                {
+                  "key": "poolName",
+                  "type": "text",
+                  "label": "Pool name",
+                  "default": ""
+                },
+                {
+                  "key": "fallbackPool",
+                  "type": "text",
+                  "label": "Fallback pool",
+                  "default": ""
+                },
+                {
+                  "key": "poolParts",
+                  "type": "list",
+                  "label": "Parts",
+                  "default": [],
+                  "fields": [
+                    {
+                      "key": "weight",
+                      "type": "integer",
+                      "label": "Weight",
+                      "default": 1,
+                      "min": 1,
+                      "max": 150,
+                      "step": 1
+                    },
+                    {
+                      "key": "structure",
+                      "type": "structure",
+                      "label": "Structure template",
+                      "default": ""
+                    },
+                    {
+                      "key": "projection",
+                      "type": "select",
+                      "label": "Projection",
+                      "default": "rigid",
+                      "options": [
+                        {
+                          "value": "rigid",
+                          "label": "Rigid"
+                        },
+                        {
+                          "value": "terrain_matching",
+                          "label": "Follow terrain"
+                        }
+                      ]
+                    },
+                    {
+                      "key": "ignoredBlocks",
+                      "type": "list",
+                      "label": "Blocks not placed",
+                      "default": [],
+                      "fields": [
+                        {
+                          "key": "block",
+                          "type": "block",
+                          "label": "Block",
+                          "default": ""
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "mcreator": "jigsawPools"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

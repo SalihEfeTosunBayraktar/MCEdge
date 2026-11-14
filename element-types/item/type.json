@@ -1,0 +1,1252 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "item",
+  "folder": "items",
+  "name": "Item",
+  "icon": "item",
+  "langKey": "item",
+  "mcreator": "item",
+  "description": "A general purpose item: materials, food, music discs, ranged weapons and items with their own inventory.",
+  "pages": [
+    {
+      "id": "visual",
+      "title": "Visual",
+      "groups": [
+        {
+          "title": "Appearance",
+          "fields": [
+            {
+              "key": "texture",
+              "type": "texture",
+              "label": "Texture",
+              "default": "",
+              "textureKind": "item",
+              "mcreator": "texture",
+              "required": true
+            },
+            {
+              "key": "model",
+              "type": "model",
+              "label": "Model",
+              "default": "Normal",
+              "modelKinds": [
+                "builtin",
+                "json",
+                "obj",
+                "java"
+              ],
+              "mcreator": "customModelName",
+              "help": "Built-in models are Normal, Tool and Ranged item."
+            },
+            {
+              "key": "guiTexture",
+              "type": "texture",
+              "label": "Inventory texture",
+              "default": "",
+              "textureKind": "item",
+              "mcreator": "guiTexture",
+              "help": "Optional separate icon used in inventories when a custom model is used."
+            }
+          ]
+        },
+        {
+          "title": "Effects and tooltip",
+          "fields": [
+            {
+              "key": "glowCondition",
+              "type": "boolean",
+              "label": "Enchanted glint",
+              "default": false,
+              "mcreator": "glowCondition.fixedValue"
+            },
+            {
+              "key": "glowConditionProcedure",
+              "type": "procedure",
+              "label": "Enchanted glint (procedure)",
+              "default": "",
+              "trigger": "item_glow",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "mcreator": "glowCondition.name",
+              "returns": "logic",
+              "help": "When set, this procedure decides the value instead of the checkbox."
+            },
+            {
+              "key": "specialInformation",
+              "type": "multiline",
+              "label": "Tooltip lines",
+              "default": "",
+              "mcreator": "specialInformation.fixedValue",
+              "help": "One tooltip line per row."
+            },
+            {
+              "key": "specialInformationProcedure",
+              "type": "procedure",
+              "label": "Tooltip lines (procedure)",
+              "default": "",
+              "trigger": "item_tooltip",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "mcreator": "specialInformation.name",
+              "returns": "string_list",
+              "help": "When set, this procedure returns the tooltip lines instead."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "states",
+      "title": "Item states",
+      "groups": [
+        {
+          "title": "Properties",
+          "fields": [
+            {
+              "key": "customProperties",
+              "type": "map",
+              "label": "Custom properties",
+              "default": {},
+              "mcreator": "customProperties",
+              "keyField": {
+                "key": "name",
+                "type": "text",
+                "label": "Property name",
+                "pattern": "^[a-z0-9_]+$"
+              },
+              "valueField": {
+                "key": "procedure",
+                "type": "procedure",
+                "label": "Value procedure",
+                "trigger": "item_property",
+                "dependencies": [
+                  "x",
+                  "y",
+                  "z",
+                  "world",
+                  "entity",
+                  "itemstack"
+                ],
+                "returns": "number"
+              },
+              "help": "Named numeric properties computed by procedures; states below switch the model based on them."
+            }
+          ]
+        },
+        {
+          "title": "States",
+          "fields": [
+            {
+              "key": "states",
+              "type": "list",
+              "label": "Model states",
+              "default": [],
+              "fields": [
+                {
+                  "key": "stateMap",
+                  "type": "map",
+                  "label": "When properties equal",
+                  "default": {},
+                  "keyField": {
+                    "key": "property",
+                    "type": "text",
+                    "label": "Property (custom or damaged, damage, lefthanded, cooldown)"
+                  },
+                  "valueField": {
+                    "key": "value",
+                    "type": "number",
+                    "label": "Value"
+                  }
+                },
+                {
+                  "key": "model",
+                  "type": "model",
+                  "label": "Model",
+                  "default": "Normal",
+                  "modelKinds": [
+                    "builtin",
+                    "json",
+                    "obj",
+                    "java"
+                  ]
+                },
+                {
+                  "key": "texture",
+                  "type": "texture",
+                  "label": "Texture",
+                  "default": "",
+                  "textureKind": "item"
+                }
+              ],
+              "mcreator": "states",
+              "help": "Alternative models/textures used when all listed property values match."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "animations",
+      "title": "Animations",
+      "groups": [
+        {
+          "title": "Model animations",
+          "fields": [
+            {
+              "key": "animations",
+              "type": "list",
+              "label": "Animations",
+              "default": [],
+              "fields": [
+                {
+                  "key": "animation",
+                  "type": "text",
+                  "label": "Animation",
+                  "default": "",
+                  "help": "Animation id; only used with Java models."
+                },
+                {
+                  "key": "speed",
+                  "type": "number",
+                  "label": "Speed",
+                  "default": 1,
+                  "min": 0,
+                  "max": 100,
+                  "step": 0.1
+                },
+                {
+                  "key": "condition",
+                  "type": "procedure",
+                  "label": "Play condition",
+                  "default": "",
+                  "trigger": "item_animation_condition",
+                  "dependencies": [
+                    "x",
+                    "y",
+                    "z",
+                    "world",
+                    "itemstack",
+                    "entity"
+                  ],
+                  "returns": "logic"
+                }
+              ],
+              "mcreator": "animations",
+              "help": "Only applies when the item uses a Java model."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "properties",
+      "title": "Properties",
+      "groups": [
+        {
+          "title": "General",
+          "fields": [
+            {
+              "key": "name",
+              "type": "text",
+              "label": "Display name",
+              "default": "",
+              "mcreator": "name",
+              "required": true
+            },
+            {
+              "key": "rarity",
+              "type": "select",
+              "label": "Rarity",
+              "default": "COMMON",
+              "options": [
+                {
+                  "value": "COMMON",
+                  "label": "Common"
+                },
+                {
+                  "value": "UNCOMMON",
+                  "label": "Uncommon"
+                },
+                {
+                  "value": "RARE",
+                  "label": "Rare"
+                },
+                {
+                  "value": "EPIC",
+                  "label": "Epic"
+                }
+              ],
+              "mcreator": "rarity",
+              "help": "Colors the item name."
+            },
+            {
+              "key": "creativeTabs",
+              "type": "multiselect",
+              "elementTypes": [
+                "creative_tab"
+              ],
+              "label": "Creative tabs",
+              "default": [
+                "MATERIALS"
+              ],
+              "mcreator": "creativeTabs",
+              "options": [
+                {
+                  "value": "BUILDING_BLOCKS",
+                  "label": "Building blocks"
+                },
+                {
+                  "value": "DECORATIONS",
+                  "label": "Natural blocks"
+                },
+                {
+                  "value": "REDSTONE",
+                  "label": "Redstone"
+                },
+                {
+                  "value": "FOOD",
+                  "label": "Food and drinks"
+                },
+                {
+                  "value": "TOOLS",
+                  "label": "Tools and utilities"
+                },
+                {
+                  "value": "COMBAT",
+                  "label": "Combat"
+                },
+                {
+                  "value": "MATERIALS",
+                  "label": "Ingredients"
+                },
+                {
+                  "value": "MISC",
+                  "label": "Spawn eggs"
+                },
+                {
+                  "value": "TRANSPORTATION",
+                  "label": "Functional blocks"
+                },
+                {
+                  "value": "BREWING",
+                  "label": "Colored blocks"
+                },
+                {
+                  "value": "OP_BLOCKS",
+                  "label": "Operator items"
+                }
+              ],
+              "help": "Creative inventory tabs that list this element. Tabs defined in this mod are offered as well."
+            },
+            {
+              "key": "stackSize",
+              "type": "integer",
+              "label": "Max stack size",
+              "default": 64,
+              "min": 1,
+              "max": 99,
+              "step": 1,
+              "mcreator": "stackSize"
+            },
+            {
+              "key": "enchantability",
+              "type": "integer",
+              "label": "Enchantability",
+              "default": 0,
+              "min": -100,
+              "max": 128000,
+              "step": 1,
+              "mcreator": "enchantability"
+            },
+            {
+              "key": "toolType",
+              "type": "number",
+              "label": "Block breaking speed",
+              "default": 1,
+              "min": -100,
+              "max": 128000,
+              "step": 0.1,
+              "mcreator": "toolType",
+              "help": "Mining speed multiplier when used on blocks."
+            },
+            {
+              "key": "damageCount",
+              "type": "integer",
+              "label": "Durability",
+              "default": 0,
+              "min": 0,
+              "max": 2147483647,
+              "warnAbove": 128000,
+              "step": 1,
+              "mcreator": "damageCount",
+              "help": "0 means the item does not take damage."
+            },
+            {
+              "key": "repairItems",
+              "type": "list",
+              "label": "Repair items",
+              "default": [],
+              "fields": [
+                {
+                  "key": "item",
+                  "type": "item",
+                  "label": "Item or block",
+                  "default": "",
+                  "allowTags": true
+                }
+              ],
+              "mcreator": "repairItems",
+              "help": "Only used when durability is above 0.",
+              "showIf": {
+                "key": "damageCount",
+                "gt": 0
+              }
+            },
+            {
+              "key": "immuneToFire",
+              "type": "boolean",
+              "label": "Immune to fire and lava",
+              "default": false,
+              "mcreator": "immuneToFire"
+            },
+            {
+              "key": "isPiglinCurrency",
+              "type": "boolean",
+              "label": "Piglins accept it for bartering",
+              "default": false,
+              "mcreator": "isPiglinCurrency"
+            },
+            {
+              "key": "destroyAnyBlock",
+              "type": "boolean",
+              "label": "Can harvest any block",
+              "default": false,
+              "mcreator": "destroyAnyBlock"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "use",
+      "title": "Use",
+      "groups": [
+        {
+          "title": "Using",
+          "fields": [
+            {
+              "key": "animation",
+              "type": "select",
+              "label": "Use animation",
+              "default": "none",
+              "options": [
+                {
+                  "value": "none",
+                  "label": "None"
+                },
+                {
+                  "value": "eat",
+                  "label": "Eat"
+                },
+                {
+                  "value": "drink",
+                  "label": "Drink"
+                },
+                {
+                  "value": "block",
+                  "label": "Block"
+                },
+                {
+                  "value": "bow",
+                  "label": "Bow"
+                },
+                {
+                  "value": "trident",
+                  "label": "Trident"
+                },
+                {
+                  "value": "crossbow",
+                  "label": "Crossbow"
+                },
+                {
+                  "value": "spyglass",
+                  "label": "Spyglass"
+                },
+                {
+                  "value": "toot_horn",
+                  "label": "Toot horn"
+                },
+                {
+                  "value": "brush",
+                  "label": "Brush"
+                },
+                {
+                  "value": "bundle",
+                  "label": "Bundle"
+                },
+                {
+                  "value": "spear",
+                  "label": "Spear"
+                }
+              ],
+              "mcreator": "animation"
+            },
+            {
+              "key": "useDuration",
+              "type": "integer",
+              "label": "Use duration (ticks)",
+              "default": 0,
+              "min": -100,
+              "max": 128000,
+              "step": 1,
+              "mcreator": "useDuration",
+              "help": "How long the item can be used. Food usually uses 32."
+            },
+            {
+              "key": "useSound",
+              "type": "sound",
+              "label": "Eating or drinking sound",
+              "help": "Sound played while the item is used. Empty keeps the vanilla sound of the use animation.",
+              "default": ""
+            }
+          ]
+        },
+        {
+          "title": "Food",
+          "fields": [
+            {
+              "key": "isFood",
+              "type": "boolean",
+              "label": "Is food",
+              "default": false,
+              "mcreator": "isFood",
+              "help": "Makes the item edible. Switching it on typically sets the use animation to eat and duration to 32."
+            },
+            {
+              "key": "nutritionalValue",
+              "type": "integer",
+              "label": "Hunger restored",
+              "default": 4,
+              "min": -1000,
+              "max": 1000,
+              "step": 1,
+              "mcreator": "nutritionalValue",
+              "showIf": {
+                "key": "isFood",
+                "equals": true
+              }
+            },
+            {
+              "key": "saturation",
+              "type": "number",
+              "label": "Saturation",
+              "default": 0.3,
+              "min": -1000,
+              "max": 1000,
+              "step": 0.1,
+              "mcreator": "saturation",
+              "showIf": {
+                "key": "isFood",
+                "equals": true
+              }
+            },
+            {
+              "key": "eatResultItem",
+              "type": "item",
+              "label": "Item left after eating",
+              "default": "",
+              "mcreator": "eatResultItem",
+              "showIf": {
+                "key": "isFood",
+                "equals": true
+              }
+            },
+            {
+              "key": "isMeat",
+              "type": "boolean",
+              "label": "Is meat (wolves eat it)",
+              "default": false,
+              "mcreator": "isMeat",
+              "showIf": {
+                "key": "isFood",
+                "equals": true
+              }
+            },
+            {
+              "key": "isAlwaysEdible",
+              "type": "boolean",
+              "label": "Edible when not hungry",
+              "default": false,
+              "mcreator": "isAlwaysEdible",
+              "showIf": {
+                "key": "isFood",
+                "equals": true
+              }
+            }
+          ]
+        },
+        {
+          "title": "Ranged",
+          "fields": [
+            {
+              "key": "enableRanged",
+              "type": "boolean",
+              "label": "Shoots projectiles",
+              "default": false,
+              "mcreator": "enableRanged"
+            },
+            {
+              "key": "projectile",
+              "type": "entity",
+              "label": "Projectile",
+              "default": "minecraft:arrow",
+              "mcreator": "projectile",
+              "help": "Arrow-type projectile or a projectile element from this mod.",
+              "showIf": {
+                "key": "enableRanged",
+                "equals": true
+              }
+            },
+            {
+              "key": "projectileDisableAmmoCheck",
+              "type": "boolean",
+              "label": "No ammo needed",
+              "default": false,
+              "mcreator": "projectileDisableAmmoCheck",
+              "showIf": {
+                "key": "enableRanged",
+                "equals": true
+              }
+            },
+            {
+              "key": "shootConstantly",
+              "type": "boolean",
+              "label": "Shoot continuously while held",
+              "default": false,
+              "mcreator": "shootConstantly",
+              "showIf": {
+                "key": "enableRanged",
+                "equals": true
+              }
+            },
+            {
+              "key": "rangedItemChargesPower",
+              "type": "boolean",
+              "label": "Charge power like a bow",
+              "default": false,
+              "mcreator": "rangedItemChargesPower",
+              "showIf": {
+                "all": [
+                  {
+                    "key": "enableRanged",
+                    "equals": true
+                  },
+                  {
+                    "key": "shootConstantly",
+                    "equals": false
+                  }
+                ]
+              },
+              "help": "Ignored when shooting continuously."
+            },
+            {
+              "key": "rangedUseCondition",
+              "type": "procedure",
+              "label": "Can shoot condition",
+              "default": "",
+              "trigger": "item_ranged_condition",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "mcreator": "rangedUseCondition",
+              "returns": "logic",
+              "showIf": {
+                "key": "enableRanged",
+                "equals": true
+              }
+            },
+            {
+              "key": "onRangedItemUsed",
+              "type": "procedure",
+              "label": "When shot",
+              "default": "",
+              "trigger": "item_ranged_used",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "mcreator": "onRangedItemUsed",
+              "showIf": {
+                "key": "enableRanged",
+                "equals": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "advanced",
+      "title": "Advanced",
+      "groups": [
+        {
+          "title": "Inventory",
+          "fields": [
+            {
+              "key": "guiBoundTo",
+              "type": "element",
+              "elementTypes": [
+                "gui"
+              ],
+              "label": "Bound GUI",
+              "default": "",
+              "mcreator": "guiBoundTo",
+              "help": "GUI element of this mod that acts as the item inventory. Empty for none."
+            },
+            {
+              "key": "openGUIOnRightClick",
+              "type": "boolean",
+              "label": "Open GUI on right-click",
+              "default": false,
+              "mcreator": "openGUIOnRightClick.fixedValue"
+            },
+            {
+              "key": "openGUIOnRightClickProcedure",
+              "type": "procedure",
+              "label": "Open GUI on right-click (procedure)",
+              "default": "",
+              "trigger": "item_open_gui",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "mcreator": "openGUIOnRightClick.name",
+              "returns": "logic",
+              "help": "When set, this procedure decides the value instead of the checkbox."
+            },
+            {
+              "key": "inventorySize",
+              "type": "integer",
+              "label": "Inventory slots",
+              "default": 9,
+              "min": 0,
+              "max": 256,
+              "step": 1,
+              "mcreator": "inventorySize"
+            },
+            {
+              "key": "inventoryStackSize",
+              "type": "integer",
+              "label": "Inventory max stack size",
+              "default": 99,
+              "min": 1,
+              "max": 1024,
+              "step": 1,
+              "mcreator": "inventoryStackSize"
+            }
+          ]
+        },
+        {
+          "title": "Music disc and banner patterns",
+          "fields": [
+            {
+              "key": "isMusicDisc",
+              "type": "boolean",
+              "label": "Is a music disc",
+              "default": false,
+              "mcreator": "isMusicDisc"
+            },
+            {
+              "key": "musicDiscMusic",
+              "type": "sound",
+              "label": "Disc sound",
+              "default": "",
+              "mcreator": "musicDiscMusic",
+              "showIf": {
+                "key": "isMusicDisc",
+                "equals": true
+              }
+            },
+            {
+              "key": "musicDiscDescription",
+              "type": "text",
+              "label": "Disc description",
+              "default": "",
+              "mcreator": "musicDiscDescription",
+              "showIf": {
+                "key": "isMusicDisc",
+                "equals": true
+              }
+            },
+            {
+              "key": "musicDiscLengthInTicks",
+              "type": "integer",
+              "label": "Track length (ticks)",
+              "default": 100,
+              "min": 1,
+              "max": 72000,
+              "step": 1,
+              "mcreator": "musicDiscLengthInTicks",
+              "showIf": {
+                "key": "isMusicDisc",
+                "equals": true
+              }
+            },
+            {
+              "key": "musicDiscAnalogOutput",
+              "type": "integer",
+              "label": "Comparator signal",
+              "default": 0,
+              "min": 0,
+              "max": 15,
+              "step": 1,
+              "mcreator": "musicDiscAnalogOutput",
+              "showIf": {
+                "key": "isMusicDisc",
+                "equals": true
+              }
+            },
+            {
+              "key": "providedBannerPatterns",
+              "type": "list",
+              "label": "Banner patterns provided",
+              "default": [],
+              "fields": [
+                {
+                  "key": "pattern",
+                  "type": "element",
+                  "elementTypes": [
+                    "banner_pattern"
+                  ],
+                  "label": "Banner pattern element",
+                  "default": ""
+                }
+              ],
+              "mcreator": "providedBannerPatterns"
+            }
+          ]
+        },
+        {
+          "title": "Melee",
+          "fields": [
+            {
+              "key": "enableMeleeDamage",
+              "type": "boolean",
+              "label": "Custom melee damage",
+              "default": false,
+              "mcreator": "enableMeleeDamage"
+            },
+            {
+              "key": "damageVsEntity",
+              "type": "number",
+              "label": "Attack damage",
+              "default": 4,
+              "min": 0,
+              "max": 128000,
+              "step": 0.1,
+              "mcreator": "damageVsEntity",
+              "showIf": {
+                "key": "enableMeleeDamage",
+                "equals": true
+              }
+            },
+            {
+              "key": "attackSpeed",
+              "type": "number",
+              "label": "Attack speed",
+              "default": 1.2,
+              "min": 0,
+              "max": 128000,
+              "step": 0.1,
+              "mcreator": "attackSpeed",
+              "showIf": {
+                "key": "enableMeleeDamage",
+                "equals": true
+              }
+            }
+          ]
+        },
+        {
+          "title": "Crafting",
+          "fields": [
+            {
+              "key": "stayInGridWhenCrafting",
+              "type": "boolean",
+              "label": "Stays in the crafting grid",
+              "default": false,
+              "mcreator": "stayInGridWhenCrafting"
+            },
+            {
+              "key": "damageOnCrafting",
+              "type": "boolean",
+              "label": "Loses durability when crafting",
+              "default": false,
+              "mcreator": "damageOnCrafting",
+              "showIf": {
+                "key": "stayInGridWhenCrafting",
+                "equals": true
+              }
+            },
+            {
+              "key": "recipeRemainder",
+              "type": "item",
+              "label": "Leftover item after crafting",
+              "default": "",
+              "mcreator": "recipeRemainder",
+              "showIf": {
+                "key": "stayInGridWhenCrafting",
+                "equals": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "attributes",
+      "title": "Attribute modifiers",
+      "groups": [
+        {
+          "title": "Modifiers",
+          "fields": [
+            {
+              "key": "attributeModifiers",
+              "type": "list",
+              "label": "Attribute modifiers",
+              "default": [],
+              "fields": [
+                {
+                  "key": "equipmentSlot",
+                  "type": "select",
+                  "label": "Active in slot",
+                  "default": "mainhand",
+                  "options": [
+                    {
+                      "value": "any",
+                      "label": "Any"
+                    },
+                    {
+                      "value": "mainhand",
+                      "label": "Mainhand"
+                    },
+                    {
+                      "value": "offhand",
+                      "label": "Offhand"
+                    },
+                    {
+                      "value": "hand",
+                      "label": "Hand"
+                    },
+                    {
+                      "value": "feet",
+                      "label": "Feet"
+                    },
+                    {
+                      "value": "legs",
+                      "label": "Legs"
+                    },
+                    {
+                      "value": "chest",
+                      "label": "Chest"
+                    },
+                    {
+                      "value": "head",
+                      "label": "Head"
+                    },
+                    {
+                      "value": "armor",
+                      "label": "Armor"
+                    },
+                    {
+                      "value": "body",
+                      "label": "Body"
+                    },
+                    {
+                      "value": "saddle",
+                      "label": "Saddle"
+                    }
+                  ]
+                },
+                {
+                  "key": "attribute",
+                  "type": "attribute",
+                  "label": "Attribute",
+                  "default": "minecraft:attack_damage"
+                },
+                {
+                  "key": "amount",
+                  "type": "number",
+                  "label": "Amount",
+                  "default": 0,
+                  "min": -1024,
+                  "max": 1024,
+                  "step": 0.001
+                },
+                {
+                  "key": "operation",
+                  "type": "select",
+                  "label": "Operation",
+                  "default": "ADD_VALUE",
+                  "options": [
+                    {
+                      "value": "ADD_VALUE",
+                      "label": "Add to base value"
+                    },
+                    {
+                      "value": "ADD_MULTIPLIED_BASE",
+                      "label": "Add percentage of base"
+                    },
+                    {
+                      "value": "ADD_MULTIPLIED_TOTAL",
+                      "label": "Multiply total"
+                    }
+                  ]
+                }
+              ],
+              "mcreator": "attributeModifiers",
+              "help": "Changes entity attributes while this is active."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "triggers",
+      "title": "Triggers",
+      "groups": [
+        {
+          "title": "Events",
+          "fields": [
+            {
+              "key": "onRightClickedInAir",
+              "type": "procedure",
+              "label": "Right-clicked in the air",
+              "default": "",
+              "trigger": "item_right_clicked",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "mcreator": "onRightClickedInAir"
+            },
+            {
+              "key": "onRightClickedOnBlock",
+              "type": "procedure",
+              "label": "Right-clicked on a block",
+              "default": "",
+              "trigger": "item_right_clicked_block",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack",
+                "direction",
+                "blockstate"
+              ],
+              "mcreator": "onRightClickedOnBlock",
+              "returns": "actionresulttype",
+              "help": "May return an interaction result; returning nothing keeps the default."
+            },
+            {
+              "key": "onCrafted",
+              "type": "procedure",
+              "label": "Crafted or smelted",
+              "default": "",
+              "trigger": "item_crafted",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "mcreator": "onCrafted"
+            },
+            {
+              "key": "onEntityHitWith",
+              "type": "procedure",
+              "label": "Entity hit with this",
+              "default": "",
+              "trigger": "item_entity_hit",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack",
+                "sourceentity"
+              ],
+              "mcreator": "onEntityHitWith"
+            },
+            {
+              "key": "onItemInInventoryTick",
+              "type": "procedure",
+              "label": "Every tick in inventory",
+              "default": "",
+              "trigger": "item_inventory_tick",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack",
+                "slot"
+              ],
+              "mcreator": "onItemInInventoryTick"
+            },
+            {
+              "key": "onItemInUseTick",
+              "type": "procedure",
+              "label": "Every tick while held",
+              "default": "",
+              "trigger": "item_hand_tick",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack",
+                "slot"
+              ],
+              "mcreator": "onItemInUseTick"
+            },
+            {
+              "key": "onStoppedUsing",
+              "type": "procedure",
+              "label": "Stopped using",
+              "default": "",
+              "trigger": "item_stopped_using",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack",
+                "time"
+              ],
+              "mcreator": "onStoppedUsing"
+            },
+            {
+              "key": "onEntitySwing",
+              "type": "procedure",
+              "label": "Entity swings it",
+              "default": "",
+              "trigger": "item_swing",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "mcreator": "onEntitySwing"
+            },
+            {
+              "key": "onDroppedByPlayer",
+              "type": "procedure",
+              "label": "Dropped by a player",
+              "default": "",
+              "trigger": "item_dropped",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "mcreator": "onDroppedByPlayer"
+            },
+            {
+              "key": "onFinishUsingItem",
+              "type": "procedure",
+              "label": "Finished using",
+              "default": "",
+              "trigger": "item_finish_using",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack"
+              ],
+              "mcreator": "onFinishUsingItem"
+            },
+            {
+              "key": "everyTickWhileUsing",
+              "type": "procedure",
+              "label": "Every tick while using",
+              "default": "",
+              "trigger": "item_using_tick",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack",
+                "time"
+              ],
+              "mcreator": "everyTickWhileUsing"
+            },
+            {
+              "key": "onItemEntityDestroyed",
+              "type": "procedure",
+              "label": "Dropped item destroyed",
+              "default": "",
+              "trigger": "item_entity_destroyed",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "itemstack",
+                "damagesource"
+              ],
+              "mcreator": "onItemEntityDestroyed"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

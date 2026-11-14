@@ -1,0 +1,12 @@
+@wait 5
+gamerule probeRule 42
+gamerule keepInventory true
+forceload add 0 0
+@wait 1
+setblock 0 100 0 wavethree:ruby_tank
+setblock 2 100 0 wavethree:ruby_chest
+probe
+@wait 3
+stop
+@wait 15
+@kill

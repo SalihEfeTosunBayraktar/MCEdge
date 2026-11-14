@@ -1,0 +1,26 @@
+{
+  "jdk": {
+    "8": {
+      "folder": "jdk8*",
+      "download": "https://api.adoptium.net/v3/binary/latest/8/ga/{os}/{arch}/jdk/hotspot/normal/eclipse"
+    },
+    "21": {
+      "folder": "jdk-21*",
+      "download": "https://api.adoptium.net/v3/binary/latest/21/ga/{os}/{arch}/jdk/hotspot/normal/eclipse"
+    },
+    "25": {
+      "folder": "jdk-25*",
+      "download": "https://api.adoptium.net/v3/binary/latest/25/ga/{os}/{arch}/jdk/hotspot/normal/eclipse"
+    }
+  },
+  "gradle": {
+    "7.6.4": {
+      "folder": "gradle-7.6.4",
+      "download": "https://services.gradle.org/distributions/gradle-7.6.4-bin.zip"
+    },
+    "9.8.2": {
+      "folder": "gradle-9.8.2",
+      "download": "https://services.gradle.org/distributions/gradle-9.8.2-bin.zip"
+    }
+  }
+}

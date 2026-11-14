@@ -1,0 +1,12 @@
+@wait 3
+forceload add 0 0
+setworldspawn 2 101 2
+gamerule spawnRadius 0
+time set noon
+fill 0 99 0 8 99 8 minecraft:stone
+fill 0 100 0 8 104 8 minecraft:air
+setblock 0 100 0 wavethree:ruby_tank
+@wait 3
+stop
+@wait 15
+@kill

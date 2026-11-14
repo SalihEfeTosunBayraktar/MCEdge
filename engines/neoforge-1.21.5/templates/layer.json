@@ -1,0 +1,20 @@
+{
+  "$comment": "Element types and fields these templates generate; see src/engines/coverage.ts.",
+  "generates": {
+    "block": [
+      "transparencyType"
+    ],
+    "recipe": [
+      "recipeType",
+      "brewingInputStack",
+      "brewingIngredientStack",
+      "brewingReturnStack"
+    ],
+    "item_extension": [
+      "item",
+      "enableFuel",
+      "fuelPower",
+      "compostLayerChance"
+    ]
+  }
+}

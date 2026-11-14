@@ -1,0 +1,139 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "feature",
+  "folder": "features",
+  "name": "Feature",
+  "description": "A world generation feature (ore, tree, patch, structure...) built with blocks.",
+  "icon": "mountain",
+  "langKey": null,
+  "mcreator": "feature",
+  "pages": [
+    {
+      "id": "main",
+      "title": "Feature",
+      "groups": [
+        {
+          "title": "Placement",
+          "fields": [
+            {
+              "key": "skipPlacement",
+              "type": "boolean",
+              "label": "Configured feature only",
+              "help": "Do not place it in the world on its own; only create the feature so other features or code can use it.",
+              "default": false,
+              "mcreator": "skipPlacement"
+            },
+            {
+              "key": "generationStep",
+              "type": "select",
+              "label": "Generation stage",
+              "help": "World generation step the feature runs in.",
+              "default": "SURFACE_STRUCTURES",
+              "showIf": {
+                "key": "skipPlacement",
+                "equals": false
+              },
+              "options": [
+                {
+                  "value": "RAW_GENERATION",
+                  "label": "Raw generation"
+                },
+                {
+                  "value": "LAKES",
+                  "label": "Lakes"
+                },
+                {
+                  "value": "LOCAL_MODIFICATIONS",
+                  "label": "Local modifications"
+                },
+                {
+                  "value": "UNDERGROUND_STRUCTURES",
+                  "label": "Underground structures"
+                },
+                {
+                  "value": "SURFACE_STRUCTURES",
+                  "label": "Surface structures"
+                },
+                {
+                  "value": "STRONGHOLDS",
+                  "label": "Strongholds"
+                },
+                {
+                  "value": "UNDERGROUND_ORES",
+                  "label": "Underground ores"
+                },
+                {
+                  "value": "UNDERGROUND_DECORATION",
+                  "label": "Underground decoration"
+                },
+                {
+                  "value": "FLUID_SPRINGS",
+                  "label": "Fluid springs"
+                },
+                {
+                  "value": "VEGETAL_DECORATION",
+                  "label": "Vegetal decoration"
+                },
+                {
+                  "value": "TOP_LAYER_MODIFICATION",
+                  "label": "Top layer modification"
+                }
+              ],
+              "mcreator": "generationStep"
+            },
+            {
+              "key": "restrictionBiomes",
+              "type": "list",
+              "label": "Biomes",
+              "help": "Biomes (or one biome tag) the feature generates in. Empty means every biome.",
+              "default": [],
+              "showIf": {
+                "key": "skipPlacement",
+                "equals": false
+              },
+              "fields": [
+                {
+                  "key": "biome",
+                  "type": "biome",
+                  "label": "Biome",
+                  "default": "",
+                  "allowTags": true
+                }
+              ],
+              "mcreator": "restrictionBiomes"
+            },
+            {
+              "key": "generateCondition",
+              "type": "procedure",
+              "label": "Extra generation condition",
+              "help": "Optional check run before placing; return false to skip. Not used for references to existing configured features.",
+              "default": "",
+              "trigger": "feature_generate",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world"
+              ],
+              "returns": "logic",
+              "mcreator": "generateCondition"
+            }
+          ]
+        },
+        {
+          "title": "Feature",
+          "fields": [
+            {
+              "key": "featurexml",
+              "type": "blockly",
+              "label": "Feature definition",
+              "help": "Blocks describing the feature, its configuration and its placement.",
+              "default": "<xml xmlns=\"https://developers.google.com/blockly/xml\"><block type=\"feature_container\" deletable=\"false\" x=\"40\" y=\"40\"></block></xml>",
+              "mcreator": "featurexml"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

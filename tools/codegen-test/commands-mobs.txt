@@ -1,0 +1,11 @@
+forceload add 0 0
+summon wavethree:ruby_golem 0 100 20
+summon wavethree:ruby_sheep 3 100 20
+@wait 3
+execute if entity @e[type=wavethree:ruby_golem] run say golem-ok
+execute if entity @e[type=wavethree:ruby_sheep] run say sheep-ok
+data get entity @e[type=wavethree:ruby_golem,limit=1] Health
+damage @e[type=wavethree:ruby_golem,limit=1] 5 minecraft:generic
+kill @e[type=wavethree:ruby_sheep]
+@wait 2
+stop
