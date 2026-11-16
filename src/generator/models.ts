@@ -150,6 +150,7 @@ function jsonModel(env: GenEnv, name: string, out: ModelOutputs, warn: (t: strin
     // Its textures exist only in memory, so they are referenced as they are.
     return model;
   }
+  if (env.mc !== "26.3" && Array.isArray(model.elements)) model.elements = model.elements.map((el: Record<string, unknown>) => singleAxisElement(el, (t) => warn(`models/${name}.json: ${t}`)));
   const textures = (model.textures ?? {}) as Record<string, unknown>;
   for (const [key, value] of Object.entries(textures)) {
     if (typeof value !== "string" || value.startsWith("#")) continue;
@@ -470,4 +471,53 @@ public final class ${cls} {
 }
 `;
   return { path: `${pkg.replaceAll(".", "/")}/${cls}.java`, code };
+}
+
+const MODEL_ANGLES = [-45, -22.5, 0, 22.5, 45];
+const AXIS_NAMES = ["x", "y", "z"] as const;
+/** A face's side after a quarter turn about the y axis (right-handed: north becomes west). */
+const QUARTER_Y: Record<string, string> = { north: "west", west: "south", south: "east", east: "north", up: "up", down: "down" };
+
+/**
+ * A model element as 1.16.5 and 1.21.5 load it: one axis and an angle of -45, -22.5, 0, 22.5 or 45. Newer models may turn
+ * an element on several axes ({"x", "y", "z"}) and by any angle (26.x); whole quarter turns about y are baked into the
+ * element's corners and faces, and the remaining turn keeps its largest axis, snapped to the nearest allowed angle.
+ */
+function singleAxisElement(el: Record<string, unknown>, warn: (t: string) => void): Record<string, unknown> {
+  const rotation = el.rotation as Record<string, unknown> | undefined;
+  if (!rotation) return el;
+  const label = typeof el.name === "string" && el.name ? el.name : "element";
+  const angles: Record<string, number> = { x: 0, y: 0, z: 0 };
+  if (typeof rotation.axis === "string") angles[rotation.axis] = Number(rotation.angle) || 0;
+  else for (const axis of AXIS_NAMES) angles[axis] = Number(rotation[axis]) || 0;
+  const origin = (rotation.origin as number[] | undefined) ?? [8, 8, 8];
+  let out = { ...el };
+  // Whole quarter turns about y: the corners turn about the origin ([x, z] -> [z, -x] from it) and the side faces move on.
+  const quarters = angles.y % 90 === 0 ? (((angles.y / 90) % 4) + 4) % 4 : 0;
+  if (quarters) {
+    angles.y = 0;
+    let from = (el.from as number[]).slice(), to = (el.to as number[]).slice();
+    let faces = (el.faces ?? {}) as Record<string, Record<string, unknown>>;
+    for (let i = 0; i < quarters; i++) {
+      const turn = (p: number[]) => [origin[0] + (p[2] - origin[2]), p[1], origin[2] - (p[0] - origin[0])];
+      const a = turn(from), b = turn(to);
+      from = [Math.min(a[0], b[0]), from[1], Math.min(a[2], b[2])];
+      to = [Math.max(a[0], b[0]), to[1], Math.max(a[2], b[2])];
+      faces = Object.fromEntries(Object.entries(faces).map(([side, face]) => [QUARTER_Y[side] ?? side,
+        side === "up" || side === "down" ? { ...face, rotation: ((Number(face.rotation) || 0) + (side === "up" ? 270 : 90)) % 360 } : face]));
+    }
+    out = { ...out, from, to, faces };
+  }
+  const turned = AXIS_NAMES.filter((axis) => angles[axis] !== 0);
+  if (!turned.length) {
+    delete out.rotation;
+    return out;
+  }
+  const axis = turned.reduce((best, a) => (Math.abs(angles[a]) > Math.abs(angles[best]) ? a : best));
+  if (turned.length > 1) warn(`${label}: turned on several axes; only the ${axis} axis is kept for this game version`);
+  const angle = angles[axis];
+  const snapped = MODEL_ANGLES.reduce((best, a) => (Math.abs(a - angle) < Math.abs(best - angle) ? a : best), 0);
+  if (snapped !== angle) warn(`${label}: rotation ${angle} becomes ${snapped} for this game version (22.5 degree steps up to 45)`);
+  out.rotation = { angle: snapped, axis, origin, ...(rotation.rescale !== undefined ? { rescale: rotation.rescale } : {}) };
+  return out;
 }

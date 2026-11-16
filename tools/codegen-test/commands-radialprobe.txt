@@ -1,0 +1,24 @@
+@wait 5
+radialprobe start
+@wait 1
+radialprobe choose 0 offer
+@wait 1
+radialprobe choose 0 hello
+@wait 1
+radialprobe choose 0 run
+@wait 1
+radialprobe choose 0 locked
+@wait 1
+radialprobe choose 1 spin
+@wait 1
+radialprobe choose 1 nosuch
+@wait 1
+radialprobe blocks
+@wait 1
+radialprobe choose 0 hello
+@wait 1
+wavethree reload
+@wait 2
+stop
+@wait 15
+@kill

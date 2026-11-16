@@ -76,6 +76,9 @@ for (const language of ["en", "tr"]) {
     await app.shot(`${OUT}/renamed-en-dark.png`);
     await app.click(`${group("@folder:Red gems")} .gtitle`, undefined, { button: "right" });
     await app.click(".menulist button", "Delete");
+    // A folder with textures asks what to do with them (Q211); the default keeps them.
+    await app.waitFor(`document.querySelector(".dialog")`);
+    await app.click(".dialog button", "Delete");
     await until(app, () => placement(project).folders.length === 0, "folder deleted");
     await app.waitFor(`document.querySelector(${JSON.stringify(`${group("")} ${cell("textures/ruby_apple.png")}`)})`);
     assert(existsSync(join(project, "textures/ruby_apple.png")), "files never move");

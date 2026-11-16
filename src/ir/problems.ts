@@ -21,6 +21,10 @@ export const DEFAULT_SEVERITY: Partial<Record<CheckCode, Severity>> = {
   soundFile: "warning",
   // An integration this app does not know is skipped by the generator.
   unknownIntegration: "warning",
+  // text_translate written into a synced store: builds, but every player reads the server's language.
+  translatedStore: "warning",
+  // Typed translation keys nothing uses: they cost nothing in the game, they are only leftovers (Q222).
+  unusedTranslation: "info",
   // Legal values past a field's soft limit (warnAbove/warnBelow).
   unusualHigh: "info",
   unusualLow: "info",

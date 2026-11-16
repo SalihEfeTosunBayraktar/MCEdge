@@ -17,6 +17,8 @@ MCEdge, Java yazmadan Minecraft modu yapar. Bir proje, `mcedge.json` dosyası ol
 
 Yaptığınız her değişiklik kendiliğinden kaydedilir. **Pencere > Tercihler...** dili, temayı ve yazı boyutunu ayarlar.
 
+Kurulu MCEdge kendini günceller: yeni sürüm arka planda iner, durum çubuğu ilerlemesini gösterir, sonra **Şimdi yeniden başlat** onu kurar (ya da MCEdge kapanınca kurulur). Sürüm notları için durum çubuğundaki öğeye tıklayın. **Yardım > Güncellemeleri denetle...** hemen denetler; kendiliğinden denetlemeyi Tercihler kapatır.
+
 ## Sonra
 
 - İlk eşyanızı yapın

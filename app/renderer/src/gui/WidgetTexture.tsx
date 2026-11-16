@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTexture } from "../hooks/useTexture.ts";
 import { animationClock, drawFrame, loadPreviewTexture, onAnimationTick, type PreviewTexture } from "../textures/animatedTexture.ts";
-import { widgetSchedule, type WidgetAnimationFields, type WidgetTextureRule } from "./widgetAnimation.ts";
+import { widgetSchedule, type WidgetAnimationFields, type WidgetTextureRule } from "../../../../src/resources/widgetAnimation.ts";
 
 /**
  * A widget texture on the GUI editor canvas, drawn like the generated screen draws it (KUYRUK 160): a still texture as

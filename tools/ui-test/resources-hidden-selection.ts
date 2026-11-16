@@ -1,17 +1,19 @@
 /**
  * KUYRUK #142: in Resources, a selected texture or file that the folder filter or the search hides is no longer
  * selected, so Edit, Delete and the details panel cannot reach an item the user cannot see (same rule as #112).
- * Runs on a copy of ETREconomy-MCEdge. Screenshots go to design/142/ (args: suffix, theme).
+ * Runs on a copy of ETREconomy-MCEdge whose own texture folders are made up by the test (Q213). Screenshots go to design/142/ (args: suffix, theme).
  */
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { assert, copyProject, REPO, run, type App } from "./cdp.ts";
+import { seedTextureFolders } from "./fixtures.ts";
 
 const OUT = "design/142";
 const suffix = process.argv[2] ?? "after";
 const theme = (process.argv[3] ?? "dark") as "dark" | "light";
 const etr = [resolve(REPO, "..", "ETREconomy-MCEdge"), resolve(REPO, "..", "..", "ETREconomy-MCEdge")].find(existsSync)!;
 const project = copyProject(etr, "etr");
+seedTextureFolders(project, ["Animated", "JobProgress"]);
 
 const enabled = (app: App, label: string) =>
   app.eval<boolean>(`!![...document.querySelectorAll(".actions .abtn")].find((b) => b.textContent.includes(${JSON.stringify(label)}) && !b.disabled)`);

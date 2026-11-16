@@ -59,6 +59,13 @@ export function PreferencesForm({ preferences, onChange }: Props) {
         </FormRow>
         <p className="hint">{t("prefs.curseforgeKeyHint")}</p>
       </FormGroup>
+      <FormGroup title={t("prefs.updates")}>
+        <FormRow label={t("prefs.autoUpdate")}>
+          <label className="check"><input type="checkbox" checked={preferences.autoUpdate !== false} data-testid="pref-auto-update"
+            onChange={(e) => set({ autoUpdate: e.target.checked ? undefined : false })} /></label>
+        </FormRow>
+        <p className="hint">{t("prefs.autoUpdateHint")}</p>
+      </FormGroup>
     </>
   );
 }

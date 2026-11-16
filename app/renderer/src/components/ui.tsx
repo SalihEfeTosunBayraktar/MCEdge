@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, Fragment, useContext, useEffect, useRef, useState } from "react";
 import { issueText, t } from "../strings.ts";
 import { Icon, type IconName } from "./Icon.tsx";
 
@@ -69,7 +69,7 @@ export function FindSelect<V extends string>({ icon, label, value, options, onCh
   onChange: (value: V) => void;
 }) {
   return (
-    <label className="fsel">
+    <label className="fsel" title={`${label} ${options.find((o) => o.value === value)?.label ?? ""}`.trim()}>
       {icon && <Icon name={icon} />}
       <span>{label}</span>
       <select value={value} onChange={(e) => onChange(e.target.value as V)}>
@@ -212,12 +212,19 @@ export function startResize(e: React.MouseEvent, id: string, widths: Widths, set
 }
 
 /** Read-only selectable list with a strong header; editing happens elsewhere. */
-export function DataTable<R>({ columns, rows, rowKey, selected, onSelect, onActivate, empty, resizeKey }: {
+export function DataTable<R>({ columns, rows, rowKey, selected, picked, onSelect, onActivate, empty, resizeKey, sections, onRowDragStart }: {
   columns: Column<R>[];
+  /** All rows, in the order they are shown (arrow keys step through them). */
   rows: R[];
   rowKey: (row: R) => string;
   selected?: string;
-  onSelect: (key: string) => void;
+  /** More selected rows besides `selected` (a multi-selection). */
+  picked?: string[];
+  onSelect: (key: string, event?: React.MouseEvent) => void;
+  /** The rows in groups, each under a heading row; `attrs` go on the heading and its rows (drop handlers). */
+  sections?: { key: string; heading: React.ReactNode; rows: R[]; attrs?: React.HTMLAttributes<HTMLTableRowElement>; className?: string }[];
+  /** Rows become draggable. */
+  onRowDragStart?: (key: string, event: React.DragEvent) => void;
   onActivate?: (key: string) => void;
   empty: string;
   /** Header edges can be dragged to resize; the widths are remembered on this machine under this name. */
@@ -249,18 +256,23 @@ export function DataTable<R>({ columns, rows, rowKey, selected, onSelect, onActi
           ))}</tr>
         </thead>
         <tbody>
-          {rows.map((row) => {
-            const key = rowKey(row);
-            return (
-              <tr key={key} data-key={key} className={key === selected ? "sel" : ""} onClick={() => onSelect(key)}
-                onDoubleClick={() => onActivate?.(key)}>
-                {columns.map((c, i) => <td key={i}>{c.cell(row)}</td>)}
-              </tr>
-            );
-          })}
+          {(sections ?? [{ key: "", heading: null, rows, attrs: undefined, className: "" }]).map((section) => (
+            <Fragment key={section.key}>
+              {section.heading && <tr className={`grouprow ${section.className ?? ""}`} {...section.attrs}><td colSpan={columns.length}>{section.heading}</td></tr>}
+              {section.rows.map((row) => {
+                const key = rowKey(row);
+                return (
+                  <tr key={key} data-key={key} className={`${key === selected || picked?.includes(key) ? "sel" : ""} ${section.className ?? ""}`} onClick={(e) => onSelect(key, e)}
+                    onDoubleClick={() => onActivate?.(key)} draggable={!!onRowDragStart || undefined} onDragStart={onRowDragStart && ((e) => onRowDragStart(key, e))} {...section.attrs}>
+                    {columns.map((c, i) => <td key={i}>{c.cell(row)}</td>)}
+                  </tr>
+                );
+              })}
+            </Fragment>
+          ))}
         </tbody>
       </table>
-      {rows.length === 0 && <p className="table-empty">{empty}</p>}
+      {rows.length === 0 && !sections?.length && <p className="table-empty">{empty}</p>}
     </div>
   );
 }

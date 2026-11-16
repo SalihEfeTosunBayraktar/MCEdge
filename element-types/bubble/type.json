@@ -1,0 +1,283 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "bubble",
+  "folder": "bubbles",
+  "name": "Bubble",
+  "icon": "message",
+  "langKey": null,
+  "description": "A speech bubble shown above a player's head: background, icon, caption and animation, shown by a procedure.",
+  "pages": [
+    {
+      "id": "design",
+      "title": "Design",
+      "groups": [
+        {
+          "title": "Background",
+          "fields": [
+            {
+              "key": "background",
+              "type": "texture",
+              "label": "Background image",
+              "default": "",
+              "textureKind": "screen",
+              "help": "Empty: the built-in speech bubble. A strip of square frames with a .png.mcmeta plays as an animation."
+            },
+            {
+              "key": "backgroundMode",
+              "type": "select",
+              "label": "Background drawing",
+              "default": "plain",
+              "options": [
+                { "value": "plain", "label": "Stretched to the bubble" },
+                { "value": "nine_slice", "label": "9-slice (corners keep their size)" }
+              ]
+            },
+            {
+              "key": "sliceBorder",
+              "type": "integer",
+              "label": "Corner size (pixels)",
+              "default": 4,
+              "min": 1,
+              "max": 64,
+              "showIf": { "key": "backgroundMode", "equals": "nine_slice" },
+              "help": "Pixels of each edge of the image kept as they are; the middle stretches."
+            }
+          ]
+        },
+        {
+          "title": "Icon",
+          "fields": [
+            {
+              "key": "icon",
+              "type": "texture",
+              "label": "Icon image",
+              "default": "",
+              "textureKind": "other",
+              "help": "Any project texture; empty for none. A strip of square frames with a .png.mcmeta plays as an animation."
+            },
+            {
+              "key": "iconSize",
+              "type": "integer",
+              "label": "Icon size (pixels)",
+              "default": 20,
+              "min": 0,
+              "max": 256
+            },
+            {
+              "key": "layout",
+              "type": "select",
+              "label": "Icon position",
+              "default": "center",
+              "options": [
+                { "value": "center", "label": "Centred above the tail" },
+                { "value": "free", "label": "Free (x, y)" }
+              ]
+            },
+            {
+              "key": "iconX",
+              "type": "integer",
+              "label": "Icon x",
+              "default": 6,
+              "min": -256,
+              "max": 256,
+              "showIf": { "key": "layout", "equals": "free" }
+            },
+            {
+              "key": "iconY",
+              "type": "integer",
+              "label": "Icon y",
+              "default": 3,
+              "min": -256,
+              "max": 256,
+              "showIf": { "key": "layout", "equals": "free" }
+            }
+          ]
+        },
+        {
+          "title": "Caption",
+          "fields": [
+            {
+              "key": "caption",
+              "type": "text",
+              "label": "Caption",
+              "default": "",
+              "help": "Text above the bubble. {text} is replaced by the caption the procedure passes; without {text}, a passed caption replaces this one."
+            },
+            {
+              "key": "captionColor",
+              "type": "color",
+              "label": "Caption colour",
+              "default": "#ffffff"
+            },
+            {
+              "key": "captionShadow",
+              "type": "boolean",
+              "label": "Caption shadow",
+              "default": false
+            },
+            {
+              "key": "captionScale",
+              "type": "number",
+              "label": "Caption size",
+              "default": 1,
+              "min": 0.25,
+              "max": 4,
+              "step": 0.25,
+              "help": "1: name-tag size."
+            }
+          ]
+        },
+        {
+          "title": "Layout",
+          "fields": [
+            {
+              "key": "width",
+              "type": "integer",
+              "label": "Width (pixels)",
+              "default": 32,
+              "min": 8,
+              "max": 256
+            },
+            {
+              "key": "height",
+              "type": "integer",
+              "label": "Height (pixels)",
+              "default": 32,
+              "min": 8,
+              "max": 256
+            },
+            {
+              "key": "padding",
+              "type": "integer",
+              "label": "Padding (pixels)",
+              "default": 3,
+              "min": 0,
+              "max": 64,
+              "showIf": { "key": "layout", "equals": "center" }
+            },
+            {
+              "key": "tail",
+              "type": "integer",
+              "label": "Tail height (pixels)",
+              "default": 6,
+              "min": 0,
+              "max": 64,
+              "showIf": { "key": "layout", "equals": "center" },
+              "help": "Pixels at the bottom kept for the speech tail; the icon is centred above them."
+            },
+            {
+              "key": "scale",
+              "type": "number",
+              "label": "Size in the world",
+              "default": 1,
+              "min": 0.1,
+              "max": 8,
+              "step": 0.1,
+              "help": "1: 32 pixels are 0.6 blocks, like the built-in bubble."
+            },
+            {
+              "key": "offset",
+              "type": "number",
+              "label": "Extra height (blocks)",
+              "default": 0,
+              "min": -2,
+              "max": 4,
+              "step": 0.05,
+              "help": "Added to the height above the head, or above the name tag when it shows."
+            }
+          ]
+        },
+        {
+          "title": "Behaviour",
+          "fields": [
+            {
+              "key": "appear",
+              "type": "multiselect",
+              "label": "Appears with",
+              "default": ["scale"],
+              "options": [
+                { "value": "fade", "label": "Fade in" },
+                { "value": "scale", "label": "Grow (pop)" },
+                { "value": "slide_up", "label": "Slide up into place" },
+                { "value": "slide_down", "label": "Slide down into place" }
+              ],
+              "help": "Any combination; none: instantly."
+            },
+            {
+              "key": "appearTicks",
+              "type": "integer",
+              "label": "Appear length (ticks)",
+              "default": 5,
+              "min": 1,
+              "max": 200,
+              "showIf": { "key": "appear", "notEquals": [] }
+            },
+            {
+              "key": "appearEasing",
+              "type": "select",
+              "label": "Appear easing",
+              "default": "back",
+              "options": [
+                { "value": "linear", "label": "Linear" },
+                { "value": "ease_out", "label": "Ease out (fast, then slow)" },
+                { "value": "ease_in_out", "label": "Ease in and out" },
+                { "value": "back", "label": "Overshoot and settle" }
+              ],
+              "showIf": { "key": "appear", "notEquals": [] }
+            },
+            {
+              "key": "disappear",
+              "type": "multiselect",
+              "label": "Disappears with",
+              "default": ["scale"],
+              "options": [
+                { "value": "fade", "label": "Fade out" },
+                { "value": "scale", "label": "Shrink" },
+                { "value": "slide_up", "label": "Slide up and away" },
+                { "value": "slide_down", "label": "Slide down and away" }
+              ],
+              "help": "Any combination; none: instantly."
+            },
+            {
+              "key": "disappearTicks",
+              "type": "integer",
+              "label": "Disappear length (ticks)",
+              "default": 5,
+              "min": 1,
+              "max": 200,
+              "showIf": { "key": "disappear", "notEquals": [] }
+            },
+            {
+              "key": "disappearEasing",
+              "type": "select",
+              "label": "Disappear easing",
+              "default": "back",
+              "options": [
+                { "value": "linear", "label": "Linear" },
+                { "value": "ease_out", "label": "Ease out (fast, then slow)" },
+                { "value": "ease_in_out", "label": "Ease in and out" },
+                { "value": "back", "label": "Overshoot and settle" }
+              ],
+              "showIf": { "key": "disappear", "notEquals": [] }
+            },
+            {
+              "key": "duration",
+              "type": "integer",
+              "label": "Active time (ticks)",
+              "default": 100,
+              "min": 0,
+              "help": "Ticks from showing until it starts to disappear (the appear time counts); 0: until cleared. Used when the show bubble block's duration is -1."
+            },
+            {
+              "key": "sound",
+              "type": "sound",
+              "label": "Sound",
+              "default": "",
+              "help": "Played at the player when the bubble is shown; empty for none."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -10,12 +10,31 @@ export interface ProjectFolders {
   colors?: Record<string, string>;
   /** Folder path -> one of FOLDER_ICONS (KUYRUK 178); a folder without an entry shows the folder icon. Only the editor shows it. */
   icons?: Record<string, string>;
+  /**
+   * The same state for the other Resources lists (Q211): texture-folders.json keeps the Textures list at the top level, as it
+   * always did, and the Sounds (keyed by event name), Models and Structures (keyed by project path) lists here.
+   */
+  resources?: Partial<Record<Exclude<FolderKind, "textures">, ProjectFolders>>;
 }
+
+/** The Resources lists that have folders. */
+export type FolderKind = "textures" | "sounds" | "models" | "structures";
 
 /** Icons a folder can show instead of the folder icon, drawn in the folder's colour (KUYRUK 178). */
 export const FOLDER_ICONS = ["chest", "book", "sword", "hammer", "gem", "gear", "box", "tag", "star", "potion", "leaf", "heart"] as const;
 
 export const NO_FOLDERS: ProjectFolders = { folders: [], placement: {} };
+
+/** The folders of one Resources list, out of the whole texture-folders.json state. */
+export const kindFolders = (file: ProjectFolders | undefined, kind: FolderKind): ProjectFolders =>
+  (kind === "textures" ? file : file?.resources?.[kind]) ?? NO_FOLDERS;
+
+/** The whole state with one list's folders replaced; the other lists stay as they are. */
+export function withKindFolders(file: ProjectFolders | undefined, kind: FolderKind, state: ProjectFolders): ProjectFolders {
+  const base = file ?? NO_FOLDERS;
+  if (kind === "textures") return { ...state, ...(base.resources ? { resources: base.resources } : {}) };
+  return { ...base, resources: { ...base.resources, [kind]: state } };
+}
 
 export const elementKey = (typeId: string, id: string) => `${typeId}/${id}`;
 export const parentFolder = (path: string) => path.slice(0, Math.max(0, path.lastIndexOf("/")));
@@ -112,6 +131,33 @@ export function removeFolder(state: ProjectFolders, path: string): ProjectFolder
     placement: Object.fromEntries(Object.entries(state.placement).map(([key, f]) => [key, up(f)]).filter(([, f]) => f)),
   }, remap(state.colors, keep), remap(state.icons, keep));
 }
+
+/** Placement keys of everything in a folder and the folders below it. */
+export function folderMembers(state: ProjectFolders, path: string): string[] {
+  return Object.entries(state.placement).filter(([, f]) => inside(f, path)).map(([key]) => key);
+}
+
+/**
+ * Removes a folder with its subfolders. What sat in them moves up to the folder's parent when `keep` lists it (or all of
+ * it, with no list); the rest loses its placement, for a caller that deletes those elements.
+ */
+export function removeFolderTree(state: ProjectFolders, path: string, keep?: ReadonlySet<string>): ProjectFolders {
+  const parent = parentFolder(path);
+  const gone = (f: string) => inside(f, path);
+  return withDecor({
+    ...state,
+    folders: state.folders.filter((f) => !gone(f)),
+    placement: Object.fromEntries(Object.entries(state.placement).flatMap(([key, f]) =>
+      !gone(f) ? [[key, f]] : !keep || keep.has(key) ? (parent ? [[key, parent]] : []) : [])),
+  }, remap(state.colors, (f) => (gone(f) ? undefined : f)), remap(state.icons, (f) => (gone(f) ? undefined : f)));
+}
+
+/** Orders folder paths as a tree: a folder, then what is in it, then its next sibling. */
+export const byFolderPath = (a: string, b: string): number => {
+  const [x, y] = [a.split("/"), b.split("/")];
+  for (let i = 0; i < Math.min(x.length, y.length); i++) if (x[i] !== y[i]) return x[i].localeCompare(y[i]);
+  return x.length - y.length;
+};
 
 /** Moves an element into `folder`; "" is the top. */
 export function moveElement(state: ProjectFolders, key: string, folder: string): ProjectFolders {

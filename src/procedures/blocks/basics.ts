@@ -62,7 +62,7 @@ const flow: BlockDef[] = [
   value("dep_direction", "flow", "both", "direction", { depField: "dep", fields: [dropdown("dep", ["direction"])], code: (c) => c.dep(String(c.f.dep)) }),
   value("dep_damagesource", "flow", "both", "damagesource", { depField: "dep", fields: [dropdown("dep", ["damagesource"])], code: (c) => c.dep(String(c.f.dep)) }),
   value("dep_logic", "flow", "both", "logic", { depField: "dep", fields: [dropdown("dep", ["moving"])], code: (c) => c.dep(String(c.f.dep)) }),
-  value("dep_text", "flow", "both", "text", { depField: "dep", fields: [dropdown("dep", ["text", "command"])], code: (c) => c.dep(String(c.f.dep)) }),
+  value("dep_text", "flow", "both", "text", { depField: "dep", fields: [dropdown("dep", ["text", "command", "menu", "tab", "slice"])], code: (c) => c.dep(String(c.f.dep)) }),
   value("action_result", "flow", "both", "actionresult", {
     fields: [dropdown("result", ["SUCCESS", "CONSUME", "PASS", "FAIL"])],
     code: (c) => `${c.j.InteractionResult}.${c.f.result}`,
@@ -129,11 +129,14 @@ const loops: BlockDef[] = [
       return `for (${c.j.Entity} ${t} : ${c.h("entitiesInRange")}(${c.dep("world")}, ${c.i.x}, ${c.i.y}, ${c.i.z}, ${c.i.range})) {\n${c.local(String(c.f.var))} = ${t};\n${c.i.do}\n}`;
     },
   }),
+  // "dimension": the players of the procedure's world; "server": every online player (none on a client). The body keeps
+  // the procedure's world either way.
   stmt("for_each_player", "loops", "both", {
-    deps: W, fields: [variable("entity")], inputs: [body()],
+    deps: W, fields: [variable("entity"), dropdown("scope", ["dimension", "server"])], inputs: [body()],
     code: (c) => {
       const t = c.temp("p");
-      return `for (${c.j.Entity} ${t} : ${c.h("players")}(${c.dep("world")})) {\n${c.local(String(c.f.var))} = ${t};\n${c.i.do}\n}`;
+      const players = c.f.scope === "server" ? "serverPlayers" : "players";
+      return `for (${c.j.Entity} ${t} : ${c.h(players)}(${c.dep("world")})) {\n${c.local(String(c.f.var))} = ${t};\n${c.i.do}\n}`;
     },
   }),
   stmt("for_each_list", "loops", "both", {

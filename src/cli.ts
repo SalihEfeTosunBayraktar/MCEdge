@@ -34,6 +34,8 @@ async function main(args: string[]): Promise<number> {
   }
   const targetArg = args[args.indexOf("--target") + 1] ?? "all";
   const runGradle = !args.includes("--no-gradle");
+  // Dev builds with the test probe of run_scenario (--probe) and tick_profile (--profile); never for a release.
+  const probe = args.includes("--profile") ? { profile: true } : args.includes("--probe") ? {} : undefined;
 
   const projectDir = resolve(projectArg);
   if (!isProjectDir(projectDir)) {
@@ -61,7 +63,7 @@ async function main(args: string[]): Promise<number> {
     const outDir = join(projectDir, "out", target.id);
     // Jars of the mods the project depends on, for the build's dev runs (KUYRUK 152).
     if (runGradle) await resolveModDependencies(project.mod.dependencies, target, { onLine: (line) => process.stderr.write(`${line}\n`) });
-    const { skipped, warnings } = generateTarget(project, projectDir, target, outDir);
+    const { skipped, warnings } = generateTarget(project, projectDir, target, outDir, { probe });
     say("generated", { target: target.id, dir: outDir });
     skipped.forEach((s) => say("skipped", { target: target.id, element: `${s.typeId}/${s.id}`, reason: s.reason }));
     warnings.forEach((message) => say("warning", { target: target.id, message }));

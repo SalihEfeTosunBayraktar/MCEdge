@@ -158,6 +158,7 @@ const blockBlocks: BlockDef[] = [
 ];
 
 const E = (c: CodeArgs) => c.i.entity;
+const SEATS = (c: CodeArgs) => `${c.pkg}.seat.${c.modClass}Seats`;
 const entityBlocks: BlockDef[] = [
   value("entity_x", "entity", "both", "number", { inputs: [ent()], code: (c) => `${E(c)}.getX()` }),
   value("entity_y", "entity", "both", "number", { inputs: [ent()], code: (c) => `${E(c)}.getY()` }),
@@ -225,6 +226,10 @@ const entityBlocks: BlockDef[] = [
   value("entity_vehicle", "entity", "both", "entity", { inputs: [ent()], code: (c) => `${E(c)}.getVehicle()` }),
   stmt("entity_ride", "entity", "server", { inputs: [ent(), ent("vehicle")], code: (c) => `${E(c)}.startRiding(${c.i.vehicle});` }),
   stmt("entity_dismount", "entity", "server", { inputs: [ent()], code: (c) => `${E(c)}.stopRiding();` }),
+  // Seats (Q225, <Mod>Seats): sit on a block (a seat block's free seat, any other block on its top), read, stand up.
+  stmt("entity_sit_on_block", "entity", "server", { inputs: [ent(), ...xyz()], code: (c) => `${SEATS(c)}.sit(${E(c)}, ${at(c)});` }),
+  value("entity_is_sitting", "entity", "both", "logic", { inputs: [ent()], code: (c) => `${SEATS(c)}.isSitting(${E(c)})` }),
+  stmt("entity_stand_up", "entity", "server", { inputs: [ent()], code: (c) => `${SEATS(c)}.standUp(${E(c)});` }),
   value("entity_target", "entity", "both", "entity", { inputs: [ent()], code: (c) => `${h(c, "target")}(${E(c)})` }),
   stmt("entity_set_target", "entity", "server", { inputs: [ent(), ent("target")], code: (c) => `${h(c, "setTarget")}(${E(c)}, ${c.i.target});` }),
   value("entity_distance", "entity", "both", "number", { inputs: [ent("a"), ent("b")], code: (c) => `${c.i.a}.distanceTo(${c.i.b})` }),
@@ -307,6 +312,8 @@ const playerBlocks: BlockDef[] = [
   value("player_is_creative", "player", "both", "logic", { inputs: [ent()], code: (c) => `${h(c, "isCreative")}(${E(c)})` }),
   value("entity_has_permission", "player", "both", "logic", { inputs: [ent(), num("level", 2)], code: (c) => `${h(c, "hasPermission")}(${E(c)}, ${c.i.level})` }),
   value("player_is_op", "player", "server", "logic", { inputs: [ent()], code: (c) => `${h(c, "isOp")}(${E(c)})` }),
+  // Any dimension; no entity when nobody by that name is online or on a client.
+  value("player_by_name", "player", "server", "entity", { deps: W, inputs: [txt("name", "Steve")], code: (c) => `${h(c, "playerByName")}(${world(c)}, ${c.i.name})` }),
   value("player_xp_level", "player", "both", "number", { inputs: [ent()], code: (c) => `${h(c, "xpLevel")}(${E(c)})` }),
   stmt("player_add_levels", "player", "server", { inputs: [ent(), num("levels", 1)], code: (c) => `${h(c, "addXpLevels")}(${E(c)}, ${c.i.levels});` }),
   stmt("player_add_xp", "player", "server", { inputs: [ent(), num("points", 10)], code: (c) => `${h(c, "addXp")}(${E(c)}, ${c.i.points});` }),
@@ -493,6 +500,50 @@ const scoreBlocks: BlockDef[] = [
   stmt("score_add", "scoreboard", "server", { inputs: [ent(), num("value", 1)], fields: [textField("objective", "points")], code: (c) => `${h(c, "setScore")}(${E(c)}, ${c.s(String(c.f.objective))}, ${c.i.value}, true);` }),
 ];
 
+// Status bubbles above players (Q206): icons are the project's textures/bubbles/<icon>.png; see <Mod>Bubbles.
+const BUBBLES = (c: CodeArgs) => `${c.pkg}.procedures.${c.modClass}Bubbles`;
+const bubbleBlocks: BlockDef[] = [
+  // Q216: the standard block, showing a bubble element (empty: the default bubble) with an optional caption; a duration
+  // below 0 takes the bubble's own.
+  stmt("bubble_show", "bubbles", "server", {
+    fields: [{ name: "bubble", kind: "id", registry: "bubble_element", default: "" }], inputs: [ent(), txt("caption", ""), num("duration", -1)],
+    code: (c) => `${BUBBLES(c)}.showBubble(${E(c)}, ${c.s(String(c.f.bubble ?? "").replace(/^.*:/, ""))}, ${c.i.caption}, ${c.i.duration});`,
+  }),
+  // The icon id of a bubble: a field completing the project's textures/bubbles/<id>.png, the default of the icon input.
+  value("bubble_icon", "bubbles", "both", "text", { fields: [idField("icon", "bubble", "")], code: (c) => c.s(String(c.f.icon)) }),
+  stmt("player_bubble_show", "bubbles", "server", {
+    inputs: [ent(), { ...txt("icon", ""), shadowBlock: "bubble_icon" }, num("duration", 100)], code: (c) => `${BUBBLES(c)}.show(${E(c)}, ${c.i.icon}, ${c.i.duration});`,
+  }),
+  stmt("player_bubble_show_text", "bubbles", "server", {
+    inputs: [ent(), { ...txt("icon", ""), shadowBlock: "bubble_icon" }, txt("text", ""), num("duration", 100)],
+    code: (c) => `${BUBBLES(c)}.show(${E(c)}, ${c.i.icon}, ${c.i.text}, ${c.i.duration});`,
+  }),
+  stmt("player_bubble_clear", "bubbles", "server", { inputs: [ent()], code: (c) => `${BUBBLES(c)}.clear(${E(c)});` }),
+  value("player_bubble_icon", "bubbles", "server", "text", { inputs: [ent()], code: (c) => `${BUBBLES(c)}.icon(${E(c)})` }),
+  // Q227: an image of a runtime folder (config/<modid>/<folder>/<name>.png or .gif on the server) as the default bubble's icon.
+  stmt("runtime_image_bubble", "bubbles", "server", {
+    inputs: [ent(), txt("image", ""), txt("caption", ""), num("duration", -1)],
+    code: (c) => `${c.pkg}.procedures.RuntimeImages.showBubble(${E(c)}, ${c.i.image}, ${c.i.caption}, ${c.i.duration});`,
+  }),
+];
+
+// Radial menus (Q227): one shared runtime, RadialMenus (src/generator/radial.ts), draws and runs every radial_menu element.
+const RADIAL = (c: CodeArgs) => `${c.pkg}.procedures.RadialMenus`;
+const radialBlocks: BlockDef[] = [
+  stmt("radial_open", "gui", "server", {
+    inputs: [ent()], fields: [{ name: "menu", kind: "id", registry: "radial_menu_element", default: "" }],
+    code: (c) => !c.f.menu ? "" : `${RADIAL(c)}.open(${E(c)}, ${c.s(String(c.f.menu).replace(/^.*:/, ""))});`,
+  }),
+  stmt("radial_close", "gui", "server", { inputs: [ent()], code: (c) => `${RADIAL(c)}.close(${E(c)});` }),
+  // Overrides a slice's condition for one player until changed again: shown, hidden or greyed out; "default" uses the condition.
+  stmt("radial_set_slice", "gui", "server", {
+    inputs: [ent(), txt("tab", ""), txt("slice", "")],
+    fields: [{ name: "menu", kind: "id", registry: "radial_menu_element", default: "" }, dropdown("state", ["default", "shown", "hidden", "disabled"])],
+    code: (c) => !c.f.menu ? "" : `${RADIAL(c)}.setSlice(${E(c)}, ${c.s(String(c.f.menu).replace(/^.*:/, ""))}, ${c.i.tab}, ${c.i.slice}, ${c.s(String(c.f.state))});`,
+  }),
+];
+
+const SESSIONS = (c: CodeArgs) => `${c.pkg}.init.${c.modClass}GuiSessions`;
 const guiBlocks: BlockDef[] = [
   // Opens the GUI at x, y, z: a block entity inventory there backs its slots.
   stmt("gui_open", "gui", "server", {
@@ -507,8 +558,34 @@ const guiBlocks: BlockDef[] = [
     inputs: [ent(), ...xyz()], fields: [{ name: "gui", kind: "id", registry: "gui", default: "" }],
     code: (c) => !c.f.gui ? "" : `${c.pkg}.init.${c.modClass}Menus.open(${E(c)}, ${c.s(String(c.f.gui).replace(/^.*:/, ""))}, ${h(c, "pos")}(${at(c)}));`,
   }),
+  // Session GUIs (Q205): a shared inventory named by a text id instead of a block; see <Mod>GuiSessions.
+  stmt("gui_open_session", "gui", "server", {
+    inputs: [ent(), txt("session", "")], fields: [{ name: "gui", kind: "id", registry: "gui", default: "" }],
+    code: (c) => !c.f.gui ? "" : `${c.pkg}.init.${c.modClass}Menus.openSession(${E(c)}, ${c.s(String(c.f.gui).replace(/^.*:/, ""))}, ${c.i.session});`,
+  }),
+  value("gui_session_id", "gui", "both", "text", { inputs: [ent()], code: (c) => `${SESSIONS(c)}.sessionOf(${E(c)})` }),
+  stmt("gui_close_session", "gui", "server", { inputs: [txt("session", "")], code: (c) => `${SESSIONS(c)}.close(${c.i.session});` }),
+  value("session_viewer_count", "gui", "both", "number", { deps: W, inputs: [txt("session", "")], code: (c) => `${SESSIONS(c)}.viewers(${world(c)}, ${c.i.session})` }),
+  value("session_slot_item", "gui", "both", "itemstack", { deps: W, inputs: [txt("session", ""), num("slot", 0)], code: (c) => `${SESSIONS(c)}.item(${world(c)}, ${c.i.session}, ${c.i.slot})` }),
+  stmt("session_set_slot_item", "gui", "both", {
+    deps: W, inputs: [txt("session", ""), num("slot", 0), stack()], code: (c) => `${SESSIONS(c)}.setItem(${world(c)}, ${c.i.session}, ${c.i.slot}, ${c.i.itemstack});`,
+  }),
+  ...(Object.keys(DATA_TYPES) as (keyof typeof DATA_TYPES)[]).flatMap((type) => [
+    value(`session_data_${type}`, "gui", "both", type, {
+      deps: W, inputs: [txt("session", ""), txt("key", "")], code: (c) => `${SESSIONS(c)}.data${DATA_TYPES[type]}(${world(c)}, ${c.i.session}, ${c.i.key})`,
+    }),
+    // On a client this does nothing; the server sends the values to the players who have the session open.
+    stmt(`session_set_data_${type}`, "gui", "both", {
+      deps: W, inputs: [txt("session", ""), txt("key", ""), dataValue(type)], code: (c) => `${SESSIONS(c)}.setData${DATA_TYPES[type]}(${world(c)}, ${c.i.session}, ${c.i.key}, ${c.i.value});`,
+    }),
+  ]),
   stmt("client_item_activation", "gui", "both", { inputs: [stack()], code: (c) => `${h(c, "itemActivation")}(${S(c)});` }),
   stmt("gui_close", "gui", "server", { inputs: [ent()], code: (c) => `${h(c, "closeScreen")}(${E(c)});` }),
+  // Q229: GUI images whose animation starts on a procedure call (<Mod>TextureAnimations, src/generator/textureAnimations.ts).
+  stmt("gui_image_restart", "gui", "client", {
+    inputs: [txt("image", "")], fields: [{ name: "gui", kind: "id", registry: "gui", default: "" }],
+    code: (c) => !c.f.gui ? "" : `${c.pkg}.client.${c.modClass}TextureAnimations.restart(${c.s(String(c.f.gui).replace(/^.*:/, ""))}, ${c.i.image});`,
+  }),
   stmt("client_message", "gui", "client", { inputs: [txt("text", "Hello")], fields: [check("actionbar", true)], code: (c) => `${h(c, "clientMessage")}(${c.i.text}, ${c.f.actionbar === true});` }),
   value("client_player", "gui", "client", "entity", { code: (c) => `${h(c, "clientPlayer")}()` }),
 ];
@@ -526,7 +603,7 @@ const directionBlocks: BlockDef[] = [
 ];
 
 export const MINECRAFT_BLOCKS: BlockDef[] = [
-  ...worldBlocks, ...blockBlocks, ...entityBlocks, ...playerBlocks, ...itemBlocks, ...effectBlocks, ...damageBlocks,
+  ...worldBlocks, ...blockBlocks, ...entityBlocks, ...playerBlocks, ...bubbleBlocks, ...radialBlocks, ...itemBlocks, ...effectBlocks, ...damageBlocks,
   ...energyBlocks, ...projectileBlocks, ...particleBlocks, ...soundBlocks, ...commandBlocks, ...advancementBlocks, ...scoreBlocks,
   ...guiBlocks, ...directionBlocks,
 ];

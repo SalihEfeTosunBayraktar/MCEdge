@@ -97,6 +97,37 @@
               "default": false
             },
             {
+              "key": "inventorySource",
+              "type": "select",
+              "label": "Slot inventory",
+              "help": "Where the slots' items live: the block the GUI is opened at (or an item, or a temporary one), or a shared session named by a text id; players who open the same session with the 'open GUI on session' block share the slots and session values, with no block.",
+              "default": "block",
+              "options": [
+                {
+                  "value": "block",
+                  "label": "Block"
+                },
+                {
+                  "value": "session",
+                  "label": "Shared session"
+                }
+              ]
+            },
+            {
+              "key": "inventorySize",
+              "type": "integer",
+              "label": "Session slots",
+              "help": "Slots of a session; at least one past the highest slot id. Extra slots hold items only procedures reach.",
+              "default": 0,
+              "min": 0,
+              "max": 256,
+              "step": 1,
+              "showIf": {
+                "key": "inventorySource",
+                "equals": "session"
+              }
+            },
+            {
               "key": "doesPauseGame",
               "type": "boolean",
               "label": "Pause game",
@@ -226,6 +257,22 @@
                 "entity"
               ],
               "mcreator": "onClosed"
+            },
+            {
+              "key": "onSlotChanged",
+              "type": "procedure",
+              "label": "When a slot changes",
+              "help": "Runs on the server once each time the stack in one of the GUI's slots changes while the screen is open: a click, a shift click, a procedure or a hopper. The 'slot' dependency gives the slot id; slots this procedure changes do not run it again.",
+              "default": "",
+              "trigger": "gui_slot_changed",
+              "dependencies": [
+                "x",
+                "y",
+                "z",
+                "world",
+                "entity",
+                "slot"
+              ]
             }
           ]
         }

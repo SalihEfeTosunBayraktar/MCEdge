@@ -47,7 +47,7 @@ for (const engine of listEngines()) {
   const bigmid = block(screen, "bigmid");
   check(/translate\(\(\w+\) \(88\), \(\w+\) \(110\)/.test(bigmid) && bigmid.includes("int labelX = 0 - labelWidth / 2;") && bigmid.includes("labelText, labelX, 0"), `${e}: a scaled centred label is centred inside its scaling`);
   const hudMid = block(hud, "hud_mid");
-  check(hudMid.includes("int labelX = cx + 213 - labelWidth / 2;") && hudMid.includes("labelText, labelX, 4"), `${e}: an overlay label centred on its anchored point`);
+  check(hudMid.includes("int labelX = cx + 213 - labelWidth / 2;") && hudMid.includes("labelText, labelX, 150"), `${e}: an overlay label centred on its anchored point`);
   const hudBox = block(hud, "hud_boxed");
   check(hudBox.includes("int labelWidth = mc.font.width(labelText);") && hudBox.includes(`${fill}cx + 4 - 1, cy + 60 - 1, cx + 4 + labelWidth + 1, cy + 60 + 9, 0x7F000000);`), `${e}: overlay label with a background`);
 }

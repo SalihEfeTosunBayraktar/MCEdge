@@ -139,6 +139,10 @@ export const DEPENDENCIES = {
   moving: { type: "logic" },
   text: { type: "text" },
   command: { type: "text" },
+  // Radial menus (Q227): the chosen slice, for the slice chosen trigger and slice procedures.
+  menu: { type: "text" },
+  tab: { type: "text" },
+  slice: { type: "text" },
   arguments: { type: "commandcontext" },
 } as const satisfies Record<string, { type: ValueType | "world" | "commandcontext" }>;
 export type Dependency = keyof typeof DEPENDENCIES;

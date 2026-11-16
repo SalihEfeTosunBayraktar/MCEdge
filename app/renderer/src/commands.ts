@@ -19,6 +19,8 @@ export interface Commands {
   openExample: () => void;
   openRecent: (dir: string) => void;
   closeProject: () => void;
+  /** File > Open project folder: the open project in the OS file manager (Q210). */
+  openProjectFolder: () => void;
   build: (all: boolean) => void;
   /** Build > Regenerate code: generates the selected engine's project again without building (KUYRUK 131). */
   regenerate: () => void;
@@ -68,6 +70,8 @@ export interface Commands {
   openDeveloperDocs: () => void;
   /** Help > Connect an AI agent: the MCP command and client setup for the open project (Q201). */
   connectAgent: () => void;
+  /** Help > Report a bug: prepares a GitHub issue with the version, engine and build output (Q208). */
+  reportBug: () => void;
   /** Ctrl+N: the element list with the New popup open. */
   newElement: () => void;
   /** Ctrl+W: closes the open element or texture editor; undefined while none is open. */

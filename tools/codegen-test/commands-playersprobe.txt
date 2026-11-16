@@ -1,0 +1,6 @@
+@wait 5
+playersprobe
+@wait 2
+stop
+@wait 15
+@kill

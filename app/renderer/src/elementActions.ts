@@ -17,10 +17,3 @@ export async function duplicateElement(snapshot: ProjectSnapshot, ref: ElementRe
   else copy.title = copyName;
   return [await api.saveElement(snapshot.dir, ref.typeId, copy), { typeId: ref.typeId, id }];
 }
-
-/** Deletes an element file after confirmation; returns undefined when the user cancels. */
-export async function deleteElement(snapshot: ProjectSnapshot, ref: ElementRef): Promise<ProjectSnapshot | undefined> {
-  const element = findElement(snapshot, ref);
-  if (!element || !window.confirm(t("element.confirmDelete", { name: elementName(ref.typeId, element) }))) return undefined;
-  return api.deleteElement(snapshot.dir, ref.typeId, ref.id);
-}

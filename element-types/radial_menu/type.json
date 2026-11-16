@@ -1,0 +1,1214 @@
+{
+  "$schema": "../../schemas/element-type.schema.json",
+  "id": "radial_menu",
+  "folder": "radial_menus",
+  "name": "Radial menu",
+  "icon": "gauge",
+  "langKey": null,
+  "description": "A wheel of slices on tabs opened by a key: the mouse's direction picks a slice that runs a command, a procedure, a GUI, another menu or a bubble.",
+  "pages": [
+    {
+      "id": "menu",
+      "title": "Menu",
+      "groups": [
+        {
+          "title": "Opening",
+          "fields": [
+            {
+              "key": "openKey",
+              "type": "select",
+              "label": "Default key",
+              "default": "R",
+              "options": [
+                {
+                  "value": "NONE",
+                  "label": "None"
+                },
+                {
+                  "value": "0",
+                  "label": "0"
+                },
+                {
+                  "value": "1",
+                  "label": "1"
+                },
+                {
+                  "value": "2",
+                  "label": "2"
+                },
+                {
+                  "value": "3",
+                  "label": "3"
+                },
+                {
+                  "value": "4",
+                  "label": "4"
+                },
+                {
+                  "value": "5",
+                  "label": "5"
+                },
+                {
+                  "value": "6",
+                  "label": "6"
+                },
+                {
+                  "value": "7",
+                  "label": "7"
+                },
+                {
+                  "value": "8",
+                  "label": "8"
+                },
+                {
+                  "value": "9",
+                  "label": "9"
+                },
+                {
+                  "value": "A",
+                  "label": "A"
+                },
+                {
+                  "value": "ADD",
+                  "label": "Add"
+                },
+                {
+                  "value": "APOSTROPHE",
+                  "label": "Apostrophe"
+                },
+                {
+                  "value": "B",
+                  "label": "B"
+                },
+                {
+                  "value": "BACK",
+                  "label": "Back"
+                },
+                {
+                  "value": "BACKSLASH",
+                  "label": "Backslash"
+                },
+                {
+                  "value": "C",
+                  "label": "C"
+                },
+                {
+                  "value": "D",
+                  "label": "D"
+                },
+                {
+                  "value": "DECIMAL",
+                  "label": "Decimal"
+                },
+                {
+                  "value": "DELETE",
+                  "label": "Delete"
+                },
+                {
+                  "value": "DIVIDE",
+                  "label": "Divide"
+                },
+                {
+                  "value": "DOWN",
+                  "label": "Down"
+                },
+                {
+                  "value": "E",
+                  "label": "E"
+                },
+                {
+                  "value": "END",
+                  "label": "End"
+                },
+                {
+                  "value": "EQUALS",
+                  "label": "Equals"
+                },
+                {
+                  "value": "ESCAPE",
+                  "label": "Escape"
+                },
+                {
+                  "value": "F",
+                  "label": "F"
+                },
+                {
+                  "value": "F1",
+                  "label": "F1"
+                },
+                {
+                  "value": "F10",
+                  "label": "F10"
+                },
+                {
+                  "value": "F11",
+                  "label": "F11"
+                },
+                {
+                  "value": "F12",
+                  "label": "F12"
+                },
+                {
+                  "value": "F13",
+                  "label": "F13"
+                },
+                {
+                  "value": "F14",
+                  "label": "F14"
+                },
+                {
+                  "value": "F15",
+                  "label": "F15"
+                },
+                {
+                  "value": "F16",
+                  "label": "F16"
+                },
+                {
+                  "value": "F17",
+                  "label": "F17"
+                },
+                {
+                  "value": "F18",
+                  "label": "F18"
+                },
+                {
+                  "value": "F19",
+                  "label": "F19"
+                },
+                {
+                  "value": "F2",
+                  "label": "F2"
+                },
+                {
+                  "value": "F3",
+                  "label": "F3"
+                },
+                {
+                  "value": "F4",
+                  "label": "F4"
+                },
+                {
+                  "value": "F5",
+                  "label": "F5"
+                },
+                {
+                  "value": "F6",
+                  "label": "F6"
+                },
+                {
+                  "value": "F7",
+                  "label": "F7"
+                },
+                {
+                  "value": "F8",
+                  "label": "F8"
+                },
+                {
+                  "value": "F9",
+                  "label": "F9"
+                },
+                {
+                  "value": "G",
+                  "label": "G"
+                },
+                {
+                  "value": "H",
+                  "label": "H"
+                },
+                {
+                  "value": "HOME",
+                  "label": "Home"
+                },
+                {
+                  "value": "I",
+                  "label": "I"
+                },
+                {
+                  "value": "INSERT",
+                  "label": "Insert"
+                },
+                {
+                  "value": "J",
+                  "label": "J"
+                },
+                {
+                  "value": "K",
+                  "label": "K"
+                },
+                {
+                  "value": "L",
+                  "label": "L"
+                },
+                {
+                  "value": "LCONTROL",
+                  "label": "Lcontrol"
+                },
+                {
+                  "value": "LEFT",
+                  "label": "Left"
+                },
+                {
+                  "value": "LSHIFT",
+                  "label": "Lshift"
+                },
+                {
+                  "value": "LWIN",
+                  "label": "Lwin"
+                },
+                {
+                  "value": "MOUSELEFT",
+                  "label": "Mouseleft"
+                },
+                {
+                  "value": "MOUSERIGHT",
+                  "label": "Mouseright"
+                },
+                {
+                  "value": "MOUSEMIDDLE",
+                  "label": "Mousemiddle"
+                },
+                {
+                  "value": "M",
+                  "label": "M"
+                },
+                {
+                  "value": "MINUS",
+                  "label": "Minus"
+                },
+                {
+                  "value": "N",
+                  "label": "N"
+                },
+                {
+                  "value": "NUMLOCK",
+                  "label": "Numlock"
+                },
+                {
+                  "value": "NUMPAD0",
+                  "label": "Numpad0"
+                },
+                {
+                  "value": "NUMPAD1",
+                  "label": "Numpad1"
+                },
+                {
+                  "value": "NUMPAD2",
+                  "label": "Numpad2"
+                },
+                {
+                  "value": "NUMPAD3",
+                  "label": "Numpad3"
+                },
+                {
+                  "value": "NUMPAD4",
+                  "label": "Numpad4"
+                },
+                {
+                  "value": "NUMPAD5",
+                  "label": "Numpad5"
+                },
+                {
+                  "value": "NUMPAD6",
+                  "label": "Numpad6"
+                },
+                {
+                  "value": "NUMPAD7",
+                  "label": "Numpad7"
+                },
+                {
+                  "value": "NUMPAD8",
+                  "label": "Numpad8"
+                },
+                {
+                  "value": "NUMPAD9",
+                  "label": "Numpad9"
+                },
+                {
+                  "value": "NUMPADCOMMA",
+                  "label": "Numpadcomma"
+                },
+                {
+                  "value": "NUMPADENTER",
+                  "label": "Numpadenter"
+                },
+                {
+                  "value": "NUMPADEQUALS",
+                  "label": "Numpadequals"
+                },
+                {
+                  "value": "O",
+                  "label": "O"
+                },
+                {
+                  "value": "P",
+                  "label": "P"
+                },
+                {
+                  "value": "PERIOD",
+                  "label": "Period"
+                },
+                {
+                  "value": "Q",
+                  "label": "Q"
+                },
+                {
+                  "value": "R",
+                  "label": "R"
+                },
+                {
+                  "value": "RCONTROL",
+                  "label": "Rcontrol"
+                },
+                {
+                  "value": "ENTER",
+                  "label": "Enter"
+                },
+                {
+                  "value": "RIGHT",
+                  "label": "Right"
+                },
+                {
+                  "value": "RSHIFT",
+                  "label": "Rshift"
+                },
+                {
+                  "value": "RWIN",
+                  "label": "Rwin"
+                },
+                {
+                  "value": "S",
+                  "label": "S"
+                },
+                {
+                  "value": "SCROLL",
+                  "label": "Scroll"
+                },
+                {
+                  "value": "SLASH",
+                  "label": "Slash"
+                },
+                {
+                  "value": "SPACE",
+                  "label": "Space"
+                },
+                {
+                  "value": "T",
+                  "label": "T"
+                },
+                {
+                  "value": "TAB",
+                  "label": "Tab"
+                },
+                {
+                  "value": "U",
+                  "label": "U"
+                },
+                {
+                  "value": "UP",
+                  "label": "Up"
+                },
+                {
+                  "value": "V",
+                  "label": "V"
+                },
+                {
+                  "value": "W",
+                  "label": "W"
+                },
+                {
+                  "value": "X",
+                  "label": "X"
+                },
+                {
+                  "value": "Y",
+                  "label": "Y"
+                },
+                {
+                  "value": "Z",
+                  "label": "Z"
+                }
+              ],
+              "help": "Players can rebind it in the controls menu. None: only procedures open the menu."
+            },
+            {
+              "key": "openMode",
+              "type": "select",
+              "label": "Key",
+              "default": "hold",
+              "options": [
+                {
+                  "value": "hold",
+                  "label": "Hold: releasing chooses the slice under the mouse"
+                },
+                {
+                  "value": "toggle",
+                  "label": "Press to open, click to choose"
+                }
+              ]
+            },
+            {
+              "key": "keyName",
+              "type": "text",
+              "label": "Name in controls menu",
+              "default": "",
+              "help": "Empty: the menu's title, else its id."
+            }
+          ]
+        },
+        {
+          "title": "Wheel",
+          "fields": [
+            {
+              "key": "size",
+              "type": "integer",
+              "label": "Size (GUI pixels)",
+              "default": 160,
+              "min": 80,
+              "max": 320
+            },
+            {
+              "key": "hole",
+              "type": "integer",
+              "label": "Hole (percent of the radius)",
+              "default": 35,
+              "min": 0,
+              "max": 80
+            },
+            {
+              "key": "gap",
+              "type": "integer",
+              "label": "Separator width (pixels)",
+              "default": 3,
+              "min": 0,
+              "max": 16,
+              "help": "Empty space between slices."
+            },
+            {
+              "key": "sliceColor",
+              "type": "color",
+              "label": "Slice colour",
+              "default": "#1e1e1e"
+            },
+            {
+              "key": "sliceOpacity",
+              "type": "integer",
+              "label": "Slice opacity (percent)",
+              "default": 80,
+              "min": 0,
+              "max": 100
+            },
+            {
+              "key": "hoverColor",
+              "type": "color",
+              "label": "Slice under the mouse",
+              "default": "#3d7eff"
+            },
+            {
+              "key": "disabledColor",
+              "type": "color",
+              "label": "Disabled slice",
+              "default": "#555555"
+            },
+            {
+              "key": "sliceImage",
+              "type": "texture",
+              "label": "Slice image",
+              "default": "",
+              "textureKind": "screen",
+              "help": "Optional, drawn under each slice's icon; the images below replace it under the mouse and when disabled."
+            },
+            {
+              "key": "hoverImage",
+              "type": "texture",
+              "label": "Slice image under the mouse",
+              "default": "",
+              "textureKind": "screen"
+            },
+            {
+              "key": "disabledImage",
+              "type": "texture",
+              "label": "Disabled slice image",
+              "default": "",
+              "textureKind": "screen"
+            },
+            {
+              "key": "sliceImageSize",
+              "type": "integer",
+              "label": "Slice image size (GUI pixels)",
+              "default": 28,
+              "min": 4,
+              "max": 128
+            }
+          ]
+        },
+        {
+          "title": "Background",
+          "fields": [
+            {
+              "key": "background",
+              "type": "texture",
+              "label": "Background image",
+              "default": "",
+              "textureKind": "screen",
+              "help": "Optional, drawn under the wheel."
+            },
+            {
+              "key": "backgroundMode",
+              "type": "select",
+              "label": "Background drawing",
+              "default": "plain",
+              "options": [
+                {
+                  "value": "plain",
+                  "label": "Stretched"
+                },
+                {
+                  "value": "nine_slice",
+                  "label": "9-slice (corners keep their size)"
+                }
+              ]
+            },
+            {
+              "key": "sliceBorder",
+              "type": "integer",
+              "label": "Corner size (pixels)",
+              "default": 4,
+              "min": 1,
+              "max": 64,
+              "showIf": {
+                "key": "backgroundMode",
+                "equals": "nine_slice"
+              }
+            },
+            {
+              "key": "backgroundPadding",
+              "type": "integer",
+              "label": "Background margin (GUI pixels)",
+              "default": 8,
+              "min": 0,
+              "max": 64,
+              "help": "How far the background reaches past the wheel."
+            }
+          ]
+        },
+        {
+          "title": "Centre",
+          "fields": [
+            {
+              "key": "title",
+              "type": "text",
+              "label": "Title",
+              "default": "",
+              "help": "Shown in the middle while no slice is under the mouse."
+            },
+            {
+              "key": "showLabel",
+              "type": "boolean",
+              "label": "Label of the slice under the mouse",
+              "default": true
+            },
+            {
+              "key": "showDescription",
+              "type": "boolean",
+              "label": "Description of the slice under the mouse",
+              "default": true
+            },
+            {
+              "key": "centerIcon",
+              "type": "boolean",
+              "label": "Icon of the slice under the mouse",
+              "default": false
+            },
+            {
+              "key": "textColor",
+              "type": "color",
+              "label": "Text colour",
+              "default": "#ffffff"
+            },
+            {
+              "key": "appear",
+              "type": "multiselect",
+              "label": "Opens with",
+              "default": ["scale"],
+              "options": [
+                { "value": "fade", "label": "Fade in" },
+                { "value": "scale", "label": "Grow (pop)" },
+                { "value": "slide_up", "label": "Slide up into place" },
+                { "value": "slide_down", "label": "Slide down into place" }
+              ],
+              "help": "Any combination; none: instantly."
+            },
+            {
+              "key": "appearTicks",
+              "type": "integer",
+              "label": "Opening length (ticks)",
+              "default": 4,
+              "min": 1,
+              "max": 40,
+              "showIf": { "key": "appear", "notEquals": [] }
+            },
+            {
+              "key": "appearEasing",
+              "type": "select",
+              "label": "Opening easing",
+              "default": "back",
+              "options": [
+                { "value": "linear", "label": "Linear" },
+                { "value": "ease_out", "label": "Ease out (fast, then slow)" },
+                { "value": "ease_in_out", "label": "Ease in and out" },
+                { "value": "back", "label": "Overshoot and settle" }
+              ],
+              "showIf": { "key": "appear", "notEquals": [] }
+            }
+          ]
+        },
+        {
+          "title": "Tabs",
+          "fields": [
+            {
+              "key": "tabs",
+              "type": "list",
+              "label": "Tabs",
+              "default": [
+                {
+                  "id": "main",
+                  "label": "",
+                  "source": "list",
+                  "slices": []
+                }
+              ],
+              "fields": [
+                {
+                  "key": "id",
+                  "type": "text",
+                  "label": "Tab id",
+                  "default": "",
+                  "required": true,
+                  "pattern": "^[a-z0-9_]+$"
+                },
+                {
+                  "key": "label",
+                  "type": "text",
+                  "label": "Tab label",
+                  "default": ""
+                },
+                {
+                  "key": "source",
+                  "type": "select",
+                  "label": "Slices",
+                  "default": "list",
+                  "options": [
+                    {
+                      "value": "list",
+                      "label": "Listed here"
+                    },
+                    {
+                      "value": "folder",
+                      "label": "Images in a runtime folder"
+                    }
+                  ],
+                  "help": "A runtime folder lists every PNG and GIF of config/<modid>/<folder>/ on the server as a slice (file name = slice id and label); new files appear on the next start or after /<modid> reload."
+                },
+                {
+                  "key": "slices",
+                  "type": "list",
+                  "label": "Slices",
+                  "default": [],
+                  "fields": [
+                    {
+                      "key": "id",
+                      "type": "text",
+                      "label": "Slice id",
+                      "default": "",
+                      "required": true,
+                      "pattern": "^[a-z0-9_]+$",
+                      "help": "Passed to procedures and the trigger as slice."
+                    },
+                    {
+                      "key": "label",
+                      "type": "text",
+                      "label": "Label",
+                      "default": "",
+                      "help": "Shown in the middle while the slice is under the mouse."
+                    },
+                    {
+                      "key": "description",
+                      "type": "text",
+                      "label": "Description",
+                      "default": "",
+                      "help": "A second line under the label."
+                    },
+                    {
+                      "key": "iconKind",
+                      "type": "select",
+                      "label": "Icon",
+                      "default": "texture",
+                      "options": [
+                        {
+                          "value": "texture",
+                          "label": "Project texture"
+                        },
+                        {
+                          "value": "item",
+                          "label": "Item"
+                        },
+                        {
+                          "value": "none",
+                          "label": "None"
+                        }
+                      ]
+                    },
+                    {
+                      "key": "icon",
+                      "type": "texture",
+                      "label": "Icon image",
+                      "default": "",
+                      "textureKind": "other",
+                      "showIf": {
+                        "key": "iconKind",
+                        "equals": "texture"
+                      },
+                      "help": "A strip of square frames with a .png.mcmeta plays as an animation."
+                    },
+                    {
+                      "key": "item",
+                      "type": "item",
+                      "label": "Icon item",
+                      "default": "minecraft:stone",
+                      "showIf": {
+                        "key": "iconKind",
+                        "equals": "item"
+                      }
+                    },
+                    {
+                      "key": "action",
+                      "type": "select",
+                      "label": "Action",
+                      "default": "none",
+                      "options": [
+                        {
+                          "value": "none",
+                          "label": "Nothing (only the slice chosen trigger)"
+                        },
+                        {
+                          "value": "command",
+                          "label": "Run a command as the player"
+                        },
+                        {
+                          "value": "procedure",
+                          "label": "Call a procedure"
+                        },
+                        {
+                          "value": "menu",
+                          "label": "Open another radial menu"
+                        },
+                        {
+                          "value": "gui",
+                          "label": "Open a GUI"
+                        },
+                        {
+                          "value": "bubble",
+                          "label": "Show a bubble"
+                        },
+                        {
+                          "value": "image_bubble",
+                          "label": "Show a runtime image as a bubble"
+                        }
+                      ],
+                      "help": "What choosing the slice does on the server. Every choice also fires the global trigger \"Radial menu slice chosen\"."
+                    },
+                    {
+                      "key": "command",
+                      "type": "text",
+                      "label": "Command",
+                      "default": "",
+                      "showIf": {
+                        "key": "action",
+                        "equals": "command"
+                      },
+                      "help": "Run with the player's own permissions, for example /takas. {id} is replaced by the slice id."
+                    },
+                    {
+                      "key": "procedure",
+                      "type": "procedure",
+                      "label": "Procedure",
+                      "default": "",
+                      "showIf": {
+                        "key": "action",
+                        "equals": "procedure"
+                      },
+                      "trigger": "radial_slice",
+                      "dependencies": [
+                        "x",
+                        "y",
+                        "z",
+                        "world",
+                        "entity",
+                        "menu",
+                        "tab",
+                        "slice"
+                      ],
+                      "help": "Runs on the server with the player; menu, tab and slice name the chosen slice."
+                    },
+                    {
+                      "key": "menu",
+                      "type": "element",
+                      "label": "Radial menu",
+                      "default": "",
+                      "elementTypes": [
+                        "radial_menu"
+                      ],
+                      "showIf": {
+                        "key": "action",
+                        "equals": "menu"
+                      }
+                    },
+                    {
+                      "key": "gui",
+                      "type": "element",
+                      "label": "GUI",
+                      "default": "",
+                      "elementTypes": [
+                        "gui"
+                      ],
+                      "showIf": {
+                        "key": "action",
+                        "equals": "gui"
+                      },
+                      "help": "Opened at the player's position."
+                    },
+                    {
+                      "key": "bubble",
+                      "type": "element",
+                      "label": "Bubble",
+                      "default": "",
+                      "elementTypes": [
+                        "bubble"
+                      ],
+                      "showIf": {
+                        "key": "action",
+                        "equals": "bubble"
+                      },
+                      "help": "Empty: the default bubble."
+                    },
+                    {
+                      "key": "caption",
+                      "type": "text",
+                      "label": "Bubble caption",
+                      "default": "",
+                      "showIf": {
+                        "key": "action",
+                        "in": [
+                          "bubble",
+                          "image_bubble"
+                        ]
+                      },
+                      "help": "Fills the bubble's {text}. {id} is replaced by the slice id."
+                    },
+                    {
+                      "key": "duration",
+                      "type": "integer",
+                      "label": "Bubble duration (ticks)",
+                      "default": -1,
+                      "min": -1,
+                      "max": 72000,
+                      "showIf": {
+                        "key": "action",
+                        "in": [
+                          "bubble",
+                          "image_bubble"
+                        ]
+                      },
+                      "help": "-1: the bubble's own (100 ticks for a runtime image), 0: until cleared."
+                    },
+                    {
+                      "key": "image",
+                      "type": "text",
+                      "label": "Runtime image",
+                      "default": "",
+                      "showIf": {
+                        "key": "action",
+                        "equals": "image_bubble"
+                      },
+                      "help": "folder/name of a PNG or GIF in config/<modid>/<folder>/ on the server, for example emotes/wave."
+                    },
+                    {
+                      "key": "condition",
+                      "type": "procedure",
+                      "label": "Condition",
+                      "default": "",
+                      "trigger": "radial_condition",
+                      "dependencies": [
+                        "x",
+                        "y",
+                        "z",
+                        "world",
+                        "entity",
+                        "menu",
+                        "tab",
+                        "slice"
+                      ],
+                      "returns": "logic",
+                      "help": "Checked on the server when the menu opens and when the slice is chosen; empty: always."
+                    },
+                    {
+                      "key": "conditionMode",
+                      "type": "select",
+                      "label": "When the condition is false",
+                      "default": "hidden",
+                      "options": [
+                        {
+                          "value": "hidden",
+                          "label": "Hide the slice"
+                        },
+                        {
+                          "value": "disabled",
+                          "label": "Show it greyed out"
+                        }
+                      ]
+                    }
+                  ],
+                  "maxItems": 12,
+                  "showIf": {
+                    "key": "source",
+                    "equals": "list"
+                  }
+                },
+                {
+                  "key": "folder",
+                  "type": "text",
+                  "label": "Folder",
+                  "default": "",
+                  "pattern": "^[a-z0-9_]+$",
+                  "showIf": {
+                    "key": "source",
+                    "equals": "folder"
+                  },
+                  "help": "Under config/<modid>/ on the server, for example emotes. The images are sent to the players."
+                },
+                {
+                  "key": "pageSize",
+                  "type": "integer",
+                  "label": "Slices per page",
+                  "default": 8,
+                  "min": 2,
+                  "max": 12,
+                  "showIf": {
+                    "key": "source",
+                    "equals": "folder"
+                  },
+                  "help": "More files go on further pages, reached like tabs."
+                },
+                {
+                  "key": "action",
+                  "type": "select",
+                  "label": "Action",
+                  "default": "none",
+                  "options": [
+                    {
+                      "value": "none",
+                      "label": "Nothing (only the slice chosen trigger)"
+                    },
+                    {
+                      "value": "command",
+                      "label": "Run a command as the player"
+                    },
+                    {
+                      "value": "procedure",
+                      "label": "Call a procedure"
+                    },
+                    {
+                      "value": "menu",
+                      "label": "Open another radial menu"
+                    },
+                    {
+                      "value": "gui",
+                      "label": "Open a GUI"
+                    },
+                    {
+                      "value": "bubble",
+                      "label": "Show a bubble"
+                    },
+                    {
+                      "value": "image_bubble",
+                      "label": "Show a runtime image as a bubble"
+                    }
+                  ],
+                  "help": "What choosing the slice does on the server. Every choice also fires the global trigger \"Radial menu slice chosen\". For a folder, the slice id is the file name; Show a runtime image as a bubble shows that file.",
+                  "showIf": {
+                    "key": "source",
+                    "equals": "folder"
+                  }
+                },
+                {
+                  "key": "command",
+                  "type": "text",
+                  "label": "Command",
+                  "default": "",
+                  "showIf": {
+                    "all": [
+                      {
+                        "key": "source",
+                        "equals": "folder"
+                      },
+                      {
+                        "key": "action",
+                        "equals": "command"
+                      }
+                    ]
+                  },
+                  "help": "Run with the player's own permissions, for example /takas. {id} is replaced by the slice id."
+                },
+                {
+                  "key": "procedure",
+                  "type": "procedure",
+                  "label": "Procedure",
+                  "default": "",
+                  "showIf": {
+                    "all": [
+                      {
+                        "key": "source",
+                        "equals": "folder"
+                      },
+                      {
+                        "key": "action",
+                        "equals": "procedure"
+                      }
+                    ]
+                  },
+                  "trigger": "radial_slice",
+                  "dependencies": [
+                    "x",
+                    "y",
+                    "z",
+                    "world",
+                    "entity",
+                    "menu",
+                    "tab",
+                    "slice"
+                  ],
+                  "help": "Runs on the server with the player; menu, tab and slice name the chosen slice."
+                },
+                {
+                  "key": "menu",
+                  "type": "element",
+                  "label": "Radial menu",
+                  "default": "",
+                  "elementTypes": [
+                    "radial_menu"
+                  ],
+                  "showIf": {
+                    "all": [
+                      {
+                        "key": "source",
+                        "equals": "folder"
+                      },
+                      {
+                        "key": "action",
+                        "equals": "menu"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "key": "gui",
+                  "type": "element",
+                  "label": "GUI",
+                  "default": "",
+                  "elementTypes": [
+                    "gui"
+                  ],
+                  "showIf": {
+                    "all": [
+                      {
+                        "key": "source",
+                        "equals": "folder"
+                      },
+                      {
+                        "key": "action",
+                        "equals": "gui"
+                      }
+                    ]
+                  },
+                  "help": "Opened at the player's position."
+                },
+                {
+                  "key": "bubble",
+                  "type": "element",
+                  "label": "Bubble",
+                  "default": "",
+                  "elementTypes": [
+                    "bubble"
+                  ],
+                  "showIf": {
+                    "all": [
+                      {
+                        "key": "source",
+                        "equals": "folder"
+                      },
+                      {
+                        "key": "action",
+                        "equals": "bubble"
+                      }
+                    ]
+                  },
+                  "help": "Empty: the default bubble."
+                },
+                {
+                  "key": "caption",
+                  "type": "text",
+                  "label": "Bubble caption",
+                  "default": "",
+                  "showIf": {
+                    "all": [
+                      {
+                        "key": "source",
+                        "equals": "folder"
+                      },
+                      {
+                        "key": "action",
+                        "in": [
+                          "bubble",
+                          "image_bubble"
+                        ]
+                      }
+                    ]
+                  },
+                  "help": "Fills the bubble's {text}. {id} is replaced by the slice id."
+                },
+                {
+                  "key": "duration",
+                  "type": "integer",
+                  "label": "Bubble duration (ticks)",
+                  "default": -1,
+                  "min": -1,
+                  "max": 72000,
+                  "showIf": {
+                    "all": [
+                      {
+                        "key": "source",
+                        "equals": "folder"
+                      },
+                      {
+                        "key": "action",
+                        "in": [
+                          "bubble",
+                          "image_bubble"
+                        ]
+                      }
+                    ]
+                  },
+                  "help": "-1: the bubble's own (100 ticks for a runtime image), 0: until cleared."
+                }
+              ],
+              "minItems": 1,
+              "maxItems": 9,
+              "help": "Scroll or press 1-9 to change tabs."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

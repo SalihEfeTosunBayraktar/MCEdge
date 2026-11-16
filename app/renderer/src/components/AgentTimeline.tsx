@@ -137,6 +137,8 @@ export function AgentTimeline({ dir, live, now, session, undone, latest, onOpenT
 function AgentNotes({ dir, live, target }: { dir: string; live: LiveState; target?: string }) {
   const [text, setText] = useState("");
   const [about, setAbout] = useState(true);
+  /** Under a width the notes fold into a bar below the steps (Q224); this is its toggle. */
+  const [open, setOpen] = useState(false);
   const notes = live.notes ?? [];
   const add = () => {
     if (!text.trim()) return;
@@ -144,8 +146,10 @@ function AgentNotes({ dir, live, target }: { dir: string; live: LiveState; targe
     setText("");
   };
   return (
-    <aside className="tlnotes" aria-label={t("notes.title")}>
-      <div className="tlnoteshead">{t("notes.title")}</div>
+    <aside className={`tlnotes ${open ? "open" : ""}`} aria-label={t("notes.title")}>
+      <button type="button" className="tlnoteshead" aria-expanded={open} onClick={() => setOpen(!open)}>
+        {t("notes.title")}<Icon name="chev" size={10} />
+      </button>
       <form className="tlnoteform" onSubmit={(e) => (e.preventDefault(), add())}>
         <textarea value={text} rows={2} placeholder={t("notes.placeholder")} aria-label={t("notes.placeholder")} onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && e.ctrlKey && (e.preventDefault(), add())} />

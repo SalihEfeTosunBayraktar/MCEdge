@@ -1,0 +1,76 @@
+{
+  "name": "hello project: block, item, inventory (no procedures, so no variables class)",
+  "steps": [
+    {
+      "op": "player",
+      "name": "Ali",
+      "pos": [
+        0.5,
+        101,
+        0.5
+      ]
+    },
+    {
+      "op": "setblock",
+      "pos": [
+        2,
+        100,
+        2
+      ],
+      "block": "hellomcedge:ruby_block",
+      "expect": "hellomcedge:ruby_block"
+    },
+    {
+      "label": "block stays",
+      "op": "read",
+      "what": "block",
+      "pos": [
+        2,
+        100,
+        2
+      ],
+      "expect": "hellomcedge:ruby_block"
+    },
+    {
+      "op": "give",
+      "item": "hellomcedge:ruby",
+      "count": 3,
+      "expect": 3
+    },
+    {
+      "op": "give",
+      "item": "minecraft:diamond",
+      "count": 5
+    },
+    {
+      "label": "inventory",
+      "op": "read",
+      "what": "count",
+      "item": "hellomcedge:ruby",
+      "expect": 3
+    },
+    {
+      "op": "command",
+      "command": "setblock 2 100 2 minecraft:air"
+    },
+    {
+      "label": "block removed",
+      "op": "read",
+      "what": "block",
+      "pos": [
+        2,
+        100,
+        2
+      ],
+      "expect": "minecraft:air"
+    },
+    {
+      "op": "wait",
+      "ticks": 10
+    },
+    {
+      "op": "read",
+      "what": "inventory"
+    }
+  ]
+}

@@ -11,7 +11,7 @@ import { registerBlockbench } from "./blockbench.ts";
 import { registerLive } from "./live.ts";
 import { registerGradleNotes } from "./gradleNotes.ts";
 import { registerTools } from "./tools.ts";
-import { checkForUpdates } from "./updater.ts";
+import { startUpdater } from "./updater.ts";
 
 /** Height of the app's own menu bar; the native window buttons are drawn over its right end. */
 const TITLE_BAR_HEIGHT = 34;
@@ -77,7 +77,7 @@ app.whenReady().then(() => {
     window?.setTitleBarOverlay({ ...TITLE_BAR_THEMES[theme], height: TITLE_BAR_HEIGHT });
   });
   createWindow();
-  checkForUpdates();
+  startUpdater();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

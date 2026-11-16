@@ -18,6 +18,8 @@ export interface ProcEnv {
   modClass: string;
   /** A tag id ("forge:crops") as the engine has it; unchanged when not given. */
   tag?: (id: string) => string;
+  /** Profile runs only (Q219): every procedure times its calls into <pkg>.probe.<modClass>Probe.record. */
+  profile?: boolean;
 }
 
 /** A procedure as the compiler sees it; built from the project by src/procedures/project.ts. */
@@ -63,6 +65,8 @@ export interface Segment {
   method: string;
   /** Class holding the method: the procedure class (server) or its client class. */
   owner: string;
+  /** toServer only: the method also gets the player who sent the packet, after the level (Q227). */
+  sender?: boolean;
 }
 
 /** Types a packet can carry. */
@@ -308,7 +312,11 @@ class Compiler {
     const params = unit.deps.map((d) => `${javaType(DEPENDENCIES[d].type, imports)} ${d}`).join(", ");
     const nullable = unit.skipNullCheck ? [] : unit.deps.filter((d) => ["entity", "world", "damagesource"].includes(DEPENDENCIES[d].type));
     const guard = nullable.length ? `if (${nullable.map((d) => `${d} == null`).join(" || ")}) return${ret ? ` ${defaultValue(ret, imports)}` : ""};\n` : "";
-    const method = `public static ${retType} execute(${params}) {\n${guard}${this.declareLocals(ctx)}${body}${ret ? `\nreturn ${defaultValue(ret, imports)};` : ""}\n}`;
+    const inner = `${guard}${this.declareLocals(ctx)}${body}${ret ? `\nreturn ${defaultValue(ret, imports)};` : ""}`;
+    // Profile runs time every call (Q219); normal builds keep the one plain method.
+    const method = env.profile
+      ? `public static ${retType} execute(${params}) {\nlong start = System.nanoTime();\ntry {\n${ret ? "return " : ""}executeBody(${unit.deps.join(", ")});\n} finally {\n${env.pkg}.probe.${env.modClass}Probe.record(${JSON.stringify(unit.id)}, System.nanoTime() - start);\n}\n}\n\nprivate static ${retType} executeBody(${params}) {\n${inner}\n}`
+      : `public static ${retType} execute(${params}) {\n${inner}\n}`;
     this.serverMethods.unshift(method);
 
     const header = (cls: string, pkg: string, imp: ImportSet, note: string, methods: string[]) =>

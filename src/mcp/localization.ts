@@ -14,6 +14,7 @@ import {
   applyImport, csvTranslations, exportCsv, exportLangJson, jsonTranslations, languageOfFile, planImport, type Incoming,
 } from "../ir/localizationIO.ts";
 import { loadProject, saveLocalization } from "../ir/storage.ts";
+import { projectUnusedTranslations, removeUnusedTranslations } from "../ir/unusedTranslations.ts";
 
 type Text = { content: { type: "text"; text: string }[]; isError?: boolean };
 type Guard = (fn: () => Promise<Text> | Text) => Promise<Text>;
@@ -128,6 +129,28 @@ export function registerLocalizationTools(server: McpServer, root: string, guard
     }),
   );
 
+  server.registerTool(
+    "unused_translation_keys",
+    {
+      description: "Translation keys with text in a language file that nothing uses, per language: no element creates them (its name, what the generator "
+        + "of `engine` writes for it, or \"<mod id>.<element id>\" in the key), no element, procedure or GUI names them as a string (text_translate and "
+        + "translated message blocks), and the engine does not look them up by name (sound subtitles, key binding categories, overrides of vanilla texts "
+        + "with \"minecraft\" in the key). A key a program builds from pieces is not seen and would be listed. Nothing changes unless `remove` is true, "
+        + "which deletes the listed keys from the language files (`languages` limits it). "
+        + "The app's Problems tab lists the same keys with a Remove button.",
+      inputSchema: { languages: z.array(code).optional(), remove: z.boolean().default(false), engine: z.string().optional(), limit: z.number().int().min(1).max(5000).default(500).describe("Keys listed per language") },
+    },
+    ({ languages: only, remove, engine, limit }) => guard(() => {
+      const chosen = engine ? listEngines().find((e) => e.id === engine) : undefined;
+      if (engine && !chosen) throw new Error(`unknown engine ${engine}`);
+      const unknown = (only ?? []).filter((l) => !(l in loadProject(root).localization));
+      if (unknown.length) throw new Error(`the project has no ${unknown.join(", ")}`);
+      const report = projectUnusedTranslations(root, chosen);
+      const shown = Object.entries(report.languages).filter(([l]) => !only || only.includes(l));
+      const listed = Object.fromEntries(shown.map(([l, rows]) => [l, { count: rows.length, keys: rows.slice(0, limit), ...(rows.length > limit ? { more: rows.length - limit } : {}) }]));
+      return json({ engine: (chosen ?? listEngines()[0]).id, keys: report.keys, languages: listed, ...(remove ? { removed: removeUnusedTranslations(root, chosen, only) } : {}) });
+    }),
+  );
   server.registerTool(
     "export_translations",
     {

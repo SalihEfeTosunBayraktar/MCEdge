@@ -11,6 +11,8 @@ interface Props {
   ignored: ValidationIssue[];
   onNewTask?: (source: TaskSource) => void;
   onAction?: (action: ProblemAction) => void;
+  /** Fixes a problem in one step (Q222: remove the unused translation keys of a language). */
+  onFix?: (issue: ValidationIssue) => void;
 }
 
 const AS: Record<Severity, "problems.asError" | "problems.asWarning" | "problems.asInfo"> = { error: "problems.asError", warning: "problems.asWarning", info: "problems.asInfo" };
@@ -19,12 +21,13 @@ const AS: Record<Severity, "problems.asError" | "problems.asWarning" | "problems
  * The Problems tab: each problem with its severity. Warnings and info can be ignored (one problem or the whole check)
  * and their check's severity changed; errors break the build or the game and cannot (src/ir/problems.ts).
  */
-export function ProblemsPanel({ issues, ignored, onNewTask, onAction }: Props) {
+export function ProblemsPanel({ issues, ignored, onNewTask, onAction, onFix }: Props) {
   const [showIgnored, setShowIgnored] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number; issue: ValidationIssue; isIgnored: boolean }>();
 
   const menuItems = (issue: ValidationIssue, isIgnored: boolean): MenuItem[] => {
     const items: MenuItem[] = onNewTask ? [{ label: t("newTask.menu"), onClick: () => onNewTask(problemSource(issue)) }] : [];
+    if (onFix && issue.code === "unusedTranslation") items.unshift({ label: t("problems.removeUnused"), onClick: () => onFix(issue) });
     if (!onAction || !issue.code || !adjustable(issue.code)) return items;
     const code = issue.code;
     if (isIgnored) items.push({ label: t("problems.unignore"), onClick: () => onAction({ kind: "unignore", code, path: issue.path }) },
@@ -52,6 +55,9 @@ export function ProblemsPanel({ issues, ignored, onNewTask, onAction }: Props) {
         </span>
         <code>{issue.path}</code> {issueText(issue)}
         {isIgnored && <span className="dim">({t("problems.ignored")})</span>}
+        {onFix && issue.code === "unusedTranslation" && !isIgnored && (
+          <button className="abtn pfix" data-testid="fix-unused-translations" onClick={() => onFix(issue)}><Icon name="trash" size={12} /><span>{t("problems.removeUnused")}</span></button>
+        )}
         {canIgnore && (
           <button className="vbtn pact" title={t("problems.ignore")} aria-label={t("problems.ignore")}
             onClick={() => onAction!({ kind: "ignore", code: issue.code!, path: issue.path })}><Icon name="close" size={10} /></button>

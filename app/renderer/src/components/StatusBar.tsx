@@ -4,6 +4,7 @@ import type { EngineBuild } from "../model.ts";
 import { useSaving } from "../saveStatus.ts";
 import { t } from "../strings.ts";
 import { Icon } from "./Icon.tsx";
+import { gameRunning, UpdateItem } from "./Updates.tsx";
 
 interface Props {
   problems: number;
@@ -13,12 +14,15 @@ interface Props {
   /** An AI agent working on the project over MCP (live co-editing). */
   agent?: { client?: string; active: boolean; recent: number };
   onOpenPanel: (panel: PanelId) => void;
+  /** Double click on the empty part of the bar: shows the bottom panel (last viewed tab) or hides it (Q209). */
+  onTogglePanel: () => void;
+  panelOpen: boolean;
   /** A project (or a Gradle mod) is open; without one the bar stays empty (KUYRUK 137, U16). */
   open: boolean;
 }
 
-/** Save state, problems, active engine and Gradle state. */
-export function StatusBar({ problems, elements, builds, engineName, agent, onOpenPanel, open }: Props) {
+/** Save state, problems, active engine and Gradle state; an update in progress shows with or without a project (Q207). */
+export function StatusBar({ problems, elements, builds, engineName, agent, onOpenPanel, onTogglePanel, panelOpen, open }: Props) {
   const saving = useSaving();
   const entries = Object.entries(builds);
   const running = entries.find(([, b]) => b.status === "running" || b.status === "waiting");
@@ -35,7 +39,8 @@ export function StatusBar({ problems, elements, builds, engineName, agent, onOpe
     : cancelled ? t("status.cancelled", { ok, total: builtOnly.length })
     : builtOnly.length ? t("status.built", { ok, total: builtOnly.length }) : t("status.idle");
   const tone = running ? "running" : failed ? "failed" : "ok";
-  if (!open) return <footer className="status" />;
+  const update = <UpdateItem gameRunning={gameRunning(builds)} />;
+  if (!open) return <footer className="status"><span className="sgrow" />{update}</footer>;
   return (
     <footer className="status">
       <span className={`smsg ${saving ? "saving" : ""}`}>
@@ -43,7 +48,10 @@ export function StatusBar({ problems, elements, builds, engineName, agent, onOpe
         {t(saving ? "editor.saving" : "editor.saved")}
         {elements !== undefined && <span className="dim">{t("status.summary", { count: elements })}</span>}
       </span>
-      <span className="sgrow" />
+      <span className={`sgrow toggle ${panelOpen ? "shown" : ""}`} title={t("status.togglePanel")} onDoubleClick={onTogglePanel}>
+        <Icon name="up" />
+      </span>
+      {update}
       {agent && (
         <button className={`sitem agent ${agent.active ? "on" : ""}`} onClick={() => onOpenPanel("activity")}
           title={t(agent.active ? "live.activeHint" : "live.idleHint")}>

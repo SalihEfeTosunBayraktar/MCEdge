@@ -13,6 +13,7 @@ import { ensureToolchains } from "../engines/toolchains.ts";
 import { generateTarget } from "../generator/generate.ts";
 import { elementRows, filterRows, type ElementRow } from "../ir/elementQuery.ts";
 import { engineCoverage } from "../engines/coverage.ts";
+import { applyDelete, everything, planDelete } from "../ir/deleteCascade.ts";
 import { keyProblem } from "../ir/localization.ts";
 import { changeModIdentity } from "../ir/modIdentity.ts";
 import { elementKey, ensureFolder, moveElements, NO_FOLDERS, parentFolder, removeFolder, renameFolder, setFolderColor, setFolderIcon, FOLDER_ICONS, summarizeFolders } from "../ir/folders.ts";
@@ -221,8 +222,35 @@ export function registerProjectTools(server: McpServer, root: string, guard: Gua
       return json({ element, issues: issuesOf(typeId, element) });
     }),
   );
-  server.registerTool("delete_element", { description: "Delete an element's file.", inputSchema: { type: z.string(), id: z.string() } },
-    ({ type: typeId, id }) => guard(() => (find(typeId, id), deleteElement(root, typeId, id), json({ deleted: `${typeId}/${id}` }))));
+  server.registerTool("delete_element", {
+    description: "Delete an element's file, and on request what only it used: procedures nobody else calls and GUIs nobody else opens "
+      + "(reached from it), recipes that make it, textures and models no other element names, translation keys no other element uses, and the "
+      + "folder entries (folders.json, texture-folders.json) of everything deleted. Listed in `exclusive` (elements, textures, models, langKeys, each with its folder) "
+      + "after every delete and by dryRun, which deletes nothing; what another element, tag or datapack file still uses is never listed. "
+      + "`cascade` deletes some of it too: \"all\" (everything listed) or {elements: [\"procedure/give_reward\"], textures: [\"textures/ruby.png\"], models, langKeys}. "
+      + "Anything not in the list is refused. `engine` (default: the first) decides which keys the generator writes for the element.",
+    inputSchema: {
+      type: z.string(), id: z.string(), dryRun: z.boolean().default(false),
+      cascade: z.union([z.literal("all"), z.object({
+        elements: z.array(z.string()).optional(), textures: z.array(z.string()).optional(), models: z.array(z.string()).optional(), langKeys: z.array(z.string()).optional(),
+      })]).optional(),
+      engine: z.string().optional(),
+    },
+  }, ({ type: typeId, id, dryRun, cascade, engine }) => guard(() => {
+    find(typeId, id);
+    const chosen = engine ? listEngines().find((e) => e.id === engine) : undefined;
+    if (engine && !chosen) throw new Error(`unknown engine ${engine}`);
+    const plan = planDelete(root, { type: typeId, id }, chosen);
+    const { element, ...exclusive } = plan;
+    if (dryRun) return json({ wouldDelete: `${typeId}/${id}`, exclusive, deleted: [] });
+    const done = applyDelete(root, plan, cascade === "all" ? everything(plan) : cascade ?? {});
+    const left = {
+      elements: plan.elements.filter((e) => !done.deleted.includes(elementKey(e.type, e.id))), textures: plan.textures.filter((t) => !done.textures.includes(t.path)),
+      models: plan.models.filter((m) => !done.models.includes(m.path)), langKeys: plan.langKeys.filter((k) => !done.langKeys.includes(k.key)),
+    };
+    const anyLeft = Object.values(left).some((list) => list.length);
+    return json({ deleted: done.deleted, textures: done.textures, models: done.models, langKeys: done.langKeys, folderEntries: done.folderEntries, ...(anyLeft ? { exclusiveLeft: left } : {}) });
+  }));
   server.registerTool("validate_element", {
     description: "Validation problems of one element, with severity; ignored ones are left out unless include_ignored.",
     inputSchema: { type: z.string(), id: z.string(), include_ignored: includeIgnored },

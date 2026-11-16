@@ -1,17 +1,18 @@
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { typeFields, type Element } from "../elements/model.ts";
+import { typeFields, valuesOfType, type Element } from "../elements/model.ts";
 import { typeRegistry } from "../elements/registry.ts";
 import { loadProject, saveElement, saveTextureFolders } from "../ir/storage.ts";
-import { ensureFolder, moveElements, NO_FOLDERS, removeFolder, renameFolder, summarizeFolders } from "../ir/folders.ts";
+import { ensureFolder, folderMembers, FOLDER_ICONS, kindFolders, moveElements, moveFolder, removeFolder, withKindFolders, type FolderKind, removeFolderTree, renameFolder, setFolderColor, setFolderIcon, summarizeFolders } from "../ir/folders.ts";
 import { describeModel, resolveModel, type BlockModelJson } from "../resources/blockModel.ts";
 import { vanillaCatalog } from "../resources/vanillaAssets.ts";
 import { QUICK_KINDS, quickItems, quickSearch } from "../ir/quickSearch.ts";
 import { displayName, REGISTRY_PROVIDERS } from "../elements/model.ts";
 import { loadTags } from "../tags/tags.ts";
-import { clearGradleCaches, deleteResource, exportWorkspace, importResources, listResources, type ResourceKind } from "../resources/files.ts";
+import { clearGradleCaches, deleteResource, exportWorkspace, importResources, listResources, resourceBlocker, type ResourceKind } from "../resources/files.ts";
+import { elementsNaming } from "../resources/resourceUse.ts";
 import VANILLA_IDS from "../../config/vanilla-ids.json" with { type: "json" };
 import { OFFERED_TAGS, suggestedEntries } from "../tags/offered.ts";
 import { mappedSlots, modelTextureSlots } from "../resources/modelTextures.ts";
@@ -258,42 +259,74 @@ export function registerResourceTools(server: McpServer, root: string, guard: Gu
   server.registerTool(
     "texture_folders",
     {
-      description: "Folders of Resources > Textures (texture-folders.json): they only organise that list; texture files, element fields and the mod do not change. "
-        + "`list` (default) gives each folder with its texture count and how many textures are in none (`full` adds the placement texture path -> folder); "
-        + "`create` makes `path` and its missing parents; `rename` gives `path` the new `name`; `remove` deletes `path`, its textures go up to the parent; "
-        + "`move` puts `textures` (project paths such as textures/block/ruby.png) into `folder` (\"\" takes them out of every folder).",
+      description: "Folders of the Resources lists (texture-folders.json), `kind` textures (default), sounds, models or structures: they only organise that list; files, element fields and the mod do not change, so every path stays valid. "
+        + "Items are texture paths (textures/block/ruby.png), sound event names (as in list_sound_events), or model and structure paths (models/x.json, structures/x.nbt). Folders nest (\"Gems/Ruby\"). "
+        + "`list` (default) gives each folder with its item count, colour and icon and how many items are in none (`full` adds the placement item -> folder); "
+        + "`create` makes `path` and its missing parents; `rename` gives `path` the new `name`; `move_folder` puts `path` and everything in it into the folder `folder` (\"\" = the top); "
+        + "`color` sets the colour of `path` (\"#rrggbb\", \"\" clears it) and `icon` its icon (" + FOLDER_ICONS.join(", ") + "; \"\" is the folder icon); "
+        + "`remove` deletes `path`: its items and subfolders go up to the parent, or, with `deleteContents`, its subfolders go and so do the items in it and below it "
+        + "(items an element uses, and the mod logo for textures, are kept, moved up, and reported as `kept`; a listed sound event is removed but its sound files stay; `dryRun` only lists what would go); "
+        + "`move` puts `items` (`textures` is the same list) into `folder` (\"\" takes them out of every folder), any number at once.",
       inputSchema: {
-        action: z.enum(["list", "create", "rename", "remove", "move"]).optional(),
+        kind: z.enum(["textures", "sounds", "models", "structures"]).optional(),
+        action: z.enum(["list", "create", "rename", "remove", "move", "move_folder", "color", "icon"]).optional(),
         path: z.string().optional(), name: z.string().optional(),
-        textures: z.array(z.string()).min(1).optional(), folder: z.string().optional(),
+        items: z.array(z.string()).min(1).optional(), textures: z.array(z.string()).min(1).optional(), folder: z.string().optional(),
+        color: z.string().optional(), icon: z.string().optional(),
+        deleteContents: z.boolean().optional(), dryRun: z.boolean().optional(),
         full: z.boolean().optional(),
       },
     },
-    ({ action = "list", path, name, textures, folder, full }) => guard(() => {
-      const state = loadProject(root).textureFolders ?? NO_FOLDERS;
-      const pngs = projectPngs(root).filter((p) => p.startsWith("textures/"));
+    ({ kind = "textures", action = "list", path, name, items, textures, folder, color, icon, deleteContents, dryRun, full }) => guard(() => {
+      const whole = loadProject(root).textureFolders;
+      const state = kindFolders(whole, kind);
+      const list = folderItems(root, kind);
       if (action === "list") {
-        const summary = summarizeFolders(state, new Set(pngs));
-        return json({ folders: summary.folders.map((f) => ({ path: f.path, textures: f.elements, total: f.total })), unfiled: summary.unfiled,
-          ...(full ? { placement: Object.fromEntries(Object.entries(state.placement).filter(([p]) => pngs.includes(p))) } : {}) });
+        const summary = summarizeFolders(state, new Set(list.keys));
+        return json({ kind, folders: summary.folders.map((f) => ({ path: f.path, [kind]: f.elements, total: f.total, ...(f.color ? { color: f.color } : {}), ...(f.icon ? { icon: f.icon } : {}) })), unfiled: summary.unfiled,
+          ...(full ? { placement: Object.fromEntries(Object.entries(state.placement).filter(([p]) => list.keys.includes(p))) } : {}) });
       }
       if (action !== "move" && !path) throw new Error(`${action} needs a path`);
+      if (action !== "move" && action !== "create" && !state.folders.includes(path!)) throw new Error(`no folder "${path}"`);
       let next = state;
+      const result: Record<string, unknown> = { action, kind, path };
       if (action === "create") next = ensureFolder(state, path!).state;
       else if (action === "rename") {
         if (!name) throw new Error("rename needs a name");
         next = renameFolder(state, path!, name);
+      } else if (action === "move_folder") {
+        if (folder === undefined) throw new Error("move_folder needs a folder (\"\" = the top)");
+        next = moveFolder(state, path!, folder);
+        result.folder = folder;
+      } else if (action === "color") {
+        if (color === undefined) throw new Error("color needs a colour: \"#rrggbb\", or \"\" to clear");
+        next = setFolderColor(state, path!, color);
+        result.color = color.toLowerCase();
+      } else if (action === "icon") {
+        if (icon === undefined) throw new Error(`icon needs an icon: ${FOLDER_ICONS.join(", ")}, or "" for the folder icon`);
+        next = setFolderIcon(state, path!, icon);
+        result.icon = icon;
       } else if (action === "remove") {
-        if (!state.folders.includes(path!)) throw new Error(`no folder "${path}"`);
-        next = removeFolder(state, path!);
+        if (!deleteContents) next = removeFolder(state, path!);
+        else {
+          const files = folderMembers(state, path!).filter((p) => list.keys.includes(p));
+          const kept = files.filter((p) => list.blocker(p));
+          const doomed = files.filter((p) => !list.blocker(p));
+          if (dryRun) return json({ action, kind, path, wouldDelete: doomed, kept });
+          for (const p of doomed) list.remove(p);
+          next = removeFolderTree(state, path!, new Set(kept));
+          Object.assign(result, { deleted: doomed, kept });
+        }
       } else {
-        if (!textures || folder === undefined) throw new Error("move needs textures and folder");
-        const missing = textures.filter((p) => !pngs.includes(p));
-        if (missing.length) throw new Error(`no project texture ${missing.join(", ")}`);
-        next = moveElements(state, textures, folder);
+        const moving = items ?? textures;
+        if (!moving || folder === undefined) throw new Error("move needs items and folder");
+        const missing = moving.filter((p) => !list.keys.includes(p));
+        if (missing.length) throw new Error(`no project ${kind} item ${missing.join(", ")}`);
+        next = moveElements(state, moving, folder);
+        Object.assign(result, { path: undefined, moved: moving.length, folder });
       }
-      saveTextureFolders(root, next);
-      return json({ action, folders: next.folders.length, ...(action === "move" ? { moved: textures!.length, folder } : { path }) });
+      saveTextureFolders(root, withKindFolders(whole, kind, next));
+      return json({ ...result, folders: next.folders.length });
     }),
   );
   server.registerTool(
@@ -414,4 +447,45 @@ function modelUsers(elements: Record<string, Element[]>, name: string): string[]
     }
   }
   return users;
+}
+
+/** Textures an element field or the mod logo uses (what delete_texture refuses to delete). */
+function usedTextures(root: string): Set<string> {
+  const project = loadProject(root);
+  const { byId } = typeRegistry();
+  const used = new Set<string>();
+  for (const [typeId, list] of Object.entries(project.elements)) {
+    const type = byId.get(typeId);
+    if (type) for (const e of list) valuesOfType(typeFields(type), e, "texture").forEach((p) => used.add(p));
+  }
+  if (project.mod.logo) used.add(project.mod.logo);
+  return used;
+}
+
+/**
+ * The items of one Resources list for folder management: their keys (texture paths, sound event names, model and structure
+ * paths), why one cannot be deleted (an element uses it), and deleting one.
+ */
+function folderItems(root: string, kind: FolderKind): { keys: string[]; blocker: (key: string) => string | undefined; remove: (key: string) => void } {
+  if (kind === "textures") {
+    const used = usedTextures(root);
+    return {
+      keys: projectPngs(root).filter((p) => p.startsWith("textures/")),
+      blocker: (p) => (used.has(p) ? "texture in use" : undefined),
+      // Its animation goes with it, as in delete_texture.
+      remove: (p) => (rmSync(join(root, p)), existsSync(join(root, `${p}.mcmeta`)) && rmSync(join(root, `${p}.mcmeta`))),
+    };
+  }
+  if (kind === "sounds") {
+    const project = loadProject(root);
+    const events = soundEvents(root, project.mod.id, projectSoundFiles(root));
+    const named = elementsNaming(project.elements);
+    const defined = (name: string) => events.find((e) => e.name === name)?.defined;
+    return {
+      keys: events.map((e) => e.name),
+      blocker: (name) => (defined(name) ? (named(name) ? "sound in use" : undefined) : resourceBlocker(root, `sounds/${name}.ogg`)),
+      remove: (name) => (defined(name) ? deleteSoundEvent(root, name) : deleteResource(root, `sounds/${name}.ogg`)),
+    };
+  }
+  return { keys: listResources(root, kind === "models" ? "model" : "structure"), blocker: (p) => resourceBlocker(root, p), remove: (p) => deleteResource(root, p) };
 }

@@ -54,6 +54,8 @@
   color-scheme: light;
 }
 :root {
+  /* Width the system window buttons (titleBarOverlay) cover at the right of the title bar; used where env(titlebar-area-*) is absent. */
+  --window-controls: 140px;
   --font: "Trebuchet MS", "Segoe UI", sans-serif;
   --mono: "Cascadia Mono", Consolas, monospace;
   --bevel: inset 2px 2px 0 var(--hi), inset -2px -2px 0 var(--lo);
@@ -123,19 +125,27 @@ input[type="number"]::-webkit-inner-spin-button { opacity: .5; }
 /* menu bar */
 /* The menu bar is the window's title bar: draggable, with room on the right for the system window controls overlay. */
 .menubar { display: flex; align-items: center; gap: 14px; height: 34px; flex: none; padding: 0 8px 0 10px; border-bottom: 2px solid var(--lo); min-width: 0;
-  -webkit-app-region: drag; padding-right: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, calc(100vw - 140px)) + 8px); }
+  -webkit-app-region: drag; padding-right: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, calc(100vw - var(--window-controls))) + 8px); }
 .menubar button, .menubar select, .menubar input, .menubar .menulist { -webkit-app-region: no-drag; }
 .brand { display: flex; align-items: center; gap: 8px; flex: none; }
 .wordmark .wm-a { fill: var(--accent); }
 .wordmark .wm-b { fill: var(--fg); }
 .wordmark .wm-s { fill: var(--lo); }
 :root[data-theme="light"] .wordmark .wm-s { fill: var(--hi); }
-.menus { display: flex; align-items: center; height: 100%; }
+.menus { display: flex; align-items: center; height: 100%; flex: none; }
 .menuwrap { position: relative; height: 100%; display: flex; align-items: center; }
-.menu { height: 100%; padding: 0 9px; color: var(--fg); }
+.menu { height: 100%; padding: 0 9px; color: var(--fg); white-space: nowrap; }
 .menu:hover, .menu.on { background: var(--sel); }
 .menu.on { box-shadow: inset 0 -2px 0 var(--accent); }
-.wsname { margin-left: auto; display: flex; align-items: center; gap: 8px; white-space: nowrap; font-weight: bold; color: var(--fg); min-width: 0; }
+.wsname { margin-left: auto; display: flex; align-items: center; gap: 8px; white-space: nowrap; font-weight: bold; color: var(--fg); min-width: 0; flex: 0 1 auto; }
+.wsn { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.wsname .menuwrap { flex: 0 1 auto; min-width: 0; }
+.enginebtn { min-width: 0; }
+.engname { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tbtns, .wsdot, .wsname .dim { flex: none; }
+/* Narrow window (KUYRUK 224): low-priority title-bar parts give way first so nothing runs under the window controls. */
+@media (max-width: 1000px) { .menubar { gap: 8px; } .brand .wordmark, .wsname .dim { display: none; } .menu { padding: 0 6px; } }
+@media (max-width: 800px) { .menubar { gap: 4px; } .menu { padding: 0 3px; } .wsn, .engname { display: none; } .wsdot { display: none; } .menubar .themebtn { display: none; } }
 .wsname .dim { font-weight: normal; }
 .enginebtn { display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 6px; font-weight: normal; color: var(--fg-2); }
 .enginebtn:hover, .enginebtn.on { background: var(--sel); color: var(--fg); }
@@ -195,11 +205,20 @@ input[type="number"]::-webkit-inner-spin-button { opacity: .5; }
 .search input { flex: 1; min-width: 0; height: 100%; padding: 0; background: transparent; box-shadow: none; }
 .search input:focus { box-shadow: none; }
 .search:focus-within { box-shadow: inset 0 0 0 2px var(--accent); }
+@media (max-width: 1000px) { .search { flex: 1 1 120px; width: auto; min-width: 120px; } .fsection { min-width: 0; } }
 .fsel { position: relative; display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; white-space: nowrap; cursor: pointer; }
 .fsel select { height: 24px; padding: 0 16px 0 0; background: transparent; box-shadow: none; background-image: none; font-weight: bold; color: var(--fg); }
 .fsel select:focus { box-shadow: none; }
 .fsel:focus-within { box-shadow: inset 0 0 0 2px var(--accent); }
 .fsel > .ico:last-child { position: absolute; right: 8px; pointer-events: none; }
+/* Narrow window (Q224): the filter and sort selects shrink to their icon; the native select stays clickable over it and the label shows as a tooltip. */
+@media (max-width: 900px) {
+  .fsel { width: 46px; padding: 0 6px; gap: 4px; }
+  .fsel > span { display: none; }
+  .fsel select { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; opacity: 0; }
+  .fsel > .ico:last-child { right: 6px; }
+  .findbar { gap: 4px; padding: 0 6px; }
+}
 .fmeta { margin-left: auto; color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* section action toolbar: one row, left aligned */
@@ -273,6 +292,21 @@ input[type="number"]::-webkit-inner-spin-button { opacity: .5; }
 .micon { display: inline-flex; width: 16px; justify-content: center; }
 .tgroup.dropping { box-shadow: inset 0 0 0 2px var(--accent); }
 .tgroup.own > .gtitle { display: flex; align-items: center; gap: 6px; }
+.gicon { display: inline-flex; }
+.gtitle.folderhead { display: flex; align-items: center; gap: 6px; }
+.folderhead.focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+.glock { color: var(--fg-3); }
+.gmore { display: inline-flex; padding: 2px; margin-left: 2px; background: none; border: 0; color: var(--fg-2); opacity: .55; cursor: pointer; }
+.folderhead:hover .gmore, .folderhead:focus-within .gmore, .gmore:focus-visible { opacity: 1; }
+.gmore:hover { color: var(--fg); background: var(--sel); }
+.foldertip { margin: 6px 12px 0; }
+.grid tbody tr.grouprow td, .grid tbody tr.grouprow:hover td { height: auto; background: transparent; border-bottom: 0; box-shadow: none; overflow: visible; }
+.grid tbody tr.grouprow .gtitle { margin: 8px 0 2px; font-size: 14px; }
+.grid tbody tr.dropping td { box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent); }
+.texarea { position: relative; user-select: none; }
+.selbox { position: absolute; z-index: 5; pointer-events: none; background: color-mix(in srgb, var(--accent) 25%, transparent); box-shadow: inset 0 0 0 1px var(--accent); }
+.radiorow { display: flex; align-items: flex-start; gap: 8px; margin: 6px 0; }
+.radiorow input { margin: 2px 0 0; width: 14px; height: 14px; flex: none; accent-color: var(--accent); }
 .crumbdrop { display: inline-block; padding: 0 2px; }
 .crumbdrop.dropping { box-shadow: inset 0 0 0 2px var(--accent); }
 .foldertile[style] .slot, .foldertile .slot[style] { box-shadow: var(--well); }
@@ -489,10 +523,24 @@ table.grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .smsg .ico { width: 12px; height: 12px; color: var(--ok); }
 .smsg.saving .ico { color: var(--warn); }
 .sgrow { flex: 1; }
+/* Q209: the empty part of the bar toggles the bottom panel on double click; hovering it lifts a small arrow and lights the strip. */
+.sgrow.toggle { align-self: stretch; display: flex; align-items: center; justify-content: center; border-radius: 3px; transition: background-color .15s ease; }
+.sgrow.toggle .ico { opacity: 0; transform: translateY(3px); color: var(--fg-3); transition: opacity .15s ease, transform .15s ease; }
+.sgrow.toggle.shown .ico { transform: translateY(-3px) rotate(180deg); }
+.sgrow.toggle:hover { background: var(--sel); }
+.sgrow.toggle:hover .ico { opacity: 1; transform: translateY(0); }
+.sgrow.toggle.shown:hover .ico { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .sgrow.toggle, .sgrow.toggle .ico { transition: none; } }
 .sitem { display: flex; align-items: center; gap: 6px; color: var(--fg-3); }
 .sitem .ico { width: 12px; height: 12px; }
 button.sitem:hover { color: var(--fg); }
 .sitem.warn { color: var(--warn); }
+/* Update in the status bar (Q207): the download in the accent colour, a ready update with its own small buttons. */
+.sitem.update > button.sitem { color: var(--accent); }
+.sitem.update.ready > button.sitem { color: var(--ok); }
+.sitem.update .mbtn { height: 18px; padding: 0 6px; }
+.updatedlg { width: 520px; }
+.updnotes { max-height: min(320px, calc(100vh - 320px)); padding: 4px 12px 8px; }
 .gradle { color: var(--fg); }
 .led { display: inline-block; width: 8px; height: 8px; flex: none; background: var(--ok); box-shadow: 0 0 0 2px var(--lo); }
 .led.running, .led.waiting { background: var(--warn); }
@@ -778,6 +826,10 @@ input[type="range"] { flex: 1; min-width: 0; accent-color: var(--accent); }
 .about-brand { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 8px 0 4px; }
 .notice-lines { overflow-wrap: anywhere; }
 .docsdlg { width: min(1100px, calc(100vw - 80px)); }
+.bugdlg { width: min(720px, calc(100vw - 80px)); }
+.bugbody textarea, .bugbody input[type="text"] { width: 100%; }
+.bugpreview { max-height: 180px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.engines button.reportbtn { height: auto; margin-top: 6px; }
 .connectdlg { width: min(820px, calc(100vw - 80px)); }
 .connectbody { max-height: calc(100vh - 200px); overflow: auto; }
 .connectbody > .hint, .connectbody > .notice { margin: 0 0 12px; }
@@ -902,6 +954,7 @@ input[type="range"] { flex: 1; min-width: 0; accent-color: var(--accent); }
 .agrangehead { padding-left: 22px; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; }
 .agsession { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0 8px; padding: 3px 10px 3px 40px; }
 .agsession .agname { color: var(--fg); }
+.agsession > .mono { white-space: nowrap; }
 .agsession .agcalls { grid-column: 2 / 4; font-size: 11px; }
 .agempty { margin: 6px 10px; }
 .agconnect { margin-top: 6px; color: var(--accent); }
@@ -941,7 +994,20 @@ input[type="range"] { flex: 1; min-width: 0; accent-color: var(--accent); }
 .tlbefore { color: var(--danger); }
 .tlafter { color: var(--ok); }
 .tlnotes { display: flex; flex-direction: column; min-height: 0; border-left: 2px solid var(--line); }
-.tlnoteshead { padding: 6px 10px 2px; color: var(--accent); font-size: 11px; font-weight: bold; letter-spacing: .06em; text-transform: uppercase; }
+.tlnoteshead { display: flex; align-items: center; gap: 6px; padding: 6px 10px 2px; color: var(--accent); font-size: 11px; font-weight: bold; letter-spacing: .06em; text-transform: uppercase; text-align: left; cursor: default; }
+.tlnoteshead > .ico { display: none; }
+/* Narrow panel (Q224): the notes fold into a bar under the steps, opened by its heading; the tree column gets narrower. */
+@media (max-width: 1000px) {
+  .agentsview { grid-template-columns: 200px minmax(0, 1fr); }
+  .tlbody { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+  .tlnotes { border-left: none; border-top: 2px solid var(--line); max-height: 60%; overflow: auto; }
+  .tlnotes:not(.open) > :not(.tlnoteshead) { display: none; }
+  .tlnoteshead { cursor: pointer; padding-bottom: 6px; }
+  .tlnoteshead > .ico { display: inline-block; transition: transform .1s; }
+  .tlnotes.open .tlnoteshead > .ico { transform: rotate(180deg); }
+}
+
+.tlcalls > li > * { min-width: 0; overflow-wrap: anywhere; }
 .tlnoteform { display: flex; flex-direction: column; gap: 4px; padding: 4px 10px 6px; }
 .tlnoteform textarea { width: 100%; resize: none; }
 .tlnoterow { display: flex; align-items: center; gap: 8px; }
@@ -1090,6 +1156,24 @@ input[type="range"] { flex: 1; min-width: 0; accent-color: var(--accent); }
 .pvfaces figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .pvfaces figcaption { font-size: 11px; color: var(--fg-2); text-align: center; line-height: 1.2; }
 @media (max-width: 1180px) { .formpreview { display: none; } }
+/* Bubble editor canvas (Q216): the bubble's design surface, so it stays beside the form at every width. */
+.formpreview.bubblepreview { display: flex; flex-basis: 320px; }
+.bubblecanvas { width: 296px; height: 280px; box-shadow: var(--well); cursor: grab; }
+
+/* Bubble timeline (Q228): appear | hold | disappear, a playhead, Play, a scrubber and a loop switch. */
+.bubbletimeline { display: flex; flex-direction: column; gap: 4px; }
+.tlbar { position: relative; display: flex; height: 22px; background: var(--slot); box-shadow: var(--well); }
+.tlseg { display: flex; align-items: center; justify-content: center; min-width: 0; overflow: hidden; font-size: 10px; color: var(--fg-2); white-space: nowrap; }
+.tlseg.appear { background: color-mix(in srgb, var(--accent) 35%, transparent); }
+.tlseg.hold { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.tlseg.disappear { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.tlseg.on { color: var(--fg); font-weight: 600; }
+.tlhead { position: absolute; top: -2px; bottom: -2px; width: 2px; margin-left: -1px; background: var(--fg); pointer-events: none; }
+.tlcontrols { display: flex; align-items: center; gap: 8px; }
+.tlcontrols input[type="range"] { flex: 1; min-width: 0; padding: 0; height: 20px; }
+.formpreview.radialpreview { display: flex; flex-basis: 320px; }
+.radialcanvas { width: 296px; height: 296px; box-shadow: var(--well); cursor: crosshair; }
+.radialtabs { display: flex; flex-wrap: wrap; gap: 4px; }
 /* GUI editor widget list: inline rename (KUYRUK 90). */
 .guilist .lrow.renaming { padding-right: 6px; }
 .guilist .lrename { flex: 1; min-width: 0; height: 20px; }
@@ -1196,3 +1280,5 @@ input[type="range"] { flex: 1; min-width: 0; accent-color: var(--accent); }
 .textctl.off .textctlval { color: var(--fg-3); }
 .textctl .btn.small { height: 24px; min-width: 28px; padding: 0 6px; background: var(--plank-2); box-shadow: var(--bevel); color: var(--fg); }
 .textctl .btn.small:disabled { color: var(--fg-3); }
+.problems .pfix { margin-left: auto; min-height: 22px; padding: 0 8px; }
+.problems .pfix + .pact { margin-left: 0; }

@@ -37,6 +37,8 @@ const FAB = "net.fabricmc.fabric.api";
 export const BLOCK_PLACE_LISTENERS = "BlockPlaceEvents.LISTENERS";
 /** List the Fabric hoe use trigger adds to; a registration that names it needs the hoe mixin. */
 export const HOE_USE_LISTENERS = "HoeUseEvents.LISTENERS";
+/** Listeners of the radial menu runtime (Q227); a registration that names it needs that runtime. */
+export const RADIAL_LISTENERS = "RadialMenus.LISTENERS";
 
 /** NeoForge game-bus listener. */
 const nf = (event: string, body: string) => `net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(${event}.class, event -> {\n${body}\n});`;
@@ -284,6 +286,14 @@ return cancelled[0];
       neoforge: (t) => nf(`${NF}.entity.living.LivingHealEvent`, `net.minecraft.world.entity.LivingEntity living = event.getEntity();\nif (living.level().isClientSide()) return;\n${t.run({ ...at("living", MODERN_LEVEL("living")), amount: "event.getAmount()" }, "event.setCanceled(true);")}`),
       forge: (t) => fg(`${FG}.entity.living.LivingHealEvent`, `net.minecraft.entity.LivingEntity living = event.getEntityLiving();\nif (living.level.isClientSide()) return;\n${t.run({ ...at("living", LEGACY_LEVEL("living")), amount: "event.getAmount()" }, "event.setCanceled(true);")}`),
       fabric: null,
+    },
+  },
+  {
+    // Radial menus (Q227): the shared runtime (src/generator/radial.ts) calls its listeners after a slice's action ran.
+    id: "radial_slice_chosen", side: "server", deps: [...PLAYER_DEPS, "menu", "tab", "slice"],
+    code: {
+      "1.16.5": (t) => `${RADIAL_LISTENERS}.add((player, menu, tab, slice) -> {\n${t.run({ ...at("player", LEGACY_LEVEL("player")), menu: "menu", tab: "tab", slice: "slice" })}\n});`,
+      modern: (t) => `${RADIAL_LISTENERS}.add((player, menu, tab, slice) -> {\n${t.run({ ...at("player", MODERN_LEVEL("player")), menu: "menu", tab: "tab", slice: "slice" })}\n});`,
     },
   },
 ];

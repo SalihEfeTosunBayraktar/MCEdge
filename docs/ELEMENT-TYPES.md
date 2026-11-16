@@ -81,6 +81,11 @@ widget's lang key `gui.<modid>.<gui>.<name>`.
 `z` (image, state_image, label; integer -99 to 99, default 0) is the drawing order: higher draws on top, list order among equal
 ones. Above 0 draws over slots, items and buttons; 0 and below keeps the normal place (images under buttons and items,
 labels under items). Overlays (HUD) draw in z order too; a `state_image` takes part like an image.
+Animated textures (Q229) play in the playback mode set in the texture editor (or `set_texture_animation mode`), stored
+in the `.mcmeta`'s own `"mcedge": { "playback": ... }` section: `loop` (default), `hold_last`, `hold_first`,
+`ping_pong`. A GUI `image` starts its animation as `animationStart` says: `open` (default, when the screen opens),
+`always` (the game clock) or `procedure` (the `gui_image_restart` block, by the image's `name` or number; the first
+frame until then). Toggle buttons play on the game clock, state images as `restartAnimation` says.
 The overlay editor draws the game's own HUD (hotbar, XP bar, health, armor, hunger, crosshair) under the widgets at
 vanilla's places on the 427x240 screen, as a guide only (Game HUD box in the side panel); it is not part of the element.
 An old image with `overlay: true` and no `z` counts as 1.
@@ -95,6 +100,151 @@ The editor's Screen preview and the MCP tool `overlay_layout` place the widgets 
 Every GUI is a container menu with a screen (`src/generator/types/gui.ts`). Its slots use the inventory of the block
 entity at the position it was opened for, the opening item's inventory, or a temporary container whose items go back
 to the player on close. Buttons reach the server through vanilla's container button packet.
+
+Session GUIs (Q205): `inventorySource: "session"` (default `block`) takes the slots from a shared server-side inventory
+named by a text id instead (`inventorySize` slots, at least one past the highest slot id; extra slots are for
+procedures). The procedure block `gui_open_session` opens the GUI for a player on a session id at the player's
+position; players with the same id see and edit the same slots live, with no block (<Mod>GuiSessions,
+`src/generator/guiSessions.ts`). Where block GUIs use x, y, z, procedures use `gui_session_id` (the session of the GUI
+an entity has open) with the session blocks: `session_slot_item`, `session_set_slot_item`, `session_data_*` and
+`session_set_data_*` (values kept with the session, like block data; the menu sends them to its player when they
+change, so slot lock conditions and labels read them on the client too), `session_viewer_count` and
+`gui_close_session` (closes it for everyone). A session menu runs `onOpen` on its first tick, once the player has it
+open. When the last viewer closes, the session ends: `keepOnClose` slots are emptied and every other item goes to the
+player who last added to its slot when online, else to the player closing it. A session GUI opened by a block or
+`gui_open` works as an ordinary GUI.
+
+Status bubbles (Q206, Q214, Q216, `src/generator/bubbles.ts`): a bubble is a `bubble` element designed like a small
+overlay (guide: [Add a bubble](guide/en/05-bubbles.md)); its layout rules are `src/elements/bubbleLayout.ts`, shared by
+the generator and the editor canvas. Fields: `background` (project PNG, "" = the built-in speech bubble),
+`backgroundMode` (`plain` stretched, `nine_slice` with `sliceBorder` pixels kept at each edge), `icon` (any project
+PNG), `iconSize`, `layout` (`center`: centred across, and between `padding` at the top and `tail` + `padding` at the
+bottom; `free`: `iconX`, `iconY`), `caption` (`{text}` is replaced by the caption a procedure passes; without it a passed
+caption replaces this one), `captionColor`, `captionShadow`, `captionScale` (1 = name-tag size), `width`, `height`
+(bubble pixels; 32 pixels are 0.6 blocks at `scale` 1), `scale`, `offset` (extra blocks above the head), the show / hide
+timing (Q228, below): `appear` / `disappear` with `appearTicks` / `disappearTicks` and `appearEasing` /
+`disappearEasing`, `duration` (the active time) and `sound`. Images taller than wide whose height is a multiple of the
+width are strips of square frames; the `<file>.png.mcmeta` gives the ticks per frame, its own frame list and times, and
+its playback mode (Q229: `loop`, `hold_last`, `hold_first`, `ping_pong`, from the texture editor's Animation panel),
+which the background and the icon play, in the game and in the editor (`interpolate` is ignored). A once mode counts
+from when the bubble appeared.
+
+Show / hide timing (Q228) is one general model, `src/elements/transitions.ts`, not bubble-only: an element has an
+appear and a disappear transition and an active time. A transition has `effects` (any combination of `fade`, `scale`,
+`slide_up`, `slide_down`; none = instant), a length in ticks (1-200) and an `easing` (`linear`, `ease_out`,
+`ease_in_out`, `back` = overshoot and settle). Disappearing runs the appear curve backwards; `slide_up` moves up into
+place when appearing and up and away when disappearing (`slide_down` the opposite), by half the bubble's height. The
+active time (`duration`) is the ticks from showing until the disappear transition starts (the appear time counts);
+0 = until cleared. The `bubble_show` block's duration overrides it (-1 = the bubble's own, 0 = until cleared), and
+clearing a bubble (the clear block, a new bubble, the time running out) plays the disappear transition instead of
+popping it out. Bubbles saved before Q228 (one `animation` of `pop` / `fade` / `none` over `animationTicks`) load as
+the same look for appear and disappear. The build writes the timing into `bubbles.json` (`timing`) and one Java
+helper, `<Mod>Transitions` (generated once per mod, with the frame lists of animated images), evaluates it for the
+bubble renderer and the radial menu screen; the editor previews run the same rule.
+
+The build writes no Java per bubble: every bubble element and the built-in bubble (`default`; a bubble element with
+that id replaces it) become an entry of `assets/<modid>/bubbles.json` (`styles`), with their images copied to
+`textures/bubble/<id>_background.png` and `<id>_icon.png`. Procedure blocks, all server side: `bubble_show` (field
+`bubble` = bubble element id, "" the default; inputs `entity`, `caption`, `duration`: below 0 the bubble's own),
+`player_bubble_clear` (`entity`), `player_bubble_icon` (`entity`; the icon id, or the bubble id for a bubble element,
+"" none), and the older icon blocks `player_bubble_show` (`entity`, `icon`, `duration`, 0 or less = until cleared) and
+`player_bubble_show_text` (plus `text`), which show the default bubble with `textures/bubbles/<icon>.png` as its icon
+(file name = icon id, `[a-z0-9_]`; copied to the mod as it is, animated ones listed in `bubbles.json` `icons`).
+
+<Mod>Bubbles reads `bubbles.json` from the mod jar on both sides, keeps one bubble per player (bubble, icon, caption) and
+drops it when its time runs out, it is cleared, the player logs out or dies; each dimension's clients get the bubbles
+of its players when they change and once a second. <Mod>BubbleRender draws any bubble from that data on all five
+engines: a camera-facing background (one quad or nine), icon and caption, the bubble's bottom 0.47 blocks over the
+player's height when the name tag shows, else 0.05 (Q217), plus `offset`; hidden while the player sneaks or is
+invisible; show and hide animations by client game time. Hooks: forge-1.16.5 RenderNameplateEvent, NeoForge
+RenderLivingEvent.Post, Fabric a client mixin at the end of LivingEntityRenderer.render (1.21.5) / submit (26.3).
+
+Seatable blocks (Q225, `src/generator/seats.ts`, guide: [Seatable blocks](guide/en/06-seats.md)): the block's Seat page.
+`seatable` turns it on; `seats` lists the seat points, `x`, `y`, `z` in block pixels from the north-west bottom corner
+(16 = one block) for the block facing north (its model unturned) and `yaw` in degrees from the block's front (0 looks out
+of the north face, 90 east), and `pose`: `sit`, or `lie` (the player lies on its back, head along the yaw, the middle of
+the body on the point: feet `LIE_HALF` 0.85 blocks behind it, `LIE_LIFT` 0.125 above the surface; a pose only, no bed,
+sleep or night skipping); a block with a `facing` property turns its seats with it, as its model and boxes. Points
+may lie outside 0..16 so a block spanning several cells (Q226) can seat players in its other cells. `seatHeightMode`
+`auto` sits each seat on the top of the block's boxes under it (`boundingBoxes` of a plain block, 8 for slabs and
+stairs, 16 otherwise), `manual` uses its `y`. `seatEmptyHand` (default on) leaves clicks with an item in hand to the
+item; `seatDismount` is where the player stands up: `top` of the block, `front` (the block in front of the seat on the
+block's floor, `top` when blocked) or `back` (where they stood). Shared rules: `src/elements/seats.ts` (generator and
+editor preview). The editor's preview draws the block with a sitting player figure on every seat; a click on a top
+surface adds a seat, dragging moves it, its arrow (or R) turns it, Delete removes it.
+
+The build writes no Java per block: every seatable block becomes an entry of `data/<modid>/seats.json` (seats in blocks
+`[x, y, z, yaw, lying 1/0]`, `emptyHand`, `dismount`, and `cells` for a multi-block). `<Mod>Seats` (package `seat`) reads it from the mod jar and listens to right
+clicks on blocks (forge-1.16.5 and NeoForge PlayerInteractEvent.RightClickBlock, Fabric UseBlockCallback): with the main
+hand, not sneaking and not riding, the player sits on the free seat nearest the click; a taken seat refuses, and so does one whose room overlaps a rider
+that lies or would lie (a lying body takes `LIE_REACH` 0.75 blocks either way along its yaw, any rider `SEAT_ROOM` 0.3
+across), so a sofa's lying spot and the sitting spots under it are not used at once. The seat is
+`<Mod>Seats.Seat` (entity `<modid>:mcedge_seat`, invisible, never saved, no renderer output) at the seat surface; the
+player's feet are 0.6 blocks below it (`SIT_DROP`) and it faces the seat's yaw. Sneaking stands up (vanilla); the seat
+removes itself when nobody sits on it or the block is broken or replaced. Procedure blocks: `entity_sit_on_block`
+(`entity`, `x`, `y`, `z`; a seat block's free seat nearest the entity, any other block on the top of its shape),
+`entity_is_sitting` (`entity`), `entity_stand_up` (`entity`). There is no sit/stand trigger yet. A lying seat
+(synced to clients) places its rider itself (`positionRider`) and, on each client, gives it the sleeping pose with body
+and head along the seat after the rider's own tick picked a pose; Forge and NeoForge keep its legs straight through
+`shouldRiderSit`, Fabric through a client mixin (`SeatLyingMixin` on `HumanoidMobRenderer.extractHumanoidRenderState`).
+
+Radial menus (Q227, `src/generator/radial.ts`, guide: [Radial menus and runtime images](guide/en/07-radial-menus.md)): a
+`radial_menu` element, independent of any one use. Shared layout rules (slice angles, the slice under the mouse, the
+slice shape, colours) are `src/elements/radialLayout.ts`, used by the generator and the editor's preview.
+Menu fields: `openKey` (key name, `NONE` = procedures only), `openMode` (`hold`: releasing the key chooses; `toggle`),
+`keyName`; `size`, `hole` (percent of the radius), `gap` (pixels between slices), `sliceColor` / `hoverColor` /
+`disabledColor` at `sliceOpacity`, optional `sliceImage` / `hoverImage` / `disabledImage` (`sliceImageSize`);
+`background` (`backgroundMode` `plain` or `nine_slice` with `sliceBorder`, `backgroundPadding`); `title`, `showLabel`,
+`showDescription`, `centerIcon`, `textColor`, the opening transition (`appear`, `appearTicks`, `appearEasing`: the
+show / hide timing model of the bubble, `src/elements/transitions.ts`; the wheel closes at once, so it has no
+disappear), and animated slice icons play their playback mode (Q229). `tabs` (1-9):
+`id`, `label`, `source` `list` with `slices` (at most 12: `id`, `label`, `description`, `iconKind` `texture` / `item` /
+`none` with `icon` or `item`, `action`, `condition` (a logic procedure) and `conditionMode` `hidden` / `disabled`), or
+`source` `folder` with `folder` and `pageSize` (2-12) and one action for all its files. Actions: `none`, `command`
+(`command`, run as the player with their own permissions; `{id}` = the slice id), `procedure` (dependencies `entity`,
+`world`, `x`, `y`, `z`, `menu`, `tab`, `slice`), `menu`, `gui`, `bubble` (`bubble`, `caption`, `duration`),
+`image_bubble` (`image` = `folder/name`, or the chosen file of a folder tab).
+
+The build writes no Java per menu: menus become `assets/<modid>/radial_menus.json` and one white slice image per shape
+(`textures/radial/sector_<hole>_<gap>_<n>.png`, turned and tinted per slice). `RadialMenus` (server) opens a menu with the
+states of its slices for that player (procedure overrides, else the condition), checks a chosen slice again (at most one
+choice every 4 ticks), runs its action and calls the `radial_slice_chosen` global trigger; `RadialMenusClient` registers
+the keys and asks the server to open; `RadialMenuScreen` draws every menu (tabs by mouse wheel, arrows or number keys,
+pages for big folders). `RuntimeImages` loads `config/<modid>/<folder>/` (PNG, GIF decoded into a strip of square
+frames; names `[a-z0-9_]{1,32}`, regular files only, at most 64 files of 1 MiB, 1024 pixels a side, 32 frames) when the
+server starts and on `/<modid> reload` (permission 2), and sends them to players on join and reload; clients register
+them as textures and as bubble icons `img:<folder>/<name>`. Procedure blocks: `radial_open`, `radial_close`,
+`radial_set_slice` (state `default`, `shown`, `hidden`, `disabled`), `runtime_image_bubble` (`image`, `caption`,
+`duration`); global trigger `radial_slice_chosen`.
+
+Multi-blocks (Q226, `src/generator/multiBlock.ts`, shared rules `src/elements/multiBlock.ts`): `multiBlock` on the
+Bounding boxes page lets a plain block (no base; no facing or `rotationMode` 1/3 without pitch) span every cell its added
+boxes cover: boxes may go below 0 and above 16 (a 2x3 sofa is x -16..16, z -16..32). Cells are whole blocks from the
+placed block (the origin), for the block facing north, origin first; at most 64. The block gets a `part` state property
+(0 = the origin, which draws the model; the others use `<id>_part`, an empty model with the block's particle texture)
+and extends the generated `<Mod>MultiBlock` (package `block`), which holds the rules for every such block: the origin
+fits only when every other cell is inside the world and replaceable (`canSurvive`, which block items check), the origin
+places its parts when it is placed (`onPlace`: by a player, a command or a procedure; flags 2|16 so the half-placed
+block does not see itself broken), a part whose block is no longer whole (any cell missing, turned or another part)
+turns to air (`updateShape`), so breaking any part removes all of them; only part 0 has loot (`block_state_property`
+`part=0`), and the origin dropping when its neighbour part goes gives one drop whichever part was broken (as vanilla doors);
+in creative, breaking another part removes the origin first without drops. Pistons cannot move it (push reaction
+`BLOCK`). Each part's outline and collision is the block's boxes cut to its cell, turned with the facing; cells turn the
+same way (a quarter clockwise turns `[x, z]` into `[-z, x]`). Seats (Q225) keep one list for the whole block in the
+origin's pixels; seats.json carries the cells, so a click on any part seats on the whole block. Waterlogging and
+gravity are off for a multi-block (warned). The editor's preview on the Bounding boxes page outlines the cells over the
+model, the Seat page's preview shows them too. JSON models with element rotations newer versions allow (any angle,
+`{"x", "y", "z"}`) are written for 1.16.5 and 1.21.5 with whole quarter turns about y baked in and the rest on one axis
+snapped to 22.5 degree steps (warned); 26.x keeps them.
+
+Slot events (Q203): `onSlotChanged` runs on the server once each time the stack in one of the GUI's slots changes
+while the screen is open, with the usual GUI dependencies plus `slot` (the slot id; `dep_number` "slot"); a session
+GUI's procedure reads its session with `gui_session_id`. The menu compares its slots with the stacks last seen in the
+backing container on every broadcast (each tick and after each click), so clicks, shift clicks, procedure writes and
+hoppers or other automation on the block all count, and a change that comes back to the same stack before the next
+broadcast does not. The menus of one container share what they have seen, so a change runs the procedure once however
+many players have the GUI open. Slots the procedure itself changes count as seen and do not run it again. There is no
+per-slot field: branch on `slot`.
 
 ### Creative tab order
 

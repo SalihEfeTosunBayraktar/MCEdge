@@ -233,7 +233,7 @@ export function networkSources(env: ProcEnv, segments: Segment[]): JavaSource[] 
   const toClient = segments.filter((s) => s.direction === "toClient");
   const toServer = segments.filter((s) => s.direction === "toServer");
   const field = (s: Segment, name: string) => (legacy ? `p.${name}` : `p.${name}()`);
-  const call = (s: Segment) => `${s.owner}.${s.method}(${["level", ...s.fields.map((f) => receiveArg(f.type, field(s, f.name), legacy))].join(", ")});`;
+  const call = (s: Segment) => `${s.owner}.${s.method}(${["level", ...(s.sender ? ["player"] : []), ...s.fields.map((f) => receiveArg(f.type, field(s, f.name), legacy))].join(", ")});`;
   const level = legacy ? "net.minecraft.world.World" : "net.minecraft.world.level.Level";
   const entity = legacy ? "net.minecraft.entity.Entity" : "net.minecraft.world.entity.Entity";
   const direction = legacy ? "net.minecraft.util.Direction" : "net.minecraft.core.Direction";

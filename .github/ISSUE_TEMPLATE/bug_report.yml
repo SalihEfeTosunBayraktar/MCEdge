@@ -1,0 +1,43 @@
+name: Bug report
+description: Something in MCEdge does not work as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        In MCEdge, Help > Report a bug prepares this report for you, with the version, engine and build output filled in.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What went wrong, and what you saw instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a project
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: MCEdge version, operating system, and the engine (Minecraft version and loader) you build for.
+      placeholder: |
+        - MCEdge: 
+        - OS: 
+        - Engine: 
+  - type: textarea
+    id: output
+    attributes:
+      label: Build output or log
+      description: The last lines of the build output, if the problem shows there. Remove personal paths first.
+      render: shell

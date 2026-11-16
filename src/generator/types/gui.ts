@@ -3,14 +3,19 @@ import { join } from "node:path";
 import type { Element } from "../../elements/model.ts";
 import { idExpr, jstr, list, pascal, str } from "../java.ts";
 import { readPng } from "../png.ts";
-import { GUI_TEXT_SEGMENT, guiServerTexts, guiTextRead, procEnv, procedureBuild, procedureCall, procedureCallById } from "../procedures.ts";
+import { GUI_SESSION_SEGMENT, GUI_TEXT_SEGMENT, guiServerTexts, guiTextRead, procEnv, procedureBuild, procedureCall, procedureCallById } from "../procedures.ts";
 import { modClassName } from "../registries.ts";
+import { frameIndexExpr, imageKey, textureAnimationsClass, textureAnimationsSource } from "../textureAnimations.ts";
+import type { AnimationSchedule } from "../../resources/textureAnimation.ts";
+import { widgetSchedule } from "../../resources/widgetAnimation.ts";
+import { guiSessionsClass, guiSessionsSource, isSessionGui, sessionSize } from "../guiSessions.ts";
 import type { ElementContext, GenEnv, JavaSourceFile, TypeModule } from "../typeModule.ts";
 
 /**
  * GUIs: every GUI is a container menu (<Gui>Menu, common) with a screen (<Gui>Screen, client), registered in
  * <Mod>Menus and <Mod>Screens. Slots are backed by the inventory of the block entity at the GUI's position, an
- * item's inventory, or a temporary container whose items go back to the player on close. Buttons reach the server
+ * item's inventory, or a temporary container whose items go back to the player on close; a session GUI (Q205) can
+ * take them from a shared session inventory instead (see guiSessions.ts). Buttons reach the server
  * through vanilla's container button packet (clickMenuButton), so no packets of our own are needed.
  *
  * Widgets (`components`, gui_layout field), positions relative to the GUI's top left corner:
@@ -28,7 +33,10 @@ import type { ElementContext, GenEnv, JavaSourceFile, TypeModule } from "../type
  *     KUYRUK 186: each state its own texture, a .mcmeta animation plays; when no state's condition holds nothing is drawn.
  *   { kind: "text_field", x, y, width, height, text (hint) }
  *   { kind: "checkbox", x, y, text, checked }
- *   { kind: "image", x, y, image (project PNG), width?, height?, condition }
+ *   { kind: "image", x, y, image (project PNG), width?, height?, condition, animationStart }
+ *     Q229: an animated image plays its texture's playback mode from animationStart: "open" (default, when the screen
+ *     opens), "always" (the game clock, every screen in step) or "procedure" (the "restart GUI image animation" block;
+ *     the first frame until then). Toggle buttons play on the game clock, state images as restartAnimation says.
  *   { kind: "slot", x, y (18x18 frame), id (inventory slot), output (no placing), limit (only this item),
  *     locked (no placing or taking), lockCondition (logic procedure: locked while it is true),
  *     keepOnClose (an unbound GUI does not give its item back when it closes: display slots) }
@@ -90,6 +98,8 @@ export interface GuiWidget {
   frameCount?: number;
   /** image: tick time per frame (1 tick = 50ms) */
   frameTime?: number;
+  /** image (Q229): when its animation starts, "open" (default), "always" or "procedure". */
+  animationStart?: string;
   /** label (KUYRUK 182): a box behind the text, "#rrggbb" ("" none), its opacity 0 to 100 and padding in GUI pixels. */
   background?: string;
   backgroundOpacity?: number;
@@ -99,23 +109,9 @@ export interface GuiWidget {
   layer?: string;
 }
 
-export interface WidgetAnimation {
-  frametime: number;
-  /** Frames played, from the top of the strip. */
-  frames: number;
-  /** Frames in the whole texture strip. */
-  stripFrames: number;
-}
-
-/** The "animation" object of a .png.mcmeta, or undefined when there is none or it is not valid JSON. */
-function readMcmetaAnimation(path: string): { frametime?: number; height?: number } | undefined {
-  if (!existsSync(path)) return undefined;
-  try {
-    const meta = JSON.parse(readFileSync(path, "utf8"));
-    return meta && typeof meta.animation === "object" ? meta.animation : undefined;
-  } catch {
-    return undefined;
-  }
+/** The .png.mcmeta text beside a project PNG, or undefined. */
+function mcmetaText(png: string): string | undefined {
+  return existsSync(`${png}.mcmeta`) ? readFileSync(`${png}.mcmeta`, "utf8") : undefined;
 }
 
 /** toggle_button: its textures in state order (off, off hover, on, on hover), a missing one falling back to the nearest set. */
@@ -134,7 +130,7 @@ interface DrawnTexture {
   th: number;
   fw: number;
   fh: number;
-  animation?: WidgetAnimation;
+  animation?: AnimationSchedule;
 }
 
 /** Size and .mcmeta animation (frames stacked downwards, as wide as high) of a project PNG. */
@@ -148,17 +144,10 @@ function drawnTexture(projectDir: string, from: string, path: string): DrawnText
   } catch {
     return { path, tw, th, fw: tw, fh: th };
   }
-  let meta: Record<string, unknown> | undefined;
-  try {
-    const parsed = existsSync(`${file}.mcmeta`) ? JSON.parse(readFileSync(`${file}.mcmeta`, "utf8")) : undefined;
-    if (parsed && typeof parsed.animation === "object") meta = parsed.animation as Record<string, unknown>;
-  } catch {
-    // An unreadable .mcmeta leaves the texture still.
-  }
-  const frames = Math.floor(th / Math.max(1, tw));
-  if (!meta || frames < 2) return { path, tw, th, fw: tw, fh: th };
-  const frametime = int(meta.frametime, 1);
-  return { path, tw, th, fw: tw, fh: tw, animation: { frametime: frametime > 0 ? frametime : 1, frames, stripFrames: frames } };
+  // The shared rule (src/resources/widgetAnimation.ts); an unreadable .mcmeta leaves the texture still.
+  const animation = widgetSchedule("toggle", tw, th, mcmetaText(file));
+  if (!animation) return { path, tw, th, fw: tw, fh: th };
+  return { path, tw, th, fw: tw, fh: tw, animation };
 }
 
 /** A widget's drawing order (`z`): an integer from -99 to 99; 0 when unset, 1 for an old `overlay: true` image. */
@@ -341,7 +330,7 @@ export function stateDraw(env: GenEnv, w: GuiWidget, drawn: (StateTexture | unde
   const draw = (tex: StateTexture) => {
     const id = idExpr(env, `${env.modId}:textures/${tex.path}.png`);
     const v = tex.still !== undefined ? `${tex.still}.0F`
-      : tex.animation ? `(float) (((${clock} / ${tex.animation.frametime * 50}L) % ${tex.animation.frames}L) * ${tex.fh})` : "0.0F";
+      : tex.animation ? `(float) (${frameIndexExpr(env, tex.animation, clock)} * ${tex.fh})` : "0.0F";
     if (legacy) return `${bind(id)}\n                net.minecraft.client.gui.AbstractGui.blit(g, ${x}, ${y}, ${width}, ${height}, 0.0F, ${v}, ${tex.fw}, ${tex.fh}, ${tex.tw}, ${tex.th});`;
     const pipeline = env.mc === "26.3" ? "net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED" : "net.minecraft.client.renderer.RenderType::guiTextured";
     return `g.blit(${pipeline}, ${id}, ${x}, ${y}, 0.0F, ${v}, ${width}, ${height}, ${tex.fw}, ${tex.fh}, ${tex.tw}, ${tex.th});`;
@@ -402,7 +391,7 @@ function element(gui: Element, env: GenEnv): ElementContext {
     const key = `gui.${env.modId}.${gui.id}.${str(w.name) || `${w.kind}_${i}`}`;
     if (["label", "button", "text_field", "checkbox"].includes(w.kind) && str(w.text)) lang[key] = str(w.text);
     let size = { w: int(w.width, 16), h: int(w.height, 16) };
-    let animation: WidgetAnimation | undefined = undefined;
+    let animation: AnimationSchedule | undefined = undefined;
     if ((w.kind === "image" || w.kind === "image_button") && str(w.image)) {
       const file = join(env.projectDir, str(w.image));
       // An image button with a hover texture has its two states in two files; without one, or with the same file as
@@ -424,20 +413,10 @@ function element(gui: Element, env: GenEnv): ElementContext {
           const png = readPng(readFileSync(file));
           if (w.kind === "image") {
             // An animated image is a vertical strip of frames, as in a .png.mcmeta: frames are square unless the
-            // .mcmeta gives a height. The widget size is the size one frame is drawn at.
-            const mcmetaAnim = readMcmetaAnimation(`${file}.mcmeta`);
-            const framePngH = Math.max(1, Math.min(png.height, int(mcmetaAnim?.height, png.width)));
-            const stripFrames = Math.floor(png.height / framePngH);
-            const isAnimated = (mcmetaAnim !== undefined || w.animated === true) && stripFrames > 1;
-            size = { w: int(w.width, png.width), h: int(w.height, isAnimated ? framePngH : png.height) };
-            if (isAnimated) {
-              const frametime = int(mcmetaAnim?.frametime ?? w.frameTime, 1);
-              animation = {
-                frametime: frametime > 0 ? frametime : 1,
-                frames: Math.min(stripFrames, Math.max(1, int(w.frameCount, stripFrames))),
-                stripFrames,
-              };
-            }
+            // .mcmeta gives a height. The widget size is the size one frame is drawn at. The shared rule
+            // (src/resources/widgetAnimation.ts) gives the frames played in the texture's playback mode.
+            animation = widgetSchedule("image", png.width, png.height, mcmetaText(file), w);
+            size = { w: int(w.width, png.width), h: int(w.height, animation ? animation.frameHeight : png.height) };
           } else if (w.width === undefined || w.height === undefined) {
             size = { w: int(w.width, png.width), h: int(w.height, png.height) };
           }
@@ -471,7 +450,7 @@ type Widget = GuiWidget & {
   key: string;
   index: number;
   size: { w: number; h: number };
-  animation?: WidgetAnimation;
+  animation?: AnimationSchedule;
   toggle?: DrawnTexture[];
   /** state_image: each state's drawn texture (undefined: a state without an image). */
   stateTex?: (StateTexture | undefined)[];
@@ -487,6 +466,9 @@ function menuSource(env: GenEnv, gui: ElementContext): JavaSourceFile {
   const buttons = all.filter((w) => w.kind === "button" || w.kind === "image_button" || w.kind === "toggle_button");
   const size = guiSlots(gui as unknown as Element);
   const withInventory = Number(gui.type) === 1;
+  // Q205: slots from a shared session inventory (<Mod>GuiSessions) instead of a block.
+  const session = isSessionGui(gui);
+  const sessions = guiSessionsClass(env);
   const W = int(gui.width, 176);
   const H = int(gui.height, 166);
   const type = env.loader === "fabric" ? `${menusClass(env)}.${String(gui.id).toUpperCase()}` : `${menusClass(env)}.${String(gui.id).toUpperCase()}.get()`;
@@ -495,6 +477,10 @@ function menuSource(env: GenEnv, gui: ElementContext): JavaSourceFile {
   const onOpen = call("onOpen", "this.entity");
   const onTick = call("onTick", "this.entity");
   const onClosed = call("onClosed", "player");
+  // Q203: onSlotChanged runs once per change of a GUI slot's stack, whatever made it (clicks, shift clicks, procedures,
+  // hoppers on the block): every broadcast compares the slots with the stacks last seen in the backing container.
+  const watched = [...new Set(slots.map((s) => int(s.id, 0)))];
+  const onSlotChanged = watched.length ? procedureCall(env, "gui", gui as unknown as Element, "onSlotChanged", { ...deps("this.entity"), slot: "WATCHED[i]" }) : undefined;
   // Labels whose text needs the server: computed here every tick, sent to the player only when it changes (KUYRUK 105).
   const serverTexts = guiServerTexts(gui as unknown as Element, procedureBuild(env).scope).flatMap(({ index, procedure }) => {
     const text = procedureCallById(env, procedure, deps("this.entity"), `gui/${gui.id}`);
@@ -517,6 +503,8 @@ function menuSource(env: GenEnv, gui: ElementContext): JavaSourceFile {
     }
     // An item with an inventory does not accept itself (MCreator's item handler rule); other containers accept anything.
     if (!members.length && itemBound) members.push(`@Override public boolean mayPlace(${N.Stack} stack) { return !(this.container instanceof ${menusClass(env)}.ItemContainer) || ((${menusClass(env)}.ItemContainer) this.container).accepts(stack); }`);
+    // A session records who put each item in, so it can go back to that player when the session ends.
+    if (session) members.push(`@Override public void set(${N.Stack} stack) { super.set(stack); ${cls}.this.noteSlot(${int(s.id, 0)}); }`, `@Override public void setChanged() { super.setChanged(); ${cls}.this.noteSlot(${int(s.id, 0)}); }`);
     const slot = `new ${N.Slot}(container, ${int(s.id, 0)}, ${int(s.x, 0) + 1}, ${int(s.y, 0) + 1})${members.length ? ` {\n            ${members.join("\n            ")}\n        }` : ""}`;
     return `        this.customSlots.put(${int(s.id, 0)}, this.addSlot(${slot}));`;
   });
@@ -588,6 +576,17 @@ function menuSource(env: GenEnv, gui: ElementContext): JavaSourceFile {
         }
         return moved;
     }`;
+  // A session menu runs onOpen on its first tick as the player's open menu (1.21.5 ticks it inside openMenu, before), so it can read the session id.
+  const openLater = session && onOpen ? [`if (!this.opened && this.entity.containerMenu == this) {\n    this.opened = true;\n    ${onOpen};\n}`] : [];
+  // The session's values go to the player when they change (only procedures read them).
+  const syncSession = session && procedureBuild(env).compiled.size > 0;
+  // Closing: a temporary container gives its items back (keepOnClose slots excepted).
+  const giveBack = `        this.container.stopOpen(player);
+        if (!this.bound && player instanceof ${N.ServerPlayer}) {${kept.map((id) => `
+            this.container.removeItemNoUpdate(${id});`).join("")}
+            this.clearContainer(player, ${legacy ? "player.level, " : ""}this.container);
+        }`;
+  const tickLines = [...(onSlotChanged ? ["this.slotChanges();"] : []), ...openLater,...(onTick ? [`${onTick};`] : []), ...serverTexts, ...(syncSession ? ["this.syncSession();"] : [])];
   const clicks = buttons.map((b) => {
     const run = procedureCall(env, "gui", { id: gui.id, procedure: str(b.procedure) } as unknown as Element, "procedure", deps("player"));
     return `            case ${b.index}:${run ? `\n                ${run};` : ""}\n                return true;`;
@@ -595,14 +594,16 @@ function menuSource(env: GenEnv, gui: ElementContext): JavaSourceFile {
   const code = `package ${pkg}.world.inventory;
 
 /** Generated by MCEdge: menu of GUI "${gui.id}". */
-public class ${cls} extends ${N.Menu} implements java.util.function.Supplier<java.util.Map<Integer, ${N.Slot}>> {
+public class ${cls} extends ${N.Menu} implements java.util.function.Supplier<java.util.Map<Integer, ${N.Slot}>>${session ? `, ${sessions}.View` : ""} {
     private final java.util.Map<Integer, ${N.Slot}> customSlots = new java.util.HashMap<>();
     public final ${N.Level} world;
     public final ${N.Player} entity;
     public final int x, y, z;
     private final ${N.Container} container;
     private final boolean bound;
-
+${session ? `    /** The shared session the slots belong to (server side; null on a client and when opened without one). */
+    private final ${sessions}.Session session;
+` : ""}${openLater.length ? "    private boolean opened;\n" : ""}${syncSession ? "    private int sentVersion = -1;\n" : ""}
     /** Client side: the server sends the slot contents. */
     public ${cls}(int id, ${N.Inv} inventory) {
         this(id, inventory, null, ${N.Pos}.ZERO);
@@ -620,8 +621,11 @@ public class ${cls} extends ${N.Menu} implements java.util.function.Supplier<jav
         this.container = this.bound ? container : new ${N.Simple}(${Math.max(size, 1)});
         this.container.startOpen(inventory.player);
         container = this.container;
-${slotLines.join("\n")}
-${invLines}${onOpen ? `        if (!this.world.isClientSide()) ${onOpen};\n` : ""}    }
+${session ? `        this.session = this.container instanceof ${sessions}.Session ? (${sessions}.Session) this.container : null;
+        if (this.session != null) ${sessions}.join(this.session, inventory.player);
+        else if (this.world.isClientSide()) ${sessions}.clientOpen(id, this.container);
+` : ""}${slotLines.join("\n")}
+${invLines}${onSlotChanged ? "        if (!this.world.isClientSide()) SEEN.put(this.container, this.slotStacks());\n" : ""}${onOpen && !openLater.length ? `        if (!this.world.isClientSide()) ${onOpen};\n` : ""}    }
 
     /** The GUI's own slots by id, for procedures. */
     @Override
@@ -629,7 +633,24 @@ ${invLines}${onOpen ? `        if (!this.world.isClientSide()) ${onOpen};\n` : "
         return this.customSlots;
     }
 
-    @Override
+${session ? `    @Override
+    public String sessionId() {
+        return this.session != null ? this.session.id : ${sessions}.clientSession(this.containerId);
+    }
+
+    /** A slot of the session changed through this player's menu. */
+    private void noteSlot(int slot) {
+        if (this.session != null) this.session.note(slot, this.entity);
+    }
+${syncSession ? `
+    /** Sends the session's id and values to the player when they changed. */
+    private void syncSession() {
+        if (this.session == null || this.sentVersion == this.session.version()) return;
+        this.sentVersion = this.session.version();
+        ${network}.toPlayer(this.entity, new ${network}.${GUI_SESSION_SEGMENT}(this.containerId, this.session.id, this.session.data().copy()));
+    }
+` : ""}
+` : ""}    @Override
     public boolean stillValid(${N.Player} player) {
         return ${gui.anyDistance === true ? "true" : "this.container.stillValid(player)"};
     }
@@ -649,7 +670,7 @@ ${clicks.join("\n")}
                 return false;
         }
     }
-${onTick || serverTexts.length ? `
+${tickLines.length ? `
     /** Set while the tick procedure runs: a procedure that changes a slot calls broadcastChanges again. */
     private boolean ticking;
 
@@ -659,9 +680,43 @@ ${onTick || serverTexts.length ? `
         if (this.world.isClientSide() || this.ticking) return;
         this.ticking = true;
         try {
-${[...(onTick ? [`${onTick};`] : []), ...serverTexts].map((line) => `            ${line}`).join("\n")}
+${tickLines.map((line) => `            ${line.replaceAll("\n", "\n            ")}`).join("\n")}
         } finally {
             this.ticking = false;
+        }
+    }
+` : ""}${onSlotChanged ? `
+    /**
+     * onSlotChanged: the slot ids it watches and the stacks last seen in each backing container. The menus of one
+     * container share them, so a change runs the procedure once however many players have it open.
+     */
+    private static final int[] WATCHED = {${watched.join(", ")}};
+    private static final java.util.Map<${N.Container}, ${N.Stack}[]> SEEN = new java.util.WeakHashMap<>();
+    /** Set while onSlotChanged runs: the slots it changes count as seen, so it does not run itself again. */
+    private static boolean slotEvent;
+
+    private ${N.Stack}[] slotStacks() {
+        ${N.Stack}[] stacks = new ${N.Stack}[WATCHED.length];
+        for (int i = 0; i < WATCHED.length; i++) stacks[i] = this.container.getItem(WATCHED[i]).copy();
+        return stacks;
+    }
+
+    /** Runs onSlotChanged for each watched slot whose stack differs from the one last seen (the player's open menu only). */
+    private void slotChanges() {
+        ${N.Stack}[] seen = SEEN.get(this.container);
+        if (seen == null || slotEvent || this.entity.containerMenu != this) return;
+        slotEvent = true;
+        try {
+            boolean ran = false;
+            for (int i = 0; i < WATCHED.length; i++) {
+                if (${N.Stack}.matches(seen[i], this.container.getItem(WATCHED[i]))) continue;
+                seen[i] = this.container.getItem(WATCHED[i]).copy();
+                ran = true;
+                ${onSlotChanged};
+            }
+            if (ran) SEEN.put(this.container, this.slotStacks());
+        } finally {
+            slotEvent = false;
         }
     }
 ` : ""}${serverTexts.length ? `
@@ -676,11 +731,10 @@ ${[...(onTick ? [`${onTick};`] : []), ...serverTexts].map((line) => `           
     @Override
     public void removed(${N.Player} player) {
         super.removed(player);
-        this.container.stopOpen(player);
-        if (!this.bound && player instanceof ${N.ServerPlayer}) {${kept.map((id) => `
-            this.container.removeItemNoUpdate(${id});`).join("")}
-            this.clearContainer(player, ${legacy ? "player.level, " : ""}this.container);
-        }${onClosed ? `\n        if (!this.world.isClientSide()) ${onClosed};` : ""}
+${session ? `        if (this.session != null) ${sessions}.leave(this.session, player${kept.map((id) => `, ${id}`).join("")});
+        else {
+    ${giveBack.replaceAll("\n", "\n    ")}
+        }` : giveBack}${onClosed ?`\n        if (!this.world.isClientSide()) ${onClosed};` : ""}
     }
 }
 `;
@@ -709,6 +763,13 @@ function screenSource(env: GenEnv, gui: ElementContext): JavaSourceFile {
   const conditional = (w: Widget, line: string) => {
     const test = condition(w);
     return test ? `if (${test}) {\n            ${line}\n        }` : line;
+  };
+  /** Q229: milliseconds into an animated image's animation, from its animationStart. */
+  const imageClock = (w: Widget) => {
+    if (w.animationStart === "always") return "System.currentTimeMillis()";
+    if (w.animationStart === "procedure") return `${textureAnimationsClass(env)}.since(${jstr(String(gui.id))}, ${jstr(imageKey(w.name, w.index))})`;
+    if (!fields.includes(OPENED_AT)) fields.push(OPENED_AT);
+    return "(System.currentTimeMillis() - this.openedAt)";
   };
   const shown: string[] = [];
   const shownField = (w: Widget, name: string) => {
@@ -765,7 +826,7 @@ function screenSource(env: GenEnv, gui: ElementContext): JavaSourceFile {
       if (state) members.push(`    /** On or off state of toggle button ${w.index}, read every frame. */\n    private boolean ${name}On() {\n        return ${state};\n    }`);
       const draw = (tex: DrawnTexture) => {
         const id = idExpr(env, `${env.modId}:textures/${tex.path}.png`);
-        const v = tex.animation ? `(float) (((System.currentTimeMillis() / ${tex.animation.frametime * 50}L) % ${tex.animation.frames}L) * ${tex.fh})` : "0.0F";
+        const v = tex.animation ? `(float) (${frameIndexExpr(env, tex.animation, "System.currentTimeMillis()")} * ${tex.fh})` : "0.0F";
         if (legacy) return `net.minecraft.client.Minecraft.getInstance().getTextureManager().bind(${id});
                 com.mojang.blaze3d.systems.RenderSystem.enableBlend();
                 blit(matrix, this.x, this.y, ${width}, ${height}, 0.0F, ${v}, ${tex.fw}, ${tex.fh}, ${tex.tw}, ${tex.th});`;
@@ -812,10 +873,8 @@ function screenSource(env: GenEnv, gui: ElementContext): JavaSourceFile {
     const anim = w.animation;
     // The texture is scaled to the widget, as the editor draws it: a frame strip becomes iw x (ih * frames).
     const tw = iw;
-    const th = anim ? ih * anim.stripFrames : ih;
-    const vOffset = anim && anim.frames > 1 && Number.isFinite(anim.frames)
-      ? `(float) (((System.currentTimeMillis() / ${anim.frametime * 50}L) % ${anim.frames}L) * ${ih})`
-      : "0.0F";
+    const th = anim ? ih * anim.frameCount : ih;
+    const vOffset = anim ? `(float) (${frameIndexExpr(env, anim, imageClock(w))} * ${ih})` : "0.0F";
     const pos = rel ? `${int(w.x, 0)}, ${int(w.y, 0)}` : at(w);
     if (legacy) return conditional(w, `this.minecraft.getTextureManager().bind(${id});\n        blit(g, ${pos}, 0.0F, ${vOffset}, ${iw}, ${ih}, ${tw}, ${th});`);
     const pipeline = v26 ? "net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED" : "net.minecraft.client.renderer.RenderType::guiTextured";
@@ -1059,6 +1118,34 @@ ${flush}        ${be} blockEntity = ${level}.getBlockEntity(pos);
         ${openCall(g)}
     }`);
   const cases = guis.map((g) => `            case ${jstr(g.id as string)}:\n                open${pascal(g.id as string)}(player, pos, null);\n                break;`);
+  // Q205: session GUIs open on a shared inventory named by a text id, at the player's position.
+  const sessions = guiSessionsClass(env);
+  const sessionCases = guis.filter((g) => isSessionGui(g)).map((g) => `            case ${jstr(g.id as string)}:
+                session = ${sessions}.open(id, ${sessionSize(g as unknown as Element, guiSlots(g as unknown as Element))});
+                ${sessions}.opening(session, player, true);
+                try {
+                    open${pascal(g.id as string)}(player, player.blockPosition(), session);
+                } finally {
+                    ${sessions}.opening(session, player, false);
+                }
+                break;`);
+  const openSession = sessionCases.length ? `
+    /** Opens session GUI \`gui\` for a player on session \`id\` (Q205): every player with the same id shares its slots and values. */
+    public static void openSession(${N.Entity} entity, String gui, String id) {
+        if (!(entity instanceof ${N.ServerPlayer}) || id == null || id.isEmpty()) return;
+        ${N.ServerPlayer} player = (${N.ServerPlayer}) entity;
+        ${sessions}.Session session;
+        switch (gui) {
+${sessionCases.join("\n")}
+            default:
+                break;
+        }
+    }
+` : `
+    /** No GUI takes a session (Q205): nothing opens. */
+    public static void openSession(${N.Entity} entity, String gui, String id) {
+    }
+`;
   const itemContainer = legacy
     ? `    /** An inventory kept in the item's item handler capability, saved as \`ForgeCaps.Parent\` of the stack like MCreator did; it stays usable while the player holds that stack. */
     public static class ItemContainer extends ${N.Simple} {
@@ -1153,7 +1240,7 @@ ${cases.join("\n")}
                 break;
         }
     }
-
+${openSession}
 ${opens.join("\n\n")}
 
 ${itemContainer}
@@ -1208,6 +1295,9 @@ ${body}
   return { source: { path: `${pkg.replaceAll(".", "/")}/client/${cls}.java`, code }, init };
 }
 
+/** Q229: when the screen opened, the start of its images' animations. */
+const OPENED_AT = "    private final long openedAt = System.currentTimeMillis();";
+
 export default {
   element,
   runtime(guis, env) {
@@ -1215,7 +1305,8 @@ export default {
     const menus = menusSource(env, guis);
     const screens = screensSource(env, guis);
     return {
-      sources: [...guis.flatMap((g) => [menuSource(env, g), screenSource(env, g)]), menus.source, screens.source],
+      sources: [...guis.flatMap((g) => [menuSource(env, g), screenSource(env, g)]), menus.source, screens.source,
+        ...(guis.some((g) => isSessionGui(g)) ? [guiSessionsSource(env)] : []), textureAnimationsSource(env)],
       init: [menus.init],
       clientInit: [screens.init],
     };

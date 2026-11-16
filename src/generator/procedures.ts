@@ -8,6 +8,10 @@ import { BLOCK_PLACE_LISTENERS, HOE_USE_LISTENERS } from "../procedures/triggers
 import { blockDataHolderSource, blockPlaceEventsSource, blockPlaceMixin, helperSources, hoeUseEventsSource, hoeUseMixin, networkSources, procedureSources, registrationSource, SYNC_SEGMENT, variablesSource, type JavaSource } from "../procedures/runtime.ts";
 import { elementTriggers, GLOBAL_TRIGGERS_BY_ID, triggerCode, type ElementTriggerCtx } from "../procedures/triggers.ts";
 import { commonTag } from "./commonTags.ts";
+import { bubbleClientInit, bubbleRenderMixin, bubbleRenderSource, bubbleSegment, bubblesSource, bubbleTick, usesBubbles } from "./bubbles.ts";
+import { guiSessionsClass, guiSessionsSource, sessionGuis, usesSessions } from "./guiSessions.ts";
+import { transitionsSource } from "./transitions.ts";
+import { radialClientInit, radialSegments, radialServerHooks, radialSources, radialUsed } from "./radial.ts";
 import { pascal } from "./java.ts";
 import type { GenEnv } from "./typeModule.ts";
 
@@ -27,6 +31,8 @@ export interface ProcedureBuild {
   warnings: string[];
   /** Fabric mixins the procedures need. */
   mixins: { id: string; code: string; client?: boolean }[];
+  /** Whether the mod has the bubble runtime (<Mod>Bubbles), which reads bubbles.json. */
+  bubbles: boolean;
   uses: FieldUse[];
   scope: CompileScope;
 }
@@ -34,7 +40,7 @@ export interface ProcedureBuild {
 const builds = new WeakMap<object, Map<string, ProcedureBuild>>();
 
 export function procEnv(env: GenEnv): ProcEnv {
-  return { gen: env.mc, loader: env.loader, modId: env.modId, pkg: env.project.mod.package, modClass: `${pascal(env.modId)}Mod`, tag: (id) => commonTag(env, id) };
+  return { gen: env.mc, loader: env.loader, modId: env.modId, pkg: env.project.mod.package, modClass: `${pascal(env.modId)}Mod`, tag: (id) => commonTag(env, id), ...(env.probe?.profile ? { profile: true } : {}) };
 }
 
 export function procedureBuild(env: GenEnv): ProcedureBuild {
@@ -88,13 +94,30 @@ function createBuild(env: GenEnv): ProcedureBuild {
   // Defaults of missing dependencies reference simple names; qualify the few that can appear.
   const qualified = triggers.map((t) => qualifyDefaults(t, penv));
   const vars = env.project.variables.map((v) => ({ ...globalVars(project).get(v.name)!, initial: v.initial, scope: v.scope }));
-  const hasProcedures = compiled.size > 0;
+  // The runtime is written for procedures, and for radial menus even in a mod without any.
+  const hasProcedures = compiled.size > 0 || (env.generated.radial_menu?.length ?? 0) > 0;
   const listensToPlace = qualified.some((t) => t.includes(BLOCK_PLACE_LISTENERS));
   const listensToHoe = qualified.some((t) => t.includes(HOE_USE_LISTENERS));
   const syncsVars = vars.length > 0;
   // GUI labels whose text procedure runs on the server: the menu sends each text when it changes (KUYRUK 105).
   const syncsGuiText = (env.generated.gui ?? []).some((g) => guiServerTexts(g, scope).length > 0);
   if (syncsGuiText) segments.push({ name: GUI_TEXT_SEGMENT, path: "gui_text", direction: "toClient", fields: [{ name: "menu", type: "number" }, { name: "index", type: "number" }, { name: "text", type: "text" }], method: "receive", owner: guiTextClass(penv) });
+  // Session GUIs (Q205): each menu sends its session's id and values to its player when they change.
+  const syncsSessions = compiled.size > 0 && sessionGuis(env).length > 0;
+  if (syncsSessions) segments.push({ name: GUI_SESSION_SEGMENT, path: "gui_session", direction: "toClient", fields: [{ name: "menu", type: "number" }, { name: "session", type: "text" }, { name: "data", type: "tag" }], method: "receive", owner: guiSessionsClass(env) });
+  const procedureCode = [...compiled.values()].map((c) => `${c.source}${c.clientSource ?? ""}`);
+  // Radial menus (Q227): one runtime for every menu, with its packets, server hooks and the bubbles its slices show.
+  const radial = radialUsed(env, procedureCode, qualified);
+  if (radial) {
+    segments.push(...radialSegments(penv));
+    qualified.push(...radialServerHooks(penv));
+  }
+  // Status bubbles (Q206): a store ticked on the server and sent to each dimension's clients.
+  const bubbles = radial || usesBubbles(penv, procedureCode);
+  if (bubbles) {
+    segments.push(bubbleSegment(penv));
+    qualified.push(bubbleTick(penv));
+  }
   if (syncsVars) segments.push({ name: SYNC_SEGMENT, path: "variables_sync", direction: "toClient", fields: [{ name: "scope", type: "number" }, { name: "data", type: "tag" }], method: "receive", owner: `${penv.pkg}.procedures.${penv.modClass}Variables` });
   const sources: JavaSource[] = [];
   const init: string[] = [];
@@ -105,6 +128,10 @@ function createBuild(env: GenEnv): ProcedureBuild {
     if (penv.gen !== "1.16.5") sources.push(blockDataHolderSource(penv.pkg));
     sources.push(...networkSources(penv, segments));
     if (syncsGuiText) sources.push(guiTextSource(penv));
+    // Session blocks without a session GUI still need the store (the GUI module writes it otherwise).
+    if (!sessionGuis(env).length && usesSessions(env, [...compiled.values()].map((c) => `${c.source}${c.clientSource ?? ""}`))) sources.push(guiSessionsSource(env));
+    if (bubbles) sources.push(transitionsSource(penv), bubblesSource(penv), bubbleRenderSource(penv));
+    if (radial) sources.push(...radialSources(env, penv, (id, deps, returns) => callIn({ env: penv, compiled, scope, warnings }, id, deps, "radial_menu", returns)));
     sources.push(registrationSource(penv, qualified, usesQueue, vars.some((v) => v.player), syncsVars));
     if (listensToPlace) sources.push(blockPlaceEventsSource(penv.pkg));
     if (listensToHoe) sources.push(hoeUseEventsSource(penv.pkg));
@@ -112,12 +139,17 @@ function createBuild(env: GenEnv): ProcedureBuild {
     const registration = `${penv.pkg}.procedures.${penv.modClass}Procedures.init(${penv.loader === "fabric" ? "" : "modBus"});`;
     init.push(registration);
     clientInit.push(`${penv.pkg}.procedures.client.${penv.modClass}NetworkClient.register(${penv.loader === "neoforge" ? "modBus" : ""});`);
+    if (bubbles) clientInit.push(...bubbleClientInit(penv));
+    if (radial) clientInit.push(...radialClientInit(penv));
   }
-  return { env: penv, compiled, sources, init, clientInit, warnings, uses, scope, mixins: [...(listensToPlace ? [blockPlaceMixin(penv.pkg, env.modId)] : []), ...(listensToHoe ? [hoeUseMixin(penv.pkg, env.modId)] : [])] };
+  return { env: penv, compiled, sources, init, clientInit, warnings, uses, scope, bubbles: bubbles && hasProcedures, mixins: [...(listensToPlace ? [blockPlaceMixin(penv.pkg, env.modId)] : []), ...(listensToHoe ? [hoeUseMixin(penv.pkg, env.modId)] : []),
+    ...(bubbles && hasProcedures && penv.loader === "fabric" ? [bubbleRenderMixin(penv)] : [])] };
 }
 
 /** Packet carrying a server-computed GUI label text: menu container id, widget index, text. */
 export const GUI_TEXT_SEGMENT = "GuiTextSync";
+/** Packet carrying a session menu's session id and values (Q205): menu container id, session id, values. */
+export const GUI_SESSION_SEGMENT = "GuiSessionSync";
 
 /** Client class holding the label texts the open menu's server sent. */
 const guiTextClass = (env: ProcEnv) => `${env.pkg}.procedures.client.${env.modClass}GuiText`;
@@ -214,7 +246,11 @@ export function procedureCall(env: GenEnv, typeId: string, element: Element, fie
  */
 export function procedureCallById(env: GenEnv, procedureId: unknown, deps: Partial<Record<Dependency, string>>, where: string, returns?: "logic" | "number"): string | undefined {
   if (typeof procedureId !== "string" || !procedureId) return undefined;
-  const build = procedureBuild(env);
+  return callIn(procedureBuild(env), procedureId, deps, where, returns);
+}
+
+/** procedureCallById within a build, also while it is being made. */
+function callIn(build: Pick<ProcedureBuild, "env" | "compiled" | "scope" | "warnings">, procedureId: string, deps: Partial<Record<Dependency, string>>, where: string, returns?: "logic" | "number"): string | undefined {
   const unit = build.compiled.has(procedureId) ? build.scope.procedures.get(procedureId) : undefined;
   if (!unit) {
     build.warnings.push(`${where} uses procedure "${procedureId}", which is not generated`);

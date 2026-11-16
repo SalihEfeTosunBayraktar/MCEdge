@@ -5,6 +5,7 @@
  */
 
 import EN from "../../config/ui-strings/en.json" with { type: "json" };
+import { upgradeTimingFields } from "./transitions.ts";
 
 export const FIELD_TYPES = [
   "text", "multiline", "integer", "number", "boolean", "select", "multiselect", "texture", "model", "sound",
@@ -181,7 +182,9 @@ export function newElement(type: ElementType, id: string): Element {
 }
 
 /** Fills fields missing from a stored element (fields added to the type later) with their defaults. */
-export function withDefaults(type: ElementType, element: Element): Element {
+export function withDefaults(type: ElementType, stored: Element): Element {
+  // Fields renamed or merged later keep their old stored values working (Q228: one animation became show/hide timing).
+  const element = typeFields(type).some((f) => f.key === "appear") ? upgradeTimingFields(stored) : stored;
   const filled: Element = { id: element.id };
   if (element.title !== undefined) filled.title = element.title;
   for (const field of typeFields(type)) filled[field.key] = field.key in element ? element[field.key] : defaultValue(field);
@@ -324,7 +327,9 @@ export type CheckCode =
   // Project-level checks (KUYRUK 157): ids, mod settings, variables, languages, registry ids, game rules, tags, sound events.
   | "schemaVersion" | "snakeCase" | "javaPackage" | "unknownEngine" | "unknownType" | "duplicateId" | "unknownIntegration" | "modId"
   | "dependencyVersion" | "javaIdentifier" | "duplicateVariable" | "unknownVariableType" | "unknownScope" | "languageCode" | "registryIdClash"
-  | "unknownGameRule" | "tagType" | "tagId" | "tagTwice" | "tagEntryId" | "tagNoElement" | "soundEventName" | "soundCategory" | "soundFile";
+  | "unknownGameRule" | "translatedStore" | "tagType" | "tagId" | "tagTwice" | "tagEntryId" | "tagNoElement" | "soundEventName" | "soundCategory" | "soundFile"
+  // Translation keys no element, procedure or GUI uses (Q222).
+  | "unusedTranslation";
 export type CheckValues = Record<string, string | number | undefined>;
 /** A project-level problem: an English message (MCP, CLI) and, for the app, a check code with its values (KUYRUK 157). */
 export interface ProjectIssue { path: string; message: string; code?: CheckCode; values?: CheckValues }

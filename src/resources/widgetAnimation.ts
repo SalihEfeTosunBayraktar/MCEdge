@@ -1,8 +1,9 @@
-import { animationSchedule, type AnimationSchedule } from "../../../../src/resources/textureAnimation.ts";
+import { animationSchedule, applyPlayback, playbackModeOf, type AnimationSchedule } from "./textureAnimation.ts";
 
 /**
- * How the generated screen plays a widget texture (src/generator/types/gui.ts), so the GUI editor draws the same frame
- * (KUYRUK 160). Pure: the image size and the .mcmeta text come from the caller.
+ * How the generated screen plays a widget texture, one rule for the generator (src/generator/types/gui.ts) and the GUI
+ * editor, so both show the same frame (KUYRUK 160). Pure: the image size and the .mcmeta text come from the caller.
+ * Every rule plays the texture's playback mode (Q229, textureAnimation.ts) on the strip it plays.
  *
  * - image: a vertical strip animates when it has a .mcmeta or the widget says `animated`; frames are as high as the
  *   .mcmeta height, else square; `frametime` (else the widget's frameTime, else 1 tick) each; the widget's frameCount
@@ -32,10 +33,11 @@ export function widgetSchedule(rule: WidgetTextureRule, width: number, height: n
       return { frameWidth: width, frameHeight: width, frameCount: count, frames: [{ index, time: 1 }], interpolate: false, total: 1 };
     }
   }
+  const mode = playbackModeOf(parsed(mcmeta));
   if (rule === "toggle" || rule === "state") {
     const count = Math.floor(height / Math.max(1, width));
     if (!section || count < 2) return undefined;
-    return strip(width, width, count, count, Math.max(1, whole(section.frametime, 1)));
+    return applyPlayback(strip(width, width, count, count, Math.max(1, whole(section.frametime, 1))), mode);
   }
   if (!section && widget.animated !== true) return undefined;
   const frameHeight = Math.max(1, Math.min(height, whole(section?.height, width)));
@@ -43,18 +45,24 @@ export function widgetSchedule(rule: WidgetTextureRule, width: number, height: n
   if (count < 2) return undefined;
   const frametime = whole(section?.frametime ?? widget.frameTime, 1);
   const played = Math.min(count, Math.max(1, whole(widget.frameCount, count)));
-  return strip(width, frameHeight, count, played, frametime > 0 ? frametime : 1);
+  return applyPlayback(strip(width, frameHeight, count, played, frametime > 0 ? frametime : 1), mode);
+}
+
+/** A .mcmeta text parsed, or undefined. */
+function parsed(text: string | undefined): Record<string, unknown> | undefined {
+  if (!text) return undefined;
+  try {
+    const raw = JSON.parse(text) as unknown;
+    return raw && typeof raw === "object" ? (raw as Record<string, unknown>) : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /** The "animation" object of a .mcmeta text, or undefined. */
 function mcmetaAnimation(text: string | undefined): Record<string, unknown> | undefined {
-  if (!text) return undefined;
-  try {
-    const raw = JSON.parse(text) as Record<string, unknown>;
-    return raw.animation && typeof raw.animation === "object" ? (raw.animation as Record<string, unknown>) : undefined;
-  } catch {
-    return undefined;
-  }
+  const raw = parsed(text);
+  return raw?.animation && typeof raw.animation === "object" ? (raw.animation as Record<string, unknown>) : undefined;
 }
 
 function strip(frameWidth: number, frameHeight: number, frameCount: number, played: number, time: number): AnimationSchedule {

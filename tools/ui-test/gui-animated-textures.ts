@@ -8,7 +8,7 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { widgetSchedule } from "../../app/renderer/src/gui/widgetAnimation.ts";
+import { widgetSchedule } from "../../src/resources/widgetAnimation.ts";
 import { showInApp } from "../../src/live/show.ts";
 import { assert, copyProject, run, type App } from "./cdp.ts";
 

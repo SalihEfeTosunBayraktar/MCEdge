@@ -34,6 +34,7 @@ const widget = z.object({
   stateValue: z.enum(["index", "percent"]).optional().describe("state_image: what stateProcedure returns: the state's index from 0 (default; kept inside the list) or a percentage 0-100 spread evenly over the states (progress bars)"),
   updateTicks: z.number().int().min(0).max(1200).optional().describe("state_image: read the state once every N ticks (default 0: every frame)"),
   restartAnimation: z.boolean().optional().describe("state_image: an animated state starts from its first frame when it becomes the shown one (default: the game clock)"),
+  animationStart: z.enum(["open", "always", "procedure"]).optional().describe("image in a GUI (Q229): when an animated image's animation starts: open (default, when the screen opens), always (the game clock) or procedure (the gui_image_restart block; the first frame until then). It plays in the texture's playback mode (set_texture_animation mode)"),
   previewState: z.number().int().min(0).optional().describe("state_image, editor only: the state the canvas shows"),
   id: z.number().int().min(0).optional().describe("slot index"), output: z.boolean().optional(), limit: z.string().optional().describe("slot: only this item"),
   locked: z.boolean().optional().describe("slot: no placing or taking"), lockCondition: z.string().optional().describe("slot: logic procedure, locked while it is true"),
@@ -104,6 +105,7 @@ export function registerGuiTools(server: McpServer, root: string, guard: Guard):
         if ((w.onImage || w.onHoverImage) && w.kind !== "toggle_button") problems.push(`${i}: onImage and onHoverImage are for toggle_button only`);
         if (w.stateProcedure && w.kind !== "toggle_button" && w.kind !== "state_image") problems.push(`${i}: stateProcedure is for toggle_button and state_image only`);
         if ((w.states || w.stateValue || w.updateTicks !== undefined || w.restartAnimation !== undefined || w.previewState !== undefined) && w.kind !== "state_image") problems.push(`${i}: states, stateValue, updateTicks, restartAnimation and previewState are for state_image only`);
+        if (w.animationStart && w.kind !== "image") problems.push(`${i}: animationStart is for image only`);
         if (w.kind === "state_image" && !w.states?.length) problems.push(`${i}: a state_image needs states`);
         (w.states ?? []).forEach((s, k) => {
           if (!existsSync(join(root, s.image))) problems.push(`${i}: state ${k} image "${s.image}" not in the project`);

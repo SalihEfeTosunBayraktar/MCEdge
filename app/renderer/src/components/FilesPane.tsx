@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import type { ProjectSnapshot, ResourceKind } from "../../../shared/api.ts";
+import { elementsNaming } from "../../../../src/resources/resourceUse.ts";
 import { api } from "../api.ts";
+import { allElements } from "../model.ts";
 import { useBlockbench } from "../models/Blockbench.tsx";
 import { ModelPreview } from "../models/ModelPreview.tsx";
 import { t } from "../strings.ts";
 import { ActionBar, ActionButton, DataTable, FindBar, FormGroup, FormRow, PanelEmpty, Separator, SidePanel } from "./ui.tsx";
 import { useRevealQuery } from "../hooks/reveal.ts";
+import { groupRows, tableSections, useFolderDrop, useResourceFolders, useSelection } from "./ResourceFolders.tsx";
 
 const LIST: Record<ResourceKind, "sounds" | "models" | "structures"> = { sound: "sounds", model: "models", structure: "structures" };
 
@@ -22,32 +25,38 @@ interface Props {
 export function FilesPane({ snapshot, kind, onChanged, onImport, tabs }: Props) {
   const [query, setQuery] = useState("");
   useRevealQuery(`files:${kind}`, setQuery);
-  const [selected, setSelected] = useState<string>();
   const [error, setError] = useState<string>();
   const [playing, setPlaying] = useState(false);
   const audio = useRef<HTMLAudioElement>(null);
   const files = snapshot[LIST[kind]];
   const q = query.trim().toLowerCase();
   const rows = files.filter((f) => !q || f.toLowerCase().includes(q));
+  const named = elementsNaming(allElements(snapshot).map((e) => e.element));
+  const res = useResourceFolders({ kind: LIST[kind], snapshot, onChanged, keys: files, isUsed: (f) => named(baseName(f)), removeItem: (f) => api.deleteResource(snapshot.dir, f) });
+  const groups = groupRows(res.own, rows, (f) => f, !!q);
+  const shown = groups.flatMap((g) => g.rows);
   // A selection the search hides is dropped, so no action can reach a file the user cannot see (KUYRUK 142, as 112).
-  const current = selected && rows.includes(selected) ? selected : undefined;
-  useEffect(() => {
-    if (selected && !current) (setSelected(undefined), audio.current?.pause(), setPlaying(false));
-  }, [selected, current]);
+  const sel = useSelection(shown, { selector: "tbody tr[data-key]", attr: "data-key" });
+  const drop = useFolderDrop(LIST[kind], res.moveInto);
+  const sections = tableSections(res, drop, sel, groups);
+  const current = sel.current;
+  useEffect(() => (audio.current?.pause(), setPlaying(false)), [current]);
   useEffect(() => () => audio.current?.pause(), []);
   const blockbench = useBlockbench(snapshot.dir);
   useEffect(() => blockbench.reset(), [current]);
   const jsonModel = kind === "model" && current?.endsWith(".json") ? baseName(current) : undefined;
 
   const remove = async () => {
-    if (!current) return;
-    try {
-      onChanged(await api.deleteResource(snapshot.dir, current));
-      setSelected(undefined);
-      setError(undefined);
-    } catch {
-      setError(t("files.inUse"));
+    let failed = false;
+    for (const file of sel.chosen) {
+      try {
+        onChanged(await api.deleteResource(snapshot.dir, file));
+      } catch {
+        failed = true;
+      }
     }
+    sel.clear();
+    setError(failed ? t("files.inUse") : undefined);
   };
   const play = async () => {
     const player = audio.current;
@@ -76,22 +85,34 @@ export function FilesPane({ snapshot, kind, onChanged, onImport, tabs }: Props) 
             <ActionButton icon={playing ? "stop" : "play"} label={t(playing ? "files.stop" : "files.play")} disabled={!current} onClick={() => void play()} />
           </>
         )}
+        {res.toolbar(sel.chosen)}
+        {res.moveButton(sel.chosen)}
         <Separator />
-        <ActionButton icon="trash" label={t("resources.delete")} tone="danger" disabled={!current} onClick={() => void remove()} />
+        <ActionButton icon="trash" label={t("resources.delete")} tone="danger" disabled={!sel.chosen.length} onClick={() => void remove()} />
       </ActionBar>
+      {res.hint}
       {tabs}
       <audio ref={audio} onEnded={() => setPlaying(false)} hidden />
       <div className="split">
-        <div className="scrollarea">
-          <DataTable rows={rows} rowKey={(r) => r} selected={current} onSelect={(r) => (setSelected(r), setError(undefined), audio.current?.pause(), setPlaying(false))}
+        <div className="scrollarea texarea" ref={sel.area} onMouseDown={sel.startBox}>
+          {sel.box && <div className="selbox" style={sel.box} />}
+          {res.folderError && <p className="ferr">{res.folderError}</p>}
+          <DataTable rows={shown} rowKey={(r) => r} selected={current} picked={sel.chosen} sections={sections}
+            onRowDragStart={(f, e) => drop.dragStart(e, f, sel)} onSelect={(r, e) => (sel.pick(r, e), setError(undefined))}
             empty={files.length ? t("list.noMatch") : t(`files.empty.${kind}`)} columns={[
               { label: t("files.col.name"), width: "34%", cell: (r) => <b>{baseName(r)}</b> },
               { label: t("files.col.use"), cell: (r) => <code>{useAs(snapshot, kind, r)}</code> },
               { label: t("files.col.type"), width: "18%", cell: (r) => <span className="dim">{r.slice(r.lastIndexOf(".") + 1).toUpperCase()}</span> },
             ]} />
+          {res.dialogs}
         </div>
         <SidePanel title={t(`files.details.${kind}`)}>
-          {current ? (
+          {sel.chosen.length > 1 ? (
+            <FormGroup title={t("resources.selected")}>
+              <p className="hint">{t("resources.selectedCount", { count: sel.chosen.length, items: t(`resources.item.${LIST[kind]}`) })}</p>
+              <ul className="plain">{sel.chosen.map((f) => <li key={f}>{baseName(f)}</li>)}</ul>
+            </FormGroup>
+          ) : current ? (
             <>
             {kind === "model" && current.endsWith(".json") && (
               <FormGroup title={t("model.preview")}>

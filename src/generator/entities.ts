@@ -21,6 +21,8 @@ export interface EntityTypeEntry {
   trackingRange: number;
   updateInterval: number;
   fireImmune?: boolean;
+  /** Never written to the world (a seat lives only while someone sits on it). */
+  noSave?: boolean;
 }
 
 export interface EntityTypeClass {
@@ -44,7 +46,7 @@ export function entityTypeClass(env: GenEnv, name: string, entries: EntityTypeEn
   const category = legacy ? "net.minecraft.entity.EntityClassification" : "net.minecraft.world.entity.MobCategory";
   const key = (e: EntityTypeEntry) => `net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.ENTITY_TYPE, ${idExpr(env, `${env.modId}:${e.id}`)})`;
   const builder = (e: EntityTypeEntry, built: string) =>
-    `${EntityType}.Builder.<${e.entityClass}>of(${e.entityClass}::new, ${category}.${e.category}).sized(${jfloat(e.width)}, ${jfloat(e.height)})${e.fireImmune ? ".fireImmune()" : ""}.clientTrackingRange(${e.trackingRange}).updateInterval(${e.updateInterval}).build(${built})`;
+    `${EntityType}.Builder.<${e.entityClass}>of(${e.entityClass}::new, ${category}.${e.category}).sized(${jfloat(e.width)}, ${jfloat(e.height)})${e.fireImmune ? ".fireImmune()" : ""}${e.noSave ? ".noSave()" : ""}.clientTrackingRange(${e.trackingRange}).updateInterval(${e.updateInterval}).build(${built})`;
   let fields: string;
   let init: string;
   if (legacy) {

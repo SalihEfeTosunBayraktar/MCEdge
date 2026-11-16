@@ -35,6 +35,8 @@ interface Props {
   ignoredIssues?: ValidationIssue[];
   /** Ignores a problem or check, or changes a check's severity (problems.json). */
   onProblemAction?: (action: ProblemAction) => void;
+  /** Fixes a problem in one step (Problems quick fix). */
+  onProblemFix?: (issue: ValidationIssue) => void;
   /** The Gradle console tab (MCEdge projects; code projects build with their own wrapper). */
   console: boolean;
   /** The agent timeline of the open MCEdge project (KUYRUK 144); `show` selects a step in it. Shown in the Agents panel (KUYRUK 195). */
@@ -52,10 +54,12 @@ interface Props {
   onStopRun?: (key: string) => void;
   onSelect: (panel: PanelId) => void;
   onClose: () => void;
+  /** Opens Help > Report a bug; offered next to a failed build (Q208). */
+  onReport?: () => void;
 }
 
 /** Problems list, streaming build/run log and the Gradle console under the content area. */
-export function BottomPanel({ panel, issues, ignoredIssues = [], onProblemAction, console: hasConsole, agent, tasks, onNewTask, builds, engineId, onGradle, onStopGradle, onStopRun, onSelect, onClose }: Props) {
+export function BottomPanel({ panel, issues, ignoredIssues = [], onProblemAction, onProblemFix, console: hasConsole, agent, tasks, onNewTask, builds, engineId, onGradle, onStopGradle, onStopRun, onSelect, onClose, onReport }: Props) {
   const engineIds = Object.keys(builds).filter((id) => !id.endsWith(" gradle"));
   const [shown, setShown] = useState<string | undefined>();
   const [menu, setMenu] = useState<{ x: number; y: number; source: TaskSource }>();
@@ -90,7 +94,7 @@ export function BottomPanel({ panel, issues, ignoredIssues = [], onProblemAction
         <button className="vbtn" title={t("panel.close")} onClick={onClose}><Icon name="close" size={12} /></button>
       </nav>
       {panel === "problems" ? (
-        <ProblemsPanel issues={issues} ignored={ignoredIssues} onNewTask={onNewTask} onAction={onProblemAction} />
+        <ProblemsPanel issues={issues} ignored={ignoredIssues} onNewTask={onNewTask} onAction={onProblemAction} onFix={onProblemFix} />
       ) : isAgents(panel) ? (
         agent && tasks ? <AgentsView {...agent} panel={panel} onRouted={() => onSelect("agents")} tasks={tasks} />
           : <p className="problems dim">{t("live.noActivity")}</p>
@@ -114,6 +118,9 @@ export function BottomPanel({ panel, issues, ignoredIssues = [], onProblemAction
                 )}
               </li>
             ))}
+            {onReport && current && builds[current].status === "failed" && (
+              <li><button type="button" className="linkbtn reportbtn" data-testid="report-build" onClick={onReport}>{t("bug.reportThis")}</button></li>
+            )}
           </ul>
           <pre ref={log} className="log" onContextMenu={onNewTask && ((e) => {
             const line = lineAt(e, lines);

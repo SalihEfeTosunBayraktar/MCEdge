@@ -283,6 +283,10 @@
                   "label": "Player xp level change"
                 },
                 {
+                  "value": "radial_slice_chosen",
+                  "label": "Radial menu slice chosen"
+                },
+                {
                   "value": "sapling_glow",
                   "label": "Sapling glow"
                 },

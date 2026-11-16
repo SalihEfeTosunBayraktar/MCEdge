@@ -1,0 +1,31 @@
+{
+  "name": "ETR UpVendProbe: the upgraded vending machine locks with a key, opens and closes, and sells (Q77, Q80)",
+  "steps": [
+    { "op": "player", "name": "Ali", "pos": [0.5, 101, 3.5] },
+    { "op": "player", "name": "Bora", "pos": [2.5, 101, 3.5] },
+    { "op": "setblock", "pos": [0, 100, 0], "block": "minecraft:air" },
+    { "label": "placed", "op": "setblock", "pos": [0, 100, 0], "block": "etreco:upgradedvending", "expect": {"contains":"etreco:upgradedvending["} },
+    { "op": "give", "player": "Ali", "item": "etreco:anahtar", "name": "Kasa1", "hold": true },
+    { "op": "call", "procedure": "lockable_block_right_clicked", "args": { "x": 0, "y": 100, "z": 0, "entity": "Ali" } },
+    { "label": "after lock", "op": "read", "what": "block", "pos": [0, 100, 0], "expect": {"contains":"etreco:upgradedvending["} },
+    { "label": "name", "op": "read", "what": "blockdata", "type": "text", "pos": [0, 100, 0], "key": "isim", "expect": "Ali" },
+    { "op": "call", "procedure": "vending_gui_closed", "args": { "x": 0, "y": 100, "z": 0 } },
+    { "label": "after owner close", "op": "read", "what": "block", "pos": [0, 100, 0], "expect": {"contains":"etreco:upgradedvending["} },
+    { "op": "command", "command": "replaceitem block 0 100 0 container.0 minecraft:diamond 5" },
+    { "op": "setBlockData", "pos": [0, 100, 0], "key": "money1", "value": 10 },
+    { "op": "setBlockData", "pos": [0, 100, 0], "key": "slotstack1", "value": 5 },
+    { "op": "set", "player": "Bora", "name": "Money", "value": 100 },
+    { "op": "set", "player": "Ali", "name": "Money", "value": 0 },
+    { "op": "call", "procedure": "lockable_block_right_clicked", "args": { "x": 0, "y": 100, "z": 0, "entity": "Bora" } },
+    { "label": "buyer open", "op": "read", "what": "block", "pos": [0, 100, 0], "expect": {"contains":"upgradedvendingopen"} },
+    { "op": "call", "procedure": "vending_slot_a1", "args": { "x": 0, "y": 100, "z": 0, "entity": "Bora" } },
+    { "label": "buyer money", "op": "read", "what": "var", "player": "Bora", "name": "Money", "expect": 90 },
+    { "label": "buyer diamonds", "op": "read", "what": "count", "player": "Bora", "item": "minecraft:diamond", "expect": 1 },
+    { "label": "stock", "op": "read", "what": "blockdata", "pos": [0, 100, 0], "key": "slotstack1", "expect": 4 },
+    { "label": "collected", "op": "read", "what": "blockdata", "pos": [0, 100, 0], "key": "collected_amount", "expect": 10 },
+    { "op": "call", "procedure": "vending_gui_closed", "args": { "x": 0, "y": 100, "z": 0 } },
+    { "label": "after buyer close", "op": "read", "what": "block", "pos": [0, 100, 0] },
+    { "op": "wait", "ticks": 25 },
+    { "label": "a second after close", "op": "read", "what": "block", "pos": [0, 100, 0], "expect": {"contains":"etreco:upgradedvending["} }
+  ]
+}

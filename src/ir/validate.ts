@@ -5,6 +5,7 @@ import { typeRegistry } from "../elements/registry.ts";
 import { loadIntegrations } from "../elements/integrations.ts";
 import { listEngines } from "../engines/registry.ts";
 import { gameRuleIssues } from "./gameRules.ts";
+import { translatedStoreIssues } from "./translatedStores.ts";
 import type { Severity } from "./problems.ts";
 import { registryIdIssues } from "./registryIds.ts";
 import { projectSoundFiles, SOUND_EVENTS_FILE, soundEventProblems, soundEvents } from "../resources/soundEvents.ts";
@@ -71,6 +72,8 @@ export function validateProject(project: ModProject, projectDir: string): Valida
   issues.push(...registryIdIssues(project));
   // A world_game_rule_* block must name a Minecraft rule or a game_rule element of the project.
   issues.push(...gameRuleIssues(project.elements));
+  // text_translate in a server procedure written into a text store the clients read (KUYRUK 204).
+  issues.push(...translatedStoreIssues(project.elements, project.variables, registry.byId));
 
   // Sound events (sound_events.json, KUYRUK 132).
   try {

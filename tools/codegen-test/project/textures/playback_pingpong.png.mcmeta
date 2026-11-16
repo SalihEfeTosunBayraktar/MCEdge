@@ -1,0 +1,8 @@
+{
+  "animation": {
+    "frametime": 10
+  },
+  "mcedge": {
+    "playback": "ping_pong"
+  }
+}

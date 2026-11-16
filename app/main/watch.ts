@@ -8,6 +8,7 @@ const IGNORED = /^(out|build|run|\.gradle|\.git|node_modules|\.idea|\.toolchains
 const DEBOUNCE_MS = 120;
 
 interface Watch {
+  dir: string;
   watcher: FSWatcher;
   timer?: ReturnType<typeof setTimeout>;
   changed: Set<string>;
@@ -51,6 +52,7 @@ export function markOwn(files: string[]): void {
 export function watchProject(sender: WebContents, dir: string): void {
   unwatch(sender.id);
   const entry: Watch = {
+    dir,
     changed: new Set(),
     watcher: watch(dir, { recursive: true }, (_event, name) => {
       if (!name) return;
@@ -76,6 +78,9 @@ export function watchProject(sender: WebContents, dir: string): void {
   watches.set(sender.id, entry);
   sender.once("destroyed", () => unwatch(sender.id));
 }
+
+/** The project folder this window opened last (what its file watch covers), if any. */
+export const watchedDir = (id: number) => watches.get(id)?.dir;
 
 export function unwatch(id: number): void {
   const entry = watches.get(id);

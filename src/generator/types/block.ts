@@ -12,6 +12,7 @@ import { customModel, customModelSlot } from "../models.ts";
 import { mappedSlots } from "../../resources/modelTextures.ts";
 import { tooltipProcedureMember } from "../tooltips.ts";
 import type { ElementContext, GenEnv, ResourceFile, TagEntry, TypeModule } from "../typeModule.ts";
+import { multiBlockBase, multiBlockCells, PART_PROPERTY, multiBlockClass, multiBlockFields, multiBlockMembers, multiBlockstate, partBoxes } from "../multiBlock.ts";
 
 /** MCreator step sound names that differ from the SoundType constant. */
 const SOUNDS: Record<string, string> = {
@@ -135,8 +136,10 @@ function element(block: Element, env: GenEnv): ElementContext {
   const legacy = env.mc === "1.16.5";
   const base = str(block.blockBase);
   const rotation = base === "" ? Number(block.rotationMode) : 0;
-  const waterlogged = (base === "" || base === "Plant" || base === "GrowablePlant") && block.isWaterloggable === true;
-  const gravity = base === "" && block.hasGravity === true;
+  // A block spanning several cells (Q226): its cells, origin first.
+  const cells = base === "" ? multiBlockCells(env, block, rotation) : undefined;
+  const waterlogged = (base === "" || base === "Plant" || base === "GrowablePlant") && block.isWaterloggable === true && !cells;
+  const gravity = base === "" && block.hasGravity === true && !cells;
   const tint = str(block.tintType) === "No tint" ? "" : str(block.tintType);
   // A flower pot always shows its plant in the pot model.
   let render = base === "" || PLANT_BASES.includes(base) ? (tint && TINTED_RENDER[Number(block.renderType)]) || Number(block.renderType)
@@ -186,7 +189,8 @@ function element(block: Element, env: GenEnv): ElementContext {
     if (instrument !== "harp") props.push(`.instrument(net.minecraft.world.level.block.state.properties.NoteBlockInstrument.${instrument.toUpperCase()})`);
     if (block.ignitedByLava === true || (material.flammable && !PLANT_BASES.includes(base))) props.push(".ignitedByLava()");
     if (block.isReplaceable === true) props.push(".replaceable()");
-    const push = str(block.reactionToPushing);
+    // Pistons cannot move a block spanning several cells.
+    const push = cells ? "BLOCK" : str(block.reactionToPushing);
     if (push !== "NORMAL") props.push(`.pushReaction(net.minecraft.world.level.material.PushReaction.${env.mc === "26.3" ? PUSH_26[push] : push})`);
     // Vanilla requires a dynamic shape for blocks that collide and are randomly offset.
     if (block.offsetType !== "NONE" && block.isNotColidable !== true) props.push(".dynamicShape()");
@@ -230,8 +234,9 @@ function element(block: Element, env: GenEnv): ElementContext {
       Door: `${blk}.DoorBlock`, TrapDoor: `${blk}.TrapDoorBlock`, Button: `${blk}.ButtonBlock`, PressurePlate: `${blk}.PressurePlateBlock`,
       EndRod: `${blk}.EndRodBlock`, FlowerPot: `${blk}.FlowerPotBlock`, Sign: `${blk}.StandingSignBlock`, HangingSign: `${blk}.CeilingHangingSignBlock` };
   if (plant) classes[base] = plant.superClass;
+  if (cells) classes[base] = multiBlockClass(env);
   const chain = props.join("\n                ");
-  const superArgs = plant ? plant.superArgs(chain)
+  const superArgs = cells ? `CELLS, ${chain}` : plant ? plant.superArgs(chain)
     : base === "Stairs" ? (legacy ? `() -> ${blk}.Blocks.AIR.defaultBlockState(), ${chain}` : `${blk}.Blocks.AIR.defaultBlockState(), ${chain}`)
     : base === "FenceGate" && !legacy ? `net.minecraft.world.level.block.state.properties.WoodType.OAK, ${chain}`
       : base === "Leaves" && !legacy ? leavesArgs(env, block, chain)
@@ -287,6 +292,12 @@ function element(block: Element, env: GenEnv): ElementContext {
   if (rotation === 5) { defaults.push(`.setValue(AXIS, ${n.dir}.Axis.Y)`); stateProps.push("AXIS"); }
   else if (rotation) { defaults.push(`.setValue(FACING, ${n.dir}.NORTH)`); stateProps.push("FACING"); }
   if (pitch) { defaults.push(`.setValue(FACE, ${face}.WALL)`); stateProps.push("FACE"); }
+  if (cells) {
+    fields.push(...multiBlockFields(env, cells));
+    members.push(...multiBlockMembers(env, rotation));
+    defaults.push(".setValue(PART, 0)");
+    stateProps.push("PART");
+  }
   if (waterlogged) {
     fields.push(`public static final ${legacy ? "net.minecraft.state.BooleanProperty" : "net.minecraft.world.level.block.state.properties.BooleanProperty"} WATERLOGGED = ${n.props}.WATERLOGGED;`);
     defaults.push(".setValue(WATERLOGGED, false)");
@@ -382,7 +393,11 @@ ${facings("ceiling")}
   const stateShapes = rows.filter((r) => r.row.hasCustomBoundingBox === true);
   if ((base === "" || (plant && boxes.length)) && (!full || stateShapes.length)) {
     const own = stateShapes.map((r) => `if (${stateCondition(r)}) {\n            ${shapeBody(list<Box>(r.row.boundingBoxes)).replaceAll("\n", "\n    ")}\n        }\n        `).join("");
-    members.push(override(`public ${n.shape} getShape(${S} state, ${n.getter} world, ${n.pos} pos, ${n.ctx} context)`, own + shapeBody(boxes)));
+    // A multi-block's parts each have their slice of the boxes.
+    const body = cells
+      ? `switch (state.getValue(PART)) {\n${partBoxes(boxes, cells).map((part, i) => `            ${i ? `case ${i}` : "default"}: {\n                ${shapeBody(part).replaceAll("\n", "\n        ")}\n            }`).join("\n")}\n        }`
+      : shapeBody(boxes);
+    members.push(override(`public ${n.shape} getShape(${S} state, ${n.getter} world, ${n.pos} pos, ${n.ctx} context)`, own + body));
   }
   if (stateShapes.length) members.push(stateHelper(env));
   if (block.hasTransparency === true && base === "" && !legacy) {
@@ -409,7 +424,7 @@ ${facings("ceiling")}
   }
   if (legacy) {
     if (block.offsetType !== "NONE") members.push(override("public net.minecraft.block.AbstractBlock.OffsetType getOffsetType()", `return net.minecraft.block.AbstractBlock.OffsetType.${str(block.offsetType)};`));
-    if (block.reactionToPushing !== "NORMAL") members.push(override(`public net.minecraft.block.material.PushReaction getPistonPushReaction(${S} state)`, `return net.minecraft.block.material.PushReaction.${str(block.reactionToPushing)};`));
+    if (block.reactionToPushing !== "NORMAL" && !cells) members.push(override(`public net.minecraft.block.material.PushReaction getPistonPushReaction(${S} state)`, `return net.minecraft.block.material.PushReaction.${str(block.reactionToPushing)};`));
     if (block.isReplaceable === true) members.push(override(`public boolean canBeReplaced(${S} state, ${n.place} context)`, "return context.getItemInHand().getItem() != this.asItem();"));
   }
   if (str(block.creativePickItem)) {
@@ -558,6 +573,11 @@ ${facings("ceiling")}
 
   // ---- Models
   const models = blockModels(block, env, render, side, tex);
+  // A multi-block's other parts draw nothing; their particles are the block's.
+  if (cells) {
+    const own = (models.find((m) => m.name === id)?.json as { textures?: Record<string, string> } | undefined)?.textures;
+    models.push({ name: `${id}_part`, json: { textures: { particle: own?.particle ?? Object.values(own ?? {})[0] ?? tex() } } });
+  }
   // State rows: their own model (and textures) for the property values they name.
   for (const r of rows) {
     let rowRender = (tint && TINTED_RENDER[Number(r.row.renderType)]) || Number(r.row.renderType) || 10;
@@ -626,22 +646,23 @@ ${facings("ceiling")}
     // 1.16.5 takes the map color with the material, and lava ignites blocks whose material is flammable.
     materialExpr: legacy ? legacyMaterial(block, plant ? (block.isReplaceable === true ? "REPLACEABLE_PLANT" : "PLANT") : setType === "IRON" ? "METAL" : setType === "OAK" ? "WOOD" : materialOf(block)) : "",
     growablePlant: base === "GrowablePlant",
+    multiBlock: cells !== undefined,
     itemPkg: itemPkg(env),
     blockClass: `${blk}.Block`,
     fabricInit: fabricInit.join("\n        "),
     init,
     files,
     strip,
-    blockstateJson: JSON.stringify(rows.length
+    blockstateJson: JSON.stringify(((single: Record<string, unknown>) => (cells ? multiBlockstate(single, cells.length, `${env.modId}:block/${id}_part`) : single))((rows.length
       ? blockstateWithStates(blockstate(block, env, rotation, tex) as Record<string, unknown>, rows, known, (r) => `${env.modId}:block/${id}_state${r.index}`, block.multipartModel === true)
-      : blockstate(block, env, rotation, tex), null, 2),
+      : blockstate(block, env, rotation, tex)) as Record<string, unknown>), null, 2),
     // A flat item icon: the item texture, or the block texture for cross-shaped plants and crops.
     itemModelJson: javaItem ? JSON.stringify(javaItem.modelJson, null, 2) : JSON.stringify(str(block.itemTexture) || [12, 120, 13].includes(render) || base === "Door" || base === "Sign" || base === "HangingSign"
       ? { parent: "minecraft:item/generated", textures: { layer0: str(block.itemTexture) ? `${env.modId}:item/${id}` : tex() }, ...itemDisplay(block) }
       : { parent: itemModelParent(block, env), ...itemDisplay(block) }, null, 2),
     itemDefinitionJson: JSON.stringify({ model: javaItem ? javaItem.definition : { type: "minecraft:model", model: `${env.modId}:item/${id}`, ...(itemTints ? { tints: itemTints } : {}) } }, null, 2),
     client,
-    lootJson: lootTable(block, env),
+    lootJson: lootTable(block, env, cells !== undefined),
     hasLoot: block.useLootTableForDrops !== true,
     models,
     textures,
@@ -1187,7 +1208,7 @@ function blockstate(block: Element, env: GenEnv, rotation: number, tex: (s?: str
   return { variants: { "": v("") } };
 }
 
-function lootTable(block: Element, env: GenEnv): string {
+function lootTable(block: Element, env: GenEnv, multi: boolean): string {
   const pot = block.blockBase === "FlowerPot";
   // A pot without an item form drops its plant, like vanilla potted plants.
   const drop = qualify(env, str(block.customDrop) || (pot && block.hasBlockItem !== true ? str(block.pottedPlant) : block.id));
@@ -1200,7 +1221,9 @@ function lootTable(block: Element, env: GenEnv): string {
   // A block without an item form drops nothing unless it names another drop.
   const dropsNothing = amount === 0 || (block.hasBlockItem !== true && !str(block.customDrop) && !pot);
   // Both door halves have this table; only the lower one drops.
-  const lowerHalf = block.blockBase === "Door" || block.blockBase === "DoublePlant" ? { conditions: [{ condition: "minecraft:block_state_property", block: qualify(env, block.id), properties: { half: "lower" } }] } : {};
+  const lowerHalf = block.blockBase === "Door" || block.blockBase === "DoublePlant" ? { conditions: [{ condition: "minecraft:block_state_property", block: qualify(env, block.id), properties: { half: "lower" } }] }
+    // Only the origin of a multi-block drops.
+    : multi ? { conditions: [{ condition: "minecraft:block_state_property", block: qualify(env, block.id), properties: { [PART_PROPERTY]: "0" } }] } : {};
   const survives = [{ condition: "minecraft:survives_explosion" }];
   const pools = dropsNothing ? [] : [{
     rolls: 1,
@@ -1217,8 +1240,10 @@ export default {
   element,
   runtime: (blocks, env) => {
     const runtime = blockEntityRuntime(env, blocks);
-    if (!blocks.some((b) => b.growablePlant === true)) return runtime;
-    return { ...runtime, sources: [...(runtime.sources ?? []), growablePlantBase(env)] };
+    const sources = [...(runtime.sources ?? [])];
+    if (blocks.some((b) => b.growablePlant === true)) sources.push(growablePlantBase(env));
+    if (blocks.some((b) => b.multiBlock === true)) sources.push(multiBlockBase(env));
+    return { ...runtime, sources };
   },
   global: (blocks: ElementContext[]): Context => ({
     blockModels: blocks.flatMap((b) => (b.models as { name: string; json: unknown }[]).map((m) => ({ id: m.name, json: JSON.stringify(m.json, null, 2) }))),

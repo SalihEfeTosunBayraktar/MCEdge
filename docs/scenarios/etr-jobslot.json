@@ -1,0 +1,16 @@
+{
+  "name": "ETR JobSlotProbe: the builder's trade box slots 4-8 pick a real item from their tag (Q74)",
+  "steps": [
+    { "op": "set", "name": "proc_job_key", "value": "builder" },
+    { "op": "set", "name": "proc_job_slot", "value": 4 },
+    { "label": "slot 4", "op": "call", "procedure": "job_pick_slot_item", "expect": { "matches": "^1 [a-z_]+$" } },
+    { "op": "set", "name": "proc_job_slot", "value": 5 },
+    { "label": "slot 5", "op": "call", "procedure": "job_pick_slot_item", "expect": { "matches": "^1 [a-z_]+$" } },
+    { "op": "set", "name": "proc_job_slot", "value": 6 },
+    { "label": "slot 6", "op": "call", "procedure": "job_pick_slot_item", "expect": { "matches": "^1 [a-z_]+$" } },
+    { "op": "set", "name": "proc_job_slot", "value": 7 },
+    { "label": "slot 7", "op": "call", "procedure": "job_pick_slot_item", "expect": { "matches": "^1 [a-z_]+$" } },
+    { "op": "set", "name": "proc_job_slot", "value": 8 },
+    { "label": "slot 8", "op": "call", "procedure": "job_pick_slot_item", "expect": { "matches": "^1 [a-z_]+$" } }
+  ]
+}

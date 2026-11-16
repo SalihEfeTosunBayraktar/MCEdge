@@ -4,6 +4,7 @@ import { listEngines } from "../engines/registry.ts";
 import { logPath, runGradle, type GradleRun, type GradleSetup } from "../build/gradle.ts";
 import { enableRcon, type RconConfig } from "../build/rcon.ts";
 import { clientLogName, DEFAULT_PLAYER, isPlayerName, nextPlayer } from "../build/players.ts";
+import type { ProbeOptions } from "../generator/typeModule.ts";
 import { clientTasks, DEBUG_PORT, muteClient, serverTasks, testServerPort } from "../build/runs.ts";
 
 type Text = { content: { type: "text"; text: string }[]; isError?: boolean };
@@ -59,8 +60,8 @@ export interface Runs {
   runningPlayers(): string[];
   server: Run;
   debug: Run;
-  /** Starts the client or the server the way run_client / run_server do. */
-  start(kind: "client" | "server", engine?: string, options?: { player?: string; join?: boolean }): Promise<Run>;
+  /** Starts the client or the server the way run_client / run_server do; `probe` builds the server with the test probe (run_scenario, tick_profile). */
+  start(kind: "client" | "server", engine?: string, options?: { player?: string; join?: boolean; probe?: ProbeOptions }): Promise<Run>;
 }
 
 const engineArg = { engine: z.string().optional().describe("Engine id; required for MCEdge projects, ignored for Gradle mods") };
@@ -72,7 +73,7 @@ export const playerArg = z.string().regex(/^[A-Za-z0-9_]{3,16}$/).optional();
  * Build & run > Run client, Run server and Debug client, and Tools > Gradle console / Reload Gradle project for agents.
  * `setupFor` generates the engine's project first (MCEdge projects) or returns the Gradle mod's own setup.
  */
-export function registerRunTools(server: McpServer, setupFor: (engine?: string, options?: { generate?: boolean }) => Promise<GradleSetup>, guard: Guard): Runs {
+export function registerRunTools(server: McpServer, setupFor: (engine?: string, options?: { generate?: boolean; probe?: ProbeOptions }) => Promise<GradleSetup>, guard: Guard): Runs {
   const clients = new Map<string, Run>();
   const client = (player = DEFAULT_PLAYER): Run => {
     if (!clients.has(player)) clients.set(player, new Run());
@@ -83,7 +84,7 @@ export function registerRunTools(server: McpServer, setupFor: (engine?: string, 
   const debug = new Run();
   const gradle = new Run();
 
-  const start = async (kind: "client" | "server", engine?: string, options: { player?: string; join?: boolean } = {}): Promise<Run> => {
+  const start = async (kind: "client" | "server", engine?: string, options: { player?: string; join?: boolean; probe?: ProbeOptions } = {}): Promise<Run> => {
     if (kind === "client") {
       const player = options.player ?? DEFAULT_PLAYER;
       if (!isPlayerName(player)) throw new Error(`bad player name "${player}": 3 to 16 letters, digits or _`);
@@ -101,7 +102,7 @@ export function registerRunTools(server: McpServer, setupFor: (engine?: string, 
       if (options.join) run.push(`[mcedge] ${player} joins the test server on port ${testServerPort(setup.projectDir)}`);
       return run;
     }
-    const setup = await setupFor(engine);
+    const setup = await setupFor(engine, { probe: options.probe });
     if (srv.run) throw new Error("already running; stop it first");
     const tasks = serverTasks(setup);
     // RCON on a fresh port and password, so server_command can reach this server.

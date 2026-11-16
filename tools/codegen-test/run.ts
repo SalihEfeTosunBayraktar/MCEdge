@@ -77,7 +77,9 @@ console.log(`run ${runId} log ${log} rcon ${rconPort} server ${serverPort}`);
 // A dedicated server with RCON, so the driver can send commands.
 mkdirSync(`${dir}/run`, { recursive: true });
 writeFileSync(`${dir}/run/eula.txt`, "eula=true\n");
-if (task === "runServer") writeFileSync(`${dir}/run/server.properties`, ["enable-rcon=true", "rcon.password=wavethree", `rcon.port=${entry.rconPort}`, `server-port=${entry.serverPort}`, "online-mode=false", "spawn-protection=0", "broadcast-rcon-to-ops=true"].join("\n") + "\n");
+// RUN_SERVER_PROPERTIES adds lines ("key=value;key=value"), e.g. a flat creative world for open-world.ts.
+if (task === "runServer") writeFileSync(`${dir}/run/server.properties`, ["enable-rcon=true", "rcon.password=wavethree", `rcon.port=${entry.rconPort}`, `server-port=${entry.serverPort}`, "online-mode=false", "spawn-protection=0", "broadcast-rcon-to-ops=true",
+  ...(process.env.RUN_SERVER_PROPERTIES ?? "").split(";").filter(Boolean)].join("\n") + "\n");
 // Test clients are silent: master volume 0 in run/options.txt (MCEDGE_TEST_SOUND=1 keeps the sound).
 if (task === "runClient") muteClient(dir);
 // Test-only: open the server's world in the client (quick play), so its mobs are rendered.

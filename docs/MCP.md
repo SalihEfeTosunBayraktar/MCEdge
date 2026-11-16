@@ -65,7 +65,7 @@ source server; with `MCEDGE_MCP_EXE=<install folder>\MCEdge.exe` they start an i
 | `read_element` | `type`, `id` | The stored values. |
 | `create_element` | `type`, `id`, `values?` | Type defaults plus `values`; ids are lower_snake_case and unique (recipes have their own namespace). Returns the element and its validation problems; it is saved either way, as the editor saves drafts. |
 | `update_element` | `type`, `id`, `values` | The given top-level keys replace their values; returns the element and its problems. |
-| `delete_element` | `type`, `id` | Deletes the element file. |
+| `delete_element` | `type`, `id`, `dryRun?`, `cascade?`, `engine?` | Deletes the element file and its folder entry. The answer (and `dryRun`, which deletes nothing) lists what only this element used, the way the app's delete dialog does: procedures nobody else calls and GUIs nobody else opens that it reaches, recipes that make it, textures and models no other element names, translation keys no other element uses (what the generator of `engine` writes for it counts), each with its folder. What another element, tag or datapack file still uses is never listed. `cascade` deletes some of it too: `"all"` or `{elements: ["procedure/give_reward"], textures: [...], models: [...], langKeys: [...]}`; a name that is not in the list is refused and nothing is deleted. The folder entries of everything deleted (`folders.json`, `texture-folders.json` incl. `resources.models`) go with it. |
 | `find_references` | `type`, `id`, `limit?` | Where the element is used and what it uses: elements, tags and datapack files naming it, by form (procedure field, element field, item/block field, procedure block, block id field, `java_code` class name or quoted id, any `"modid:id"` text, tag entry, datapack file) with the place inside each. Also its folder and, for procedures, its global trigger. The app's *Usages* button shows the same. |
 | `unused_elements` | `types?`, `transitive?`, `limit?`, `offset?` | Elements nothing uses: no element, tag or datapack file names them and no global trigger runs them. Default types are `procedure` and `gui` (they do nothing until something points at them); other types are only listed when asked for. `transitive` also lists elements used only by unused ones. Per-type totals come with it. Nothing is deleted. The app's *Unused* button filters the element list the same way. |
 | `rename_element` | `type`, `id`, `newId`, `dryRun?` | Renames an element and updates everything that names it: fields and procedure blocks, `java_code` class names (`<Id>Procedure`, `<Id>Block`, ...) and quoted `"modid:id"`, tags, datapack files, translation keys, `folders.json`, and texture files named after the element when nothing else uses them. Everything is computed and checked first (no reference may be lost, no derived-id collision) and a failed write puts the files back. `dryRun` reports the changes only; plain words in `java_code` are reported as notes, not changed. The app's *Rename* does the same. |
@@ -121,6 +121,30 @@ locked class) and `tools/ui-test/locked-code.ts` test it.
 | `write_ai_goals` | `entity`, `program` | A living entity's AI goals from IR JSON (goal blocks of category "ai"). |
 | `entity_models` | - | Project entity models with their parts, texture size and animations. |
 
+Bubbles (Q216) are ordinary elements of type `bubble`: `create_element` / `update_element` / `read_element` with the
+fields of `element_type_schema` `bubble` (see docs/ELEMENT-TYPES.md); `procedure_blocks` `category: "bubbles"` lists
+`bubble_show` (field `bubble`, registry `bubble_element`) and the other bubble blocks; `find_references` lists the
+procedures showing a bubble. Show / hide timing (Q228) is the general element fields `appear`, `disappear` (lists of
+`fade`, `scale`, `slide_up`, `slide_down`), `appearTicks`, `disappearTicks`, `appearEasing`, `disappearEasing` (`linear`,
+`ease_out`, `ease_in_out`, `back`) and, for bubbles, `duration` (the active time): `update_element` sets them like any
+field, and `element_type_schema` lists them (`bubble`, `radial_menu` with the opening transition only). The old
+`animation` / `animationTicks` fields are gone; saved values load as the new ones. Check: `node tools/codegen-test/bubble-mcp-check.ts`.
+
+Seatable blocks (Q225) are block fields: `update_element` a block with `seatable: true` and `seats` (rows `x`, `y`, `z` in
+block pixels for the block facing north, `yaw` from its front, `pose` `sit` or `lie`), `seatHeightMode` (`auto` from the boxes, `manual` uses
+`y`), `seatEmptyHand`, `seatDismount` (`top`, `front`, `back`); `element_type_schema` `block` lists them on the `seat`
+page (see docs/ELEMENT-TYPES.md). `procedure_blocks` `category: "entity"` lists `entity_sit_on_block`,
+`entity_is_sitting` and `entity_stand_up`. Multi-blocks (Q226): `multiBlock: true` on a plain block lets its
+`boundingBoxes` reach past 0..16; every covered cell becomes a part of the block (`element_type_schema` `block`,
+`bounding_boxes` page). Check: `node tools/codegen-test/seat-mcp-check.ts`.
+
+Radial menus (Q227) are ordinary elements of type `radial_menu`: `create_element` / `update_element` / `read_element` with
+the fields of `element_type_schema` `radial_menu` (tabs with slices, see docs/ELEMENT-TYPES.md). `procedure_blocks`
+`category: "gui"` lists `radial_open`, `radial_close` and `radial_set_slice` (field `menu`, registry
+`radial_menu_element`), `category: "bubbles"` `runtime_image_bubble`; `procedure_triggers` lists `radial_slice_chosen`;
+`find_references` lists the procedures opening a menu. Runtime image folders are server files
+(`config/<modid>/<folder>/`), not project files. Check: `node tools/codegen-test/radial-mcp-check.ts`.
+
 ## Variables and localization
 
 | Tool | Arguments | What it does |
@@ -137,6 +161,7 @@ locked class) and `tools/ui-test/locked-code.ts` test it.
 | `add_language` | `code`, `copyFrom?` | Adds a language, empty or starting with another language's texts (from `en_us` including element names). |
 | `rename_language` | `from`, `to` | Moves a language to another code; the file is renamed. `en_us` stays. |
 | `remove_language` | `code` | Removes a language and deletes its file. `en_us` stays. |
+| `unused_translation_keys` | `languages?`, `remove?`, `engine?`, `limit?` | Translation keys with text in a language file that nothing uses, per language: no element creates them (its name, what the generator of `engine` writes, or `<mod id>.<element id>` in the key), no element, procedure or GUI names them as a string, and the engine does not need them by name (sound subtitles, key binding categories, overrides of vanilla texts with `minecraft` in the key). A key a program builds from pieces is not seen and is listed. Nothing changes unless `remove` is true, which deletes the listed keys from the language files (`languages` limits it). The app's Problems tab shows the same keys, one info entry per language, with a Remove button. |
 | `export_translations` | `path`, `format`, `languages?`, `language?`, `filter?`, `query?` | Writes translations to an absolute path: `csv` (key + one column per language, UTF-8 with BOM, CRLF; en_us includes element names) or `json` (one language as a Minecraft lang file). Rows can be narrowed like `list_translation_keys`. |
 | `import_translations` | `path`, `language?`, `apply?`, `addUnknown?` | Reads a CSV or lang JSON file and reports per language what is added, changed and unchanged, and keys the project lacks. Writes only with `apply`; unknown keys only with `addUnknown`; empty cells never clear a text. |
 
@@ -166,6 +191,7 @@ Colours are `#rrggbb`, `#rrggbbaa` or `transparent`; reads return `#rrggbbaa`.
 | `resize_texture_canvas` | `path`, `width`, `height`, `anchor` (default `center`) | Resize canvas without scaling: the picture keeps its pixels at the anchor, new space is transparent. |
 | `adjust_texture` | `path`, `hue?` (-180 to 180), `desaturate?` (0 to 1), `rect?` | Adjust colours: shift the hue, take out colour; the whole texture or a rectangle. |
 | `delete_texture` | `path` | Refused while an element or the mod logo uses it. |
+| `set_texture_animation` | `path`, `frametime?`, `interpolate?`, `frames?`, `mode?`, `still?` | The texture editor's Animation panel: a vertical strip of square frames with `<png>.mcmeta`. `mode` (Q229): `loop` (default), `hold_last` (play once, stay on the last frame), `hold_first` (play once, then show the first frame), `ping_pong` (forwards, then backwards); stored in the .mcmeta's own `"mcedge"` section, which the game ignores, and generated as the vanilla frame list that plays it. Blocks and items start a once mode when the player enters a world (and after a resource reload); GUI images when their `animationStart` says (`open`, `always`, `procedure`: the `gui_image_restart` block). `still: true` deletes the .mcmeta. |
 
 ## GUI and overlay layouts (layout editor)
 
@@ -196,7 +222,7 @@ The screen settings of a GUI (size, slots, background, triggers) are ordinary fi
 | `list_animations` | - | Model animations in models/ (Resources > Animations), with length and loop mode. |
 | `model_textures` | `block`, `set?` | Texture slots of a block's custom model (JSON variables without `particle`, OBJ materials), what the model names for each and the project texture the block maps it to (`customModelTextures`). `set` maps slots (`{"0": "textures/blocks/x.png"}`, `""` removes one) and saves the block; generated on all engines as the block model's own textures over the model's. A Java model (renderType 4) draws with the main texture. |
 | `edit_in_blockbench` | `model`, `action?` (open, sync, stop), `block?`, `launch?`, `program?` | Edit in Blockbench (KUYRUK 171): copies the JSON model and the project textures it names (with `block`, that block's `customModelTextures`) to a work folder (`assets/<ns>/models`, `assets/<ns>/textures`), starts Blockbench on it and copies its saves back (the model with the block's own slots put back, changed textures to their files, new ones to `textures/<path>.png`). `sync` copies back now, `stop` ends the watch. |
-| `texture_folders` | `action?` (list, create, rename, remove, move), `path?`, `name?`, `textures?`, `folder?`, `full?` | Folders of Resources > Textures (KUYRUK 177, texture-folders.json; they only organise that list, texture files and the mod do not change): list with counts, create (with parents), rename, remove (textures go up), move textures in or out (`folder` ""). |
+| `texture_folders` | `kind?` (textures, sounds, models, structures), `action?` (list, create, rename, remove, move, move_folder, color, icon), `path?`, `name?`, `items?` (or `textures?`), `folder?`, `color?`, `icon?`, `deleteContents?`, `dryRun?`, `full?` | Folders of the Resources lists (KUYRUK 177, Q211; texture-folders.json: the Textures list at the top level as always, the other lists under `resources.<kind>`; they only organise a list, files, element fields and the mod do not change, so references stay valid). Items are texture paths, sound event names (as `list_sound_events`), or model and structure paths. Folders nest ("Gems/Red"). `list` gives counts, colour and icon; `create` (with parents), `rename`, `move_folder` (`path` into `folder`, "" = top), `color` ("#rrggbb", "" clears) and `icon` change a folder; `move` puts many `items` into `folder` at once ("" takes them out). `remove` deletes a folder: its items and subfolders go up to the parent, or with `deleteContents` its subfolders go and so do the items in it (items an element uses, and the logo for textures, are kept, moved up and reported as `kept`; a listed sound event is removed but its sound files stay; `dryRun` lists what would go). |
 | `delete_resource` | `path` | Refused while an element names it. |
 | `export_workspace` | `file` (absolute .zip) | Zips the project without `out/`, `build/`, `run/`, `.gradle`, `.git`. |
 | `coverage` | `type?` | Fields each engine does not generate (the "not generated" badges). |
@@ -221,6 +247,56 @@ MCEdge projects and is ignored for Gradle mods. Long runs are non-blocking: star
 | `editor_screenshot` | `screen?` | The running MCEdge editor window, plus what the user has open (as `collaborators`). With `screen` the app switches there first (KUYRUK 153): a section (`tags`), a resources tab (`resources/models`), an element editor (`item/ruby`), a dialog (`dialog/preferences`, `dialog/about`, `dialog/docs` (the user guide), `dialog/shortcuts`) or a bottom panel (`panel/agents`, `panel/problems`, `panel/build`, `panel/gradle`; `panel/activity` and `panel/tasks` open the Agents panel at the latest session or the tasks). The server writes `.mcedge/live/show.json`, the app switches and confirms in `presence-app.json`; an unknown screen or a missing element is an error. |
 | `observe_run` | `side`, `engine`, `commands?`, `waitSeconds?`, `timeoutSeconds?`, `screenshot?`, `username?`, `joinServer?`, `keepRunning?`, `warnings?`, `modOnly?`, `limit?` | A whole test run: starts the client or server unless it runs, waits for ready (server `Done (`, client title screen) or a crash, runs the server `commands`, waits, returns the replies, the grouped problems (as `log_problems`), a client screenshot if asked, and stops the run unless `keepRunning`. `tools/mcp-test/observe.ts` tests these. |
 | `gradle_task` | `engine`, `tasks`, `lines?` | Any Gradle tasks (Tools > Gradle console); `["help"]` is Reload Gradle project. Waits and returns the exit code and log tail. |
+
+### Scenarios and tick profile (Q218, Q219)
+
+Two tools run the project on a dedicated server of one engine with a test probe, wait for the answer and stop the
+server. The probe is generated into that run's `out/<engine>` only (`<package>.probe.<Mod>ModProbe`, plus `...ProbeGame`
+for the vanilla calls): never by `build`, `run_server`, `run_client` or `export_jar`, so an exported jar has none (the CLI
+has `build <dir> --target <engine> --probe` or `--profile` for a check build). A later normal run regenerates the sources
+without it. The scenario goes to `out/<engine>/run/mcedge-probe/scenario.json`, the probe answers in `result.json`. A
+running `run_server` must be stopped first.
+
+| Tool | Arguments | What it does |
+| --- | --- | --- |
+| `run_scenario` | `engine`, `scenario` or `file` (absolute or project-relative JSON), `timeoutSeconds?` | Runs the scenario and returns `{ ok, passed, failed, errors, steps }`: per step its `value`, `pass` and `expected` when it has `expect`, an `error`, the `messages` the fake players received during it (Forge 1.16.5 and NeoForge), the server `tick` and `ms`. A malformed scenario is refused before any build. |
+| `tick_profile` | `engine`, `seconds?` (30), `warmupSeconds?` (5), `players?` (1), `top?` (10), `all?`, `timeoutSeconds?` | A profile build (every procedure times its calls) runs `players` ticking fake players for `seconds`; the answer lists the tick-triggered procedures (global player, world and server ticks, and element fields with a server tick trigger: block, item inventory and effect ticks) by `usPerTick`, with `calls`, `callsPerTick`, `usPerCall`, `totalMs` and the `triggers` that run each. Times include procedures a procedure calls; `all` also lists procedures no tick trigger runs. |
+
+A scenario is `{ "name"?, "steps": [ ... ] }`. Every step has an `op` and may have a `label` and an `expect`: a plain value
+(numbers compare as numbers) or `{ "contains": "x" }`, `{ "matches": "regex" }`, `{ "min": 1, "max": 5 }`, `{ "not": ... }`.
+Steps run in order, each on the server thread; a failing step does not stop the rest. `pos` is `[x, y, z]`, `dimension` is
+`overworld` (default), `nether`, `end` or `namespace:path`, `player` names a fake player (the only one when omitted).
+
+| `op` | Keys | Value |
+| --- | --- | --- |
+| `player` | `name`, `pos?`, `dimension?`, `ticking?` | Creates a fake player. `ticking` makes it run its player tick once per server tick during `wait` steps (tick events and tick procedures). |
+| `removePlayer` | `name` | |
+| `setblock` | `pos`, `block` (`id[state]`) | The block there afterwards (the chunk is loaded and kept loaded). |
+| `command` | `command`, `player?` | The command's result; as the player when given. Also the way to `summon`, `fill`, set a game rule... |
+| `give` | `item`, `count?`, `name?`, `hold?`, `player?` | How many of the item the player has. `hold` puts it in the main hand. |
+| `setSlot` / `closeMenu` | `slot`, `item?` (empty clears), `count?`, `player?` / `player?` | Sets a slot of the player's open menu / closes it. |
+| `useBlock` / `useItem` / `useEntity` | `pos`, `face?`, `hand?` / `hand?` / `target`, `hand?` | Right-click as the fake player through the game's interaction path (loader events fire). `target` is another fake player's name or `{ type, pos, radius? }` for the nearest entity. The result name (SUCCESS, PASS, ...). |
+| `call` | `procedure`, `args?`, `pos?`, `dimension?`, `player?` | Calls a procedure by element id. `args` are by dependency name: `world` (dimension), `x`, `y`, `z` (default the player's or `pos`), `entity`, `sourceentity` (fake player names; the single player by default), numbers, text, `logic`. The procedure's return value. |
+| `set` | `name`, `value`, `player?`, `dimension?` | Writes a project variable (player, world or global). Needs a project with procedures (the variables class is generated with them). |
+| `setBlockData` | `pos`, `key`, `value`, `type?` | Writes a value a procedure keeps at a block position. |
+| `read` | `what`, ... | `var` (`name`), `block` (`pos`: `id[state]`), `blockdata` (`pos`, `key`, `type?`: number, text, logic), `count` (`item?`), `inventory` (item -> count), `position`, `menu` (menu class and slot count), `slot` (`slot`: `5 x id`), `bubble` (icon or bubble id, caption, ticks left). |
+| `wait` | `ticks` | Waits for server ticks. |
+| `profile` | `action` (`reset`, `report`), `all?` | Only in profile builds (what `tick_profile` runs). |
+
+`docs/scenarios/` has examples: `hello.json` (the example project: block, item, inventory) and the ETR probes as scenarios,
+`etr-takas.json` (trade offer, pairing, third player, shared slots, swap, status bubbles), `etr-upvend.json` (the upgraded
+vending machine: lock, open and close, sale) and `etr-jobslot.json` (builder slot items). Menus open for NeoForge and
+Forge 1.16.5 fake players; the Fabric API fake player has no client, so `messages` stay empty there. `tools/mcp-test/scenario.ts`
+and `tick-profile.ts` run both tools end to end, `scenario-run.ts <project> <engine> <file>` runs one file.
+
+Seeing another player (KUYRUK 221): a player's own name tag never shows, so anything drawn over a player's head (a bubble
+over the name tag) needs a second player in view. No extra option is needed: `run_server`, then `run_client` with
+`username: "Dev2"` and `join_server: true`, then `run_client` (Dev, `join_server: true`), and when both joined,
+`server_command` `["execute as Dev2 at Dev2 run tp Dev ^ ^ ^3 facing entity Dev2 feet"]` puts Dev 3 blocks in front of Dev2
+looking level at it (`feet` is the anchor the look is measured from; `eyes` would tilt Dev's view up), then `game_screenshot`
+with `username: "Dev"`. For something in the air, build a stone platform first with `fill` so no world blocks are in the
+picture. `tools/codegen-test/bubble-other-check.ts <engine>` does this for the designed bubble of the test project and saves
+`design/221/bubble-other-<engine>.png` (usage in its header).
 
 Source map: generating an engine also writes `out/<engine>/mcedge-sourcemap.json` (the Java is unchanged). It maps each
 generated `.java` file to the element that made it (procedure classes by name, other classes by the element's PascalCase

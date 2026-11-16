@@ -66,9 +66,11 @@ const walk = (dir: string) => {
 walk("app/renderer/src");
 /** Editors whose Delete acts on the open element itself, not on a selection in a list. */
 const OWN_OBJECT = new Set(["ElementEditor.tsx"]);
+/** Delete folder acts on the focused folder, which the toolbar shows only while one is focused (Q211). */
+const OWN_BUTTON = new Set(["folders.delete"]);
 for (const { file, key, danger } of toolbars) {
   if (/^Create\b/.test(en[key] ?? "")) fail(`${file} ${key}: a toolbar says "New", not "Create": ${en[key]}`);
-  if (!danger || OWN_OBJECT.has(file) || /^(Discard|Revert|Stop)\b/.test(en[key] ?? "")) continue;
+  if (!danger || OWN_OBJECT.has(file) || OWN_BUTTON.has(key) || /^(Discard|Revert|Stop)\b/.test(en[key] ?? "")) continue;
   const ok = (en[key] === "Delete selected" && tr[key] === "Seçileni sil") || (en[key] === "Remove selected" && tr[key] === "Seçileni kaldır");
   if (!ok) fail(`${file} ${key}: a destructive toolbar button reads "Delete selected" or "Remove selected": ${en[key]} / ${tr[key]}`);
 }

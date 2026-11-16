@@ -21,6 +21,16 @@ const legacyModern = (legacy: HelperFn, modern: HelperFn, v26?: HelperFn | null)
   ({ "1.16.5": legacy, modern, ...(v26 !== undefined ? { "26.3": v26 } : {}) });
 const all = (fn: (j: Record<string, string>) => string): HelperDef["code"] => ({ all: fn });
 
+/** Cached gameRuleId (Q215): rule name as a procedure gives it -> registered id. */
+const ruleIdCache = (j: Record<string, string>) => `private static final java.util.Map<String, String> RULE_IDS = new java.util.concurrent.ConcurrentHashMap<>();
+static String gameRuleId(${j.LevelAccessor} world, String rule) {
+String id = RULE_IDS.get(rule);
+if (id != null) return id;
+id = findGameRuleId(world, rule);
+if (id != null) RULE_IDS.put(rule, id);
+return id;
+}`;
+
 /** Types of block data (values procedures keep at a block position): Java type, NBT accessor name, value without data. */
 const BLOCK_DATA = {
   number: { name: "Number", java: "double", api: "Double", missing: "-1.0", empty: "0.0" },
@@ -582,11 +592,13 @@ return world.getBiome(pos(x, y, z)).is(rl(id));
 }`),
   },
   // The registered id of a game rule a procedure names in camelCase, snake_case or by the element's ruleName: an exact match wins,
-  // else the names are compared without underscores and case (KUYRUK 51). Null when no rule matches.
+  // else the names are compared without underscores and case (KUYRUK 51). Null when no rule matches. A found id is kept per
+  // name (rules are registered once, at startup), so procedures reading a rule every tick do not walk all rules (Q215).
   gameRuleId: {
     uses: ["level"],
     code: legacyModern(
-      (j) => `static String gameRuleId(${j.LevelAccessor} world, String rule) {
+      (j) => `${ruleIdCache(j)}
+static String findGameRuleId(${j.LevelAccessor} world, String rule) {
 final String[] result = {null};
 final String loose = rule.replace("_", "");
 ${j.GameRules}.visitGameRuleTypes(new ${j.GameRules}.IRuleEntryVisitor() {
@@ -598,7 +610,8 @@ if (id.equals(rule) || (result[0] == null && id.replace("_", "").equalsIgnoreCas
 });
 return result[0];
 }`,
-      (j) => `static String gameRuleId(${j.LevelAccessor} world, String rule) {
+      (j) => `${ruleIdCache(j)}
+static String findGameRuleId(${j.LevelAccessor} world, String rule) {
 if (!(level(world) instanceof ${j.ServerLevel} level)) return null;
 final String[] result = {null};
 final String loose = rule.replace("_", "");
@@ -617,7 +630,8 @@ if (id.equals(rule) || (result[0] == null && id.replace("_", "").equalsIgnoreCas
 return result[0];
 }`,
       // 26.x keeps rules in a registry: the id path (or the full identifier) matches exactly, else without underscores and case.
-      (j) => `static String gameRuleId(${j.LevelAccessor} world, String rule) {
+      (j) => `${ruleIdCache(j)}
+static String findGameRuleId(${j.LevelAccessor} world, String rule) {
 if (!(level(world) instanceof ${j.ServerLevel} level)) return null;
 final String loose = rule.replace("_", "");
 java.util.List<String> paths = level.getGameRules().availableRules().map(r -> r.getIdentifier().getPath()).toList();
@@ -626,35 +640,64 @@ for (String path : paths) if (path.replace("_", "").equalsIgnoreCase(loose)) ret
 return level.getGameRules().availableRules().filter(r -> r.getIdentifier().toString().equals(rule)).map(r -> r.getIdentifier().getPath()).findFirst().orElse(null);
 }`),
   },
+  // The key of a registered rule id, kept per id (Q215); null when the id is not a rule. 26.x reads rules from its registry instead.
+  gameRuleKey: {
+    code: legacyModern(
+      (j) => `private static final java.util.Map<String, ${j.GameRules}.RuleKey<?>> RULE_KEYS = new java.util.concurrent.ConcurrentHashMap<>();
+static ${j.GameRules}.RuleKey<?> gameRuleKey(String id) {
+${j.GameRules}.RuleKey<?> cached = RULE_KEYS.get(id);
+if (cached != null) return cached;
+final ${j.GameRules}.RuleKey<?>[] result = {null};
+${j.GameRules}.visitGameRuleTypes(new ${j.GameRules}.IRuleEntryVisitor() {
+@Override
+public <T extends ${j.GameRules}.RuleValue<T>> void visit(${j.GameRules}.RuleKey<T> key, ${j.GameRules}.RuleType<T> type) {
+if (key.getId().equals(id)) result[0] = key;
+}
+});
+if (result[0] != null) RULE_KEYS.put(id, result[0]);
+return result[0];
+}`,
+      (j) => `private static final java.util.Map<String, ${j.GameRules}.Key<?>> RULE_KEYS = new java.util.concurrent.ConcurrentHashMap<>();
+static ${j.GameRules}.Key<?> gameRuleKey(${j.ServerLevel} level, String id) {
+${j.GameRules}.Key<?> cached = RULE_KEYS.get(id);
+if (cached != null) return cached;
+final ${j.GameRules}.Key<?>[] result = {null};
+level.getGameRules().visitGameRuleTypes(new ${j.GameRules}.GameRuleTypeVisitor() {
+@Override
+public void visitBoolean(${j.GameRules}.Key<${j.GameRules}.BooleanValue> key, ${j.GameRules}.Type<${j.GameRules}.BooleanValue> type) {
+if (key.getId().equals(id)) result[0] = key;
+}
+@Override
+public void visitInteger(${j.GameRules}.Key<${j.GameRules}.IntegerValue> key, ${j.GameRules}.Type<${j.GameRules}.IntegerValue> type) {
+if (key.getId().equals(id)) result[0] = key;
+}
+});
+if (result[0] != null) RULE_KEYS.put(id, result[0]);
+return result[0];
+}`,
+      (j) => `static String gameRuleKey(String id) {
+return id;
+}`),
+  },
   gameRuleLogic: {
-    uses: ["level", "runCommand", "gameRuleId"],
+    uses: ["level", "runCommand", "gameRuleId", "gameRuleKey"],
     code: legacyModern(
       (j) => `static boolean gameRuleLogic(${j.LevelAccessor} world, String rule) {
 ${j.Level} level = level(world);
 if (level == null) return false;
 String id = gameRuleId(world, rule);
 if (id == null) return false;
-final boolean[] result = {false};
-${j.GameRules}.visitGameRuleTypes(new ${j.GameRules}.IRuleEntryVisitor() {
-@Override
-public <T extends ${j.GameRules}.RuleValue<T>> void visit(${j.GameRules}.RuleKey<T> key, ${j.GameRules}.RuleType<T> type) {
-if (key.getId().equals(id) && level.getGameRules().getRule(key) instanceof ${j.GameRules}.BooleanValue) result[0] = ((${j.GameRules}.BooleanValue) level.getGameRules().getRule(key)).get();
-}
-});
-return result[0];
+${j.GameRules}.RuleKey key = gameRuleKey(id);
+Object value = key == null ? null : level.getGameRules().getRule(key);
+return value instanceof ${j.GameRules}.BooleanValue && ((${j.GameRules}.BooleanValue) value).get();
 }`,
       (j) => `static boolean gameRuleLogic(${j.LevelAccessor} world, String rule) {
 if (!(level(world) instanceof ${j.ServerLevel} level)) return false;
 String id = gameRuleId(world, rule);
 if (id == null) return false;
-final boolean[] result = {false};
-level.getGameRules().visitGameRuleTypes(new ${j.GameRules}.GameRuleTypeVisitor() {
-@Override
-public void visitBoolean(${j.GameRules}.Key<${j.GameRules}.BooleanValue> key, ${j.GameRules}.Type<${j.GameRules}.BooleanValue> type) {
-if (key.getId().equals(id)) result[0] = level.getGameRules().getBoolean(key);
-}
-});
-return result[0];
+${j.GameRules}.Key key = gameRuleKey(level, id);
+Object value = key == null ? null : level.getGameRules().getRule(key);
+return value instanceof ${j.GameRules}.BooleanValue && ((${j.GameRules}.BooleanValue) value).get();
 }`,
       // 26.x keeps rules in a registry under snake_case ids, so doDaylightCycle-style names match without underscores.
       (j) => `static boolean gameRuleLogic(${j.LevelAccessor} world, String rule) {
@@ -665,34 +708,24 @@ return level.getGameRules().availableRules().filter(r -> r.valueClass() == Boole
 }`),
   },
   gameRuleNumber: {
-    uses: ["level", "gameRuleId"],
+    uses: ["level", "gameRuleId", "gameRuleKey"],
     code: legacyModern(
       (j) => `static double gameRuleNumber(${j.LevelAccessor} world, String rule) {
 ${j.Level} level = level(world);
 if (level == null) return 0;
 String id = gameRuleId(world, rule);
 if (id == null) return 0;
-final int[] result = {0};
-${j.GameRules}.visitGameRuleTypes(new ${j.GameRules}.IRuleEntryVisitor() {
-@Override
-public <T extends ${j.GameRules}.RuleValue<T>> void visit(${j.GameRules}.RuleKey<T> key, ${j.GameRules}.RuleType<T> type) {
-if (key.getId().equals(id) && level.getGameRules().getRule(key) instanceof ${j.GameRules}.IntegerValue) result[0] = ((${j.GameRules}.IntegerValue) level.getGameRules().getRule(key)).get();
-}
-});
-return result[0];
+${j.GameRules}.RuleKey key = gameRuleKey(id);
+Object value = key == null ? null : level.getGameRules().getRule(key);
+return value instanceof ${j.GameRules}.IntegerValue ? ((${j.GameRules}.IntegerValue) value).get() : 0;
 }`,
       (j) => `static double gameRuleNumber(${j.LevelAccessor} world, String rule) {
 if (!(level(world) instanceof ${j.ServerLevel} level)) return 0;
 String id = gameRuleId(world, rule);
 if (id == null) return 0;
-final int[] result = {0};
-level.getGameRules().visitGameRuleTypes(new ${j.GameRules}.GameRuleTypeVisitor() {
-@Override
-public void visitInteger(${j.GameRules}.Key<${j.GameRules}.IntegerValue> key, ${j.GameRules}.Type<${j.GameRules}.IntegerValue> type) {
-if (key.getId().equals(id)) result[0] = level.getGameRules().getInt(key);
-}
-});
-return result[0];
+${j.GameRules}.Key key = gameRuleKey(level, id);
+Object value = key == null ? null : level.getGameRules().getRule(key);
+return value instanceof ${j.GameRules}.IntegerValue ? ((${j.GameRules}.IntegerValue) value).get() : 0;
 }`,
       (j) => `static double gameRuleNumber(${j.LevelAccessor} world, String rule) {
 if (!(level(world) instanceof ${j.ServerLevel} level)) return 0.0;
@@ -1088,6 +1121,21 @@ return list;
   players: {
     code: all((j) => `static java.util.List<${j.Entity}> players(${j.LevelAccessor} world) {
 return new java.util.ArrayList<${j.Entity}>(world.players());
+}`),
+  },
+  // Every online player in every dimension; none on a client (no server).
+  serverPlayers: {
+    uses: ["server"],
+    code: all((j) => `static java.util.List<${j.Entity}> serverPlayers(${j.LevelAccessor} world) {
+${j.MinecraftServer} server = server(world);
+return server == null ? new java.util.ArrayList<>() : new java.util.ArrayList<${j.Entity}>(server.getPlayerList().getPlayers());
+}`),
+  },
+  playerByName: {
+    uses: ["server"],
+    code: all((j) => `static ${j.Entity} playerByName(${j.LevelAccessor} world, String name) {
+${j.MinecraftServer} server = server(world);
+return server == null ? null : server.getPlayerList().getPlayerByName(name);
 }`),
   },
   nearestEntity: {

@@ -981,6 +981,7 @@
     "pages": {
       "visual": "Görünüm",
       "bounding_boxes": "Sınır kutuları",
+      "seat": "Oturma",
       "state_properties": "Blok durumu özellikleri",
       "states": "Durumlar",
       "animations": "Animasyonlar",
@@ -999,6 +1000,7 @@
       "Built-in states": "Yerleşik durumlar",
       "Rendering": "Çizim",
       "Collision": "Çarpışma",
+      "Seat": "Oturma",
       "Custom properties": "Özel özellikler",
       "State models": "Durum modelleri",
       "Block entity animations": "Blok varlığı animasyonları",
@@ -1234,7 +1236,7 @@
       },
       "boundingBoxes": {
         "label": "Kutular",
-        "help": "Piksel cinsinden çizgi ve çarpışma biçimi (her eksende 0-16)."
+        "help": "Piksel cinsinden çizgi ve çarpışma biçimi (her eksende 0-16; dışı yalnız birden çok bloğa yayılan blok için)."
       },
       "boundingBoxes.mx": {
         "label": "X başlangıcı"
@@ -1257,6 +1259,60 @@
       "boundingBoxes.subtract": {
         "label": "Çıkar",
         "help": "Bu kutuyu öncekilere eklemek yerine onlardan kes."
+      },
+      "multiBlock": {
+        "label": "Birden çok bloğa yayılır",
+        "help": "Kutular bloğun kendi hücresinin dışına taşabilir (0'ın altı, 16'nın üstü): değdikleri her hücre bloğun parçası olur. Koymak için o hücreler boş olmalı, herhangi bir parçası kırılınca bütün blok kırılır ve bir kez düşer, yönüyle birlikte döner. Yalnız tabanı olmayan, yönü olmayan ya da dört yatay yöne bakan bloklar için."
+      },
+      "seatable": {
+        "label": "Oturulabilir",
+        "help": "Oyuncular bloğa sağ tıklayınca üstüne oturur; eğilince kalkar, blok kırılınca herkes kalkar. Prosedür ya da kod gerekmez."
+      },
+      "seatHeightMode": {
+        "label": "Oturma yüksekliği",
+        "help": "Otomatik: her koltuk altındaki kutuların üstüne oturur (yarım blok yüksekliğinde bir kutu 0,5 blok verir). Elle: her koltuk kendi yüksekliğini korur.",
+        "options": {
+          "auto": "Otomatik, kutulardan",
+          "manual": "Elle, koltuk başına"
+        }
+      },
+      "seats": {
+        "label": "Koltuklar",
+        "help": "Oturabilecek her oyuncu için bir satır; kuzeye bakan blok için kuzeybatı alt köşeden piksel cinsinden (16 = bir blok). Yönü olan blok koltuklarını da döndürür. Yön, bloğun önünden derece cinsindendir (0 kuzey yüzünden dışarı bakar, 90 doğu). Koltuk eklemek için önizlemeye tıkla, taşımak için sürükle."
+      },
+      "seats.x": {
+        "label": "X"
+      },
+      "seats.y": {
+        "label": "Yükseklik (Y)",
+        "help": "Oturma yüzeyi; oturma yüksekliği elle olduğunda görünür."
+      },
+      "seats.z": {
+        "label": "Z"
+      },
+      "seats.yaw": {
+        "label": "Yön"
+      },
+      "seats.pose": {
+        "label": "Duruş",
+        "help": "Otur: oyuncu yöne bakarak oturur. Uzan: oyuncu sırtüstü uzanır, başı yön tarafında, gövdesinin ortası noktada (kanepenin uzun kenarı); yatak ya da uyku yok.",
+        "options": {
+          "sit": "Otur",
+          "lie": "Uzan"
+        }
+      },
+      "seatEmptyHand": {
+        "label": "Yalnız eli boşken",
+        "help": "Elinde bir şey tutan oyuncu onu blokta her zamanki gibi kullanır (blok koyar, yer) ve oturmaz."
+      },
+      "seatDismount": {
+        "label": "Kalkınca durduğu yer",
+        "help": "Oyuncunun kalkınca durduğu yer. Önü kapalıysa ön yerine bloğun üstü kullanılır.",
+        "options": {
+          "top": "Bloğun üstünde",
+          "front": "Koltuğun önünde",
+          "back": "Oturmadan önce durduğu yerde"
+        }
       },
       "customProperties": {
         "label": "Özellikler",
@@ -2170,6 +2226,144 @@
       "rvRecipes.energy": {
         "label": "Enerji (FE)",
         "help": "0: gösterilmez."
+      }
+    }
+  },
+  "bubble": {
+    "name": "Baloncuk",
+    "description": "Oyuncunun kafasının üstünde gösterilen konuşma baloncuğu: arka plan, ikon, yazı ve animasyon; bir prosedür gösterir.",
+    "pages": {
+      "design": "Tasarım"
+    },
+    "groups": {
+      "Background": "Arka plan",
+      "Icon": "İkon",
+      "Caption": "Yazı",
+      "Layout": "Yerleşim",
+      "Behaviour": "Davranış"
+    },
+    "fields": {
+      "background": {
+        "label": "Arka plan resmi",
+        "help": "Boş: hazır konuşma baloncuğu. .png.mcmeta dosyası olan, üst üste kare karelerden oluşan bir şerit animasyon olarak oynar."
+      },
+      "backgroundMode": {
+        "label": "Arka plan çizimi",
+        "options": {
+          "plain": "Baloncuğa gerilir",
+          "nine_slice": "9 dilim (köşeler boyutunu korur)"
+        }
+      },
+      "sliceBorder": {
+        "label": "Köşe boyutu (piksel)",
+        "help": "Resmin her kenarından olduğu gibi kalan pikseller; orta kısım gerilir."
+      },
+      "icon": {
+        "label": "İkon resmi",
+        "help": "Projedeki herhangi bir doku; boşsa ikon yok. .png.mcmeta dosyası olan, üst üste kare karelerden oluşan bir şerit animasyon olarak oynar."
+      },
+      "iconSize": {
+        "label": "İkon boyutu (piksel)"
+      },
+      "layout": {
+        "label": "İkon konumu",
+        "options": {
+          "center": "Kuyruğun üstünde ortada",
+          "free": "Serbest (x, y)"
+        }
+      },
+      "iconX": {
+        "label": "İkon x"
+      },
+      "iconY": {
+        "label": "İkon y"
+      },
+      "caption": {
+        "label": "Yazı",
+        "help": "Baloncuğun üstündeki yazı. {text}, prosedürün verdiği yazıyla değişir; {text} yoksa verilen yazı bunun yerine geçer."
+      },
+      "captionColor": {
+        "label": "Yazı rengi"
+      },
+      "captionShadow": {
+        "label": "Yazı gölgesi"
+      },
+      "captionScale": {
+        "label": "Yazı boyutu",
+        "help": "1: isim etiketi boyu."
+      },
+      "width": {
+        "label": "Genişlik (piksel)"
+      },
+      "height": {
+        "label": "Yükseklik (piksel)"
+      },
+      "padding": {
+        "label": "İç boşluk (piksel)"
+      },
+      "tail": {
+        "label": "Kuyruk yüksekliği (piksel)",
+        "help": "Altta konuşma kuyruğuna ayrılan pikseller; ikon bunların üstünde ortalanır."
+      },
+      "scale": {
+        "label": "Dünyadaki boyut",
+        "help": "1: 32 piksel 0,6 bloktur, hazır baloncuk gibi."
+      },
+      "offset": {
+        "label": "Ek yükseklik (blok)",
+        "help": "Kafanın üstündeki yüksekliğe, isim etiketi görünüyorsa onun üstündekine eklenir."
+      },
+      "appear": {
+        "label": "Şununla belirir",
+        "help": "Herhangi bir birleşim; hiçbiri: anında.",
+        "options": {
+          "fade": "Belirerek",
+          "scale": "Büyüyerek (fırlama)",
+          "slide_up": "Aşağıdan yukarı kayarak",
+          "slide_down": "Yukarıdan aşağı kayarak"
+        }
+      },
+      "appearTicks": {
+        "label": "Belirme süresi (tik)"
+      },
+      "appearEasing": {
+        "label": "Belirme eğrisi",
+        "options": {
+          "linear": "Doğrusal",
+          "ease_out": "Yavaşlayarak (hızlı başlar)",
+          "ease_in_out": "Başta ve sonda yavaş",
+          "back": "Aşıp yerine oturur"
+        }
+      },
+      "disappear": {
+        "label": "Şununla kaybolur",
+        "help": "Herhangi bir birleşim; hiçbiri: anında.",
+        "options": {
+          "fade": "Silinerek",
+          "scale": "Küçülerek",
+          "slide_up": "Yukarı kayıp giderek",
+          "slide_down": "Aşağı kayıp giderek"
+        }
+      },
+      "disappearTicks": {
+        "label": "Kaybolma süresi (tik)"
+      },
+      "disappearEasing": {
+        "label": "Kaybolma eğrisi",
+        "options": {
+          "linear": "Doğrusal",
+          "ease_out": "Yavaşlayarak (hızlı başlar)",
+          "ease_in_out": "Başta ve sonda yavaş",
+          "back": "Aşıp yerine oturur"
+        }
+      },
+      "duration": {
+        "label": "Aktif süre (tik)",
+        "help": "Gösterildiğinden kaybolmaya başlayana kadar geçen tik (belirme süresi dahil); 0: kaldırılana kadar. Baloncuk göster bloğunun süresi -1 olduğunda kullanılır."
+      },
+      "sound": {
+        "label": "Ses",
+        "help": "Baloncuk gösterildiğinde oyuncunun yanında çalar; boşsa ses yok."
       }
     }
   },
@@ -3163,6 +3357,18 @@
         "label": "Her uzaklıkta açık kal",
         "help": "Oyuncu bloğundan uzaklaşsa da arayüzü açık tutar."
       },
+      "inventorySource": {
+        "label": "Yuva envanteri",
+        "help": "Yuvalardaki eşyaların durduğu yer: arayüzün açıldığı blok (ya da bir eşya, ya da geçici bir envanter) veya bir metin kimliğiyle adlandırılan ortak oturum; 'arayüzü oturumda aç' bloğuyla aynı oturumu açan oyuncular yuvaları ve oturum değerlerini blok olmadan paylaşır.",
+        "options": {
+          "block": "Blok",
+          "session": "Ortak oturum"
+        }
+      },
+      "inventorySize": {
+        "label": "Oturum yuvaları",
+        "help": "Bir oturumun yuva sayısı; en az en yüksek yuva kimliğinin bir fazlası. Fazla yuvalardaki eşyalara yalnız prosedürler ulaşır."
+      },
       "doesPauseGame": {
         "label": "Oyunu duraklat",
         "help": "Ekran açıkken tek oyunculu oyunu duraklat."
@@ -3202,6 +3408,10 @@
       "onClosed": {
         "label": "Kapandığında",
         "help": "Ekran kapandığında çalışır."
+      },
+      "onSlotChanged": {
+        "label": "Bir yuva değiştiğinde",
+        "help": "Ekran açıkken arayüzün yuvalarından birindeki yığın her değiştiğinde sunucuda bir kez çalışır: tıklama, shift ile tıklama, bir prosedür ya da huni. Yuva kimliğini 'slot' bağımlılığı verir; bu prosedürün değiştirdiği yuvalar onu yeniden çalıştırmaz."
       }
     }
   },
@@ -5570,6 +5780,7 @@
           "player_wakes_up": "Oyuncu uyandığında",
           "player_xp_change": "Oyuncunun deneyimi değiştiğinde",
           "player_xp_level_change": "Oyuncunun deneyim seviyesi değiştiğinde",
+          "radial_slice_chosen": "Radyal menü dilimi seçildiğinde",
           "sapling_glow": "Fidan parladığında",
           "village_siege": "Köy kuşatıldığında",
           "world_ticks": "Dünya her tikte",
@@ -6306,6 +6517,383 @@
       },
       "trades.priceMultiplier": {
         "label": "Fiyat çarpanı"
+      }
+    }
+  },
+  "radial_menu": {
+    "name": "Radyal menü",
+    "description": "Bir tuşla açılan, sekmelerde dilimlerden oluşan çark: farenin yönü bir dilim seçer; dilim komut, prosedür, arayüz, başka bir menü ya da baloncuk çalıştırır.",
+    "pages": {
+      "menu": "Menü"
+    },
+    "groups": {
+      "Opening": "Açılış",
+      "Wheel": "Çark",
+      "Background": "Arka plan",
+      "Centre": "Orta",
+      "Tabs": "Sekmeler"
+    },
+    "fields": {
+      "openKey": {
+        "label": "Varsayılan tuş",
+        "help": "Oyuncular kontroller menüsünden değiştirebilir. Yok: menüyü yalnız prosedürler açar.",
+        "options": {
+          "NONE": "Yok",
+          "0": "0",
+          "1": "1",
+          "2": "2",
+          "3": "3",
+          "4": "4",
+          "5": "5",
+          "6": "6",
+          "7": "7",
+          "8": "8",
+          "9": "9",
+          "A": "A",
+          "ADD": "Ekle",
+          "APOSTROPHE": "Kesme işareti",
+          "B": "B",
+          "BACK": "Geri",
+          "BACKSLASH": "Ters bölü",
+          "C": "C",
+          "D": "D",
+          "DECIMAL": "Ondalık",
+          "DELETE": "Sil",
+          "DIVIDE": "Böl",
+          "DOWN": "Aşağı ok",
+          "E": "E",
+          "END": "End",
+          "EQUALS": "Eşittir",
+          "ESCAPE": "Esc",
+          "F": "F",
+          "F1": "F1",
+          "F10": "F10",
+          "F11": "F11",
+          "F12": "F12",
+          "F13": "F13",
+          "F14": "F14",
+          "F15": "F15",
+          "F16": "F16",
+          "F17": "F17",
+          "F18": "F18",
+          "F19": "F19",
+          "F2": "F2",
+          "F3": "F3",
+          "F4": "F4",
+          "F5": "F5",
+          "F6": "F6",
+          "F7": "F7",
+          "F8": "F8",
+          "F9": "F9",
+          "G": "G",
+          "H": "H",
+          "HOME": "Home",
+          "I": "I",
+          "INSERT": "Insert",
+          "J": "J",
+          "K": "K",
+          "L": "L",
+          "LCONTROL": "Sol Ctrl",
+          "LEFT": "Sol ok",
+          "LSHIFT": "Sol Shift",
+          "LWIN": "Sol Win",
+          "MOUSELEFT": "Fare sol",
+          "MOUSERIGHT": "Fare sağ",
+          "MOUSEMIDDLE": "Fare orta",
+          "M": "M",
+          "MINUS": "Eksi",
+          "N": "N",
+          "NUMLOCK": "Num Lock",
+          "NUMPAD0": "Numpad0",
+          "NUMPAD1": "Numpad1",
+          "NUMPAD2": "Numpad2",
+          "NUMPAD3": "Numpad3",
+          "NUMPAD4": "Numpad4",
+          "NUMPAD5": "Numpad5",
+          "NUMPAD6": "Numpad6",
+          "NUMPAD7": "Numpad7",
+          "NUMPAD8": "Numpad8",
+          "NUMPAD9": "Numpad9",
+          "NUMPADCOMMA": "Num virgül",
+          "NUMPADENTER": "Num Enter",
+          "NUMPADEQUALS": "Num eşittir",
+          "O": "O",
+          "P": "P",
+          "PERIOD": "Nokta",
+          "Q": "Q",
+          "R": "R",
+          "RCONTROL": "Sağ Ctrl",
+          "ENTER": "Enter",
+          "RIGHT": "Sağ ok",
+          "RSHIFT": "Sağ Shift",
+          "RWIN": "Sağ Win",
+          "S": "S",
+          "SCROLL": "Scroll",
+          "SLASH": "Bölü",
+          "SPACE": "Boşluk",
+          "T": "T",
+          "TAB": "Tab",
+          "U": "U",
+          "UP": "Yukarı ok",
+          "V": "V",
+          "W": "W",
+          "X": "X",
+          "Y": "Y",
+          "Z": "Z"
+        }
+      },
+      "openMode": {
+        "label": "Tuş",
+        "options": {
+          "hold": "Basılı tut: bırakınca faredeki dilim seçilir",
+          "toggle": "Basınca açılır, tıklayınca seçilir"
+        }
+      },
+      "keyName": {
+        "label": "Kontroller menüsündeki ad",
+        "help": "Boş: menünün başlığı, o da yoksa kimliği."
+      },
+      "size": {
+        "label": "Boyut (arayüz pikseli)"
+      },
+      "hole": {
+        "label": "Boşluk (yarıçapın yüzdesi)"
+      },
+      "gap": {
+        "label": "Ayırıcı genişliği (piksel)",
+        "help": "Dilimler arasındaki boşluk."
+      },
+      "sliceColor": {
+        "label": "Dilim rengi"
+      },
+      "sliceOpacity": {
+        "label": "Dilim opaklığı (yüzde)"
+      },
+      "hoverColor": {
+        "label": "Faredeki dilim"
+      },
+      "disabledColor": {
+        "label": "Devre dışı dilim"
+      },
+      "sliceImage": {
+        "label": "Dilim resmi",
+        "help": "İsteğe bağlı, her dilimin ikonunun altına çizilir; aşağıdaki resimler fare üstündeyken ve devre dışıyken bunun yerine geçer."
+      },
+      "hoverImage": {
+        "label": "Faredeki dilim resmi"
+      },
+      "disabledImage": {
+        "label": "Devre dışı dilim resmi"
+      },
+      "sliceImageSize": {
+        "label": "Dilim resmi boyutu (arayüz pikseli)"
+      },
+      "background": {
+        "label": "Arka plan resmi",
+        "help": "İsteğe bağlı, çarkın altına çizilir."
+      },
+      "backgroundMode": {
+        "label": "Arka plan çizimi",
+        "options": {
+          "plain": "Gerilir",
+          "nine_slice": "9 dilim (köşeler boyutunu korur)"
+        }
+      },
+      "sliceBorder": {
+        "label": "Köşe boyutu (piksel)"
+      },
+      "backgroundPadding": {
+        "label": "Arka plan payı (arayüz pikseli)",
+        "help": "Arka planın çarkın ne kadar dışına taştığı."
+      },
+      "title": {
+        "label": "Başlık",
+        "help": "Farenin altında dilim yokken ortada görünür."
+      },
+      "showLabel": {
+        "label": "Faredeki dilimin adı"
+      },
+      "showDescription": {
+        "label": "Faredeki dilimin açıklaması"
+      },
+      "centerIcon": {
+        "label": "Faredeki dilimin ikonu"
+      },
+      "textColor": {
+        "label": "Yazı rengi"
+      },
+      "appear": {
+        "label": "Şununla açılır",
+        "help": "Herhangi bir birleşim; hiçbiri: anında.",
+        "options": {
+          "fade": "Belirerek",
+          "scale": "Büyüyerek (fırlama)",
+          "slide_up": "Aşağıdan yukarı kayarak",
+          "slide_down": "Yukarıdan aşağı kayarak"
+        }
+      },
+      "appearTicks": {
+        "label": "Açılış süresi (tik)"
+      },
+      "appearEasing": {
+        "label": "Açılış eğrisi",
+        "options": {
+          "linear": "Doğrusal",
+          "ease_out": "Yavaşlayarak (hızlı başlar)",
+          "ease_in_out": "Başta ve sonda yavaş",
+          "back": "Aşıp yerine oturur"
+        }
+      },
+      "tabs": {
+        "label": "Sekmeler",
+        "help": "Sekme değiştirmek için tekerleği çevir ya da 1-9 tuşlarına bas."
+      },
+      "tabs.id": {
+        "label": "Sekme kimliği"
+      },
+      "tabs.label": {
+        "label": "Sekme adı"
+      },
+      "tabs.source": {
+        "label": "Dilimler",
+        "help": "Çalışma zamanı klasörü, sunucudaki config/<modid>/<klasör>/ içindeki her PNG ve GIF dosyasını dilim yapar (dosya adı dilim kimliği ve adıdır); yeni dosyalar bir sonraki açılışta ya da /<modid> reload sonrasında görünür.",
+        "options": {
+          "list": "Burada listelenenler",
+          "folder": "Çalışma zamanı klasöründeki resimler"
+        }
+      },
+      "tabs.slices": {
+        "label": "Dilimler"
+      },
+      "tabs.slices.id": {
+        "label": "Dilim kimliği",
+        "help": "Prosedürlere ve tetikleyiciye slice olarak verilir."
+      },
+      "tabs.slices.label": {
+        "label": "Ad",
+        "help": "Dilim farenin altındayken ortada görünür."
+      },
+      "tabs.slices.description": {
+        "label": "Açıklama",
+        "help": "Adın altında ikinci satır."
+      },
+      "tabs.slices.iconKind": {
+        "label": "İkon",
+        "options": {
+          "texture": "Proje dokusu",
+          "item": "Eşya",
+          "none": "Yok"
+        }
+      },
+      "tabs.slices.icon": {
+        "label": "İkon resmi",
+        "help": ".png.mcmeta dosyası olan, üst üste kare karelerden oluşan bir şerit animasyon olarak oynar."
+      },
+      "tabs.slices.item": {
+        "label": "İkon eşyası"
+      },
+      "tabs.slices.image": {
+        "label": "Çalışma zamanı resmi",
+        "help": "Sunucudaki config/<modid>/<klasör>/ içindeki bir PNG ya da GIF için klasör/ad, örneğin emotes/wave."
+      },
+      "tabs.slices.condition": {
+        "label": "Koşul",
+        "help": "Menü açılırken ve dilim seçilirken sunucuda denetlenir; boş: her zaman."
+      },
+      "tabs.slices.conditionMode": {
+        "label": "Koşul yanlışsa",
+        "options": {
+          "hidden": "Dilimi gizle",
+          "disabled": "Gri göster"
+        }
+      },
+      "tabs.folder": {
+        "label": "Klasör",
+        "help": "Sunucuda config/<modid>/ altında, örneğin emotes. Resimler oyunculara gönderilir."
+      },
+      "tabs.pageSize": {
+        "label": "Sayfa başına dilim",
+        "help": "Fazla dosyalar sonraki sayfalara geçer; sayfalara sekmeler gibi ulaşılır."
+      },
+      "tabs.slices.action": {
+        "label": "Eylem",
+        "help": "Dilim seçilince sunucuda ne olur. Her seçim ayrıca \"Radyal menü dilimi seçildi\" genel tetikleyicisini çalıştırır.",
+        "options": {
+          "none": "Hiçbir şey (yalnız dilim seçildi tetikleyicisi)",
+          "command": "Oyuncu olarak komut çalıştır",
+          "procedure": "Prosedür çağır",
+          "menu": "Başka bir radyal menü aç",
+          "gui": "Arayüz aç",
+          "bubble": "Baloncuk göster",
+          "image_bubble": "Çalışma zamanı resmini baloncukta göster"
+        }
+      },
+      "tabs.slices.command": {
+        "label": "Komut",
+        "help": "Oyuncunun kendi yetkileriyle çalışır, örneğin /takas. {id} dilim kimliğiyle değişir."
+      },
+      "tabs.slices.procedure": {
+        "label": "Prosedür",
+        "help": "Sunucuda oyuncuyla çalışır; menu, tab ve slice seçilen dilimi verir."
+      },
+      "tabs.slices.menu": {
+        "label": "Radyal menü"
+      },
+      "tabs.slices.gui": {
+        "label": "Arayüz",
+        "help": "Oyuncunun bulunduğu yerde açılır."
+      },
+      "tabs.slices.bubble": {
+        "label": "Baloncuk",
+        "help": "Boş: varsayılan baloncuk."
+      },
+      "tabs.slices.caption": {
+        "label": "Baloncuk yazısı",
+        "help": "Baloncuğun {text} yerini doldurur. {id} dilim kimliğiyle değişir."
+      },
+      "tabs.slices.duration": {
+        "label": "Baloncuk süresi (tik)",
+        "help": "-1: baloncuğun kendi süresi (çalışma zamanı resminde 100 tik), 0: kaldırılana kadar."
+      },
+      "tabs.action": {
+        "label": "Eylem",
+        "help": "Dilim seçilince sunucuda ne olur. Her seçim ayrıca \"Radyal menü dilimi seçildi\" genel tetikleyicisini çalıştırır. Klasörde dilim kimliği dosya adıdır; Çalışma zamanı resmini baloncukta göster o dosyayı gösterir.",
+        "options": {
+          "none": "Hiçbir şey (yalnız dilim seçildi tetikleyicisi)",
+          "command": "Oyuncu olarak komut çalıştır",
+          "procedure": "Prosedür çağır",
+          "menu": "Başka bir radyal menü aç",
+          "gui": "Arayüz aç",
+          "bubble": "Baloncuk göster",
+          "image_bubble": "Çalışma zamanı resmini baloncukta göster"
+        }
+      },
+      "tabs.command": {
+        "label": "Komut",
+        "help": "Oyuncunun kendi yetkileriyle çalışır, örneğin /takas. {id} dilim kimliğiyle değişir."
+      },
+      "tabs.procedure": {
+        "label": "Prosedür",
+        "help": "Sunucuda oyuncuyla çalışır; menu, tab ve slice seçilen dilimi verir."
+      },
+      "tabs.menu": {
+        "label": "Radyal menü"
+      },
+      "tabs.gui": {
+        "label": "Arayüz",
+        "help": "Oyuncunun bulunduğu yerde açılır."
+      },
+      "tabs.bubble": {
+        "label": "Baloncuk",
+        "help": "Boş: varsayılan baloncuk."
+      },
+      "tabs.caption": {
+        "label": "Baloncuk yazısı",
+        "help": "Baloncuğun {text} yerini doldurur. {id} dilim kimliğiyle değişir."
+      },
+      "tabs.duration": {
+        "label": "Baloncuk süresi (tik)",
+        "help": "-1: baloncuğun kendi süresi (çalışma zamanı resminde 100 tik), 0: kaldırılana kadar."
       }
     }
   }

@@ -60,6 +60,8 @@ export interface Widget {
   animated?: boolean;
   frameTime?: number;
   frameCount?: number;
+  /** image (Q229): when its animation starts, "open" (default), "always" (game clock) or "procedure". */
+  animationStart?: string;
   /** Overlay label, image: the screen point it keeps its distance to (src/elements/overlayLayout.ts); unset: the overlay's. */
   anchor?: string;
   /** label (KUYRUK 182): a box behind the text, "#rrggbb", opacity 0-100 (default 50) and padding (default 1). */
@@ -353,7 +355,10 @@ export function widgetFields(kind: WidgetKind, overlay: boolean): FieldDef[] {
     case "checkbox":
       return [name, f("text", "text", "gui.field.text"), f("checked", "boolean", "gui.field.checked"), ...pos];
     case "image":
-      return [name, f("image", "texture", "gui.field.image"), ...pos, ...anchor, ...size.map((s) => ({ ...s, help: t("gui.field.imageSizeHelp") })), z, condition];
+      // Q229: when an animated image starts; overlays have no opening, so they keep the game clock or a procedure.
+      return [name, f("image", "texture", "gui.field.image"), ...pos, ...anchor, ...size.map((s) => ({ ...s, help: t("gui.field.imageSizeHelp") })), z, condition,
+        ...(overlay ? [] : [f("animationStart", "select", "gui.field.animationStart", { help: t("gui.field.animationStartHelp"), default: "open",
+          options: (["open", "always", "procedure"] as const).map((v) => ({ value: v, label: t(`gui.animationStart.${v}`) })) })])];
     case "state_image":
       // KUYRUK 186: the states, then what picks one (a number procedure, else the states' conditions) and when.
       return [name,

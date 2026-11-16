@@ -8,6 +8,7 @@ import { resolveModDependencies } from "../build/modDependencies.ts";
 import { listEngines, toolchainNeeds } from "../engines/registry.ts";
 import { ensureToolchain, ensureToolchains } from "../engines/toolchains.ts";
 import { generateTarget } from "../generator/generate.ts";
+import type { ProbeOptions } from "../generator/typeModule.ts";
 import { isProjectDir, loadProject, refreshSchemas } from "../ir/storage.ts";
 import { gradleModSetup, isGradleModProject, loadGradleModProject } from "../projects/gradleMod.ts";
 import { registerAgentTools } from "./agentTools.ts";
@@ -32,6 +33,7 @@ import { registerCreativeTabTools } from "./creativeTabs.ts";
 import { registerTagTools } from "./tags.ts";
 import { registerTextureTools } from "./textures.ts";
 import { registerRunTools } from "./runs.ts";
+import { registerScenarioTools } from "./scenario.ts";
 import { registerObserveTools } from "./observe.ts";
 
 /** Folders that are generated or huge; never listed or searched. */
@@ -74,7 +76,7 @@ export async function serveMcp(projectDir: string): Promise<void> {
    * Downloads missing toolchains first, so a fresh install can build without manual setup. With generate: false the
    * engine's project is used as it was generated last (a second client of a running engine, KUYRUK 190).
    */
-  const setupFor = async (engineId?: string, options: { generate?: boolean } = {}): Promise<GradleSetup> => {
+  const setupFor = async (engineId?: string, options: { generate?: boolean; probe?: ProbeOptions } = {}): Promise<GradleSetup> => {
     if (kind === "gradle") {
       const project = loadGradleModProject(root);
       await ensureToolchain("jdk", project.jdk);
@@ -87,7 +89,7 @@ export async function serveMcp(projectDir: string): Promise<void> {
     if (options.generate === false) return engineSetup(engine, outDir);
     // Jars of the mods the project depends on, so runs load them (KUYRUK 152).
     await resolveModDependencies(loadProject(root).mod.dependencies, engine);
-    generateTarget(loadProject(root), root, engine, outDir);
+    generateTarget(loadProject(root), root, engine, outDir, { probe: options.probe });
     return engineSetup(engine, outDir);
   };
   const engineArg = { engine: z.string().optional().describe("Engine id; required for MCEdge projects, ignored for Gradle mods") };
@@ -223,6 +225,7 @@ export async function serveMcp(projectDir: string): Promise<void> {
   }
   else registerGradleModTools(server, () => setupFor(), guard);
   const runs = registerRunTools(server, setupFor, guard);
+  if (kind === "mcedge") registerScenarioTools(server, root, runs, guard);
   registerObserveTools(server, root, kind, runs);
   registerGitTools(server, root, guard);
   if (kind === "mcedge") registerGeneratorTools(server, root, guard);

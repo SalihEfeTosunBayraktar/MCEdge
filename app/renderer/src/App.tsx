@@ -36,10 +36,13 @@ import { DataListsDialog, GradleTaskDialog, ImportZipDialog, RunClientDialog } f
 import { nextPlayer } from "../../../src/build/players.ts";
 import { TextureEditor } from "./textures/TextureEditor.tsx";
 import { invalidateTexture } from "./hooks/useTexture.ts";
-import { AboutDialog, ConnectAgentDialog, DocsDialog, KeyboardShortcutsDialog, NoticeDialog, UpdateDialog, type Notice } from "./components/HelpDialogs.tsx";
+import { AboutDialog, ConnectAgentDialog, DocsDialog, KeyboardShortcutsDialog, NoticeDialog, type Notice } from "./components/HelpDialogs.tsx";
+import { gameRunning, UpdateDialog } from "./components/Updates.tsx";
+import { ReportBugDialog } from "./components/ReportBugDialog.tsx";
 import type { ResourceTab } from "./components/ResourcesView.tsx";
 import { QuickOpen } from "./components/QuickOpen.tsx";
 import { reveal } from "./hooks/reveal.ts";
+import { useUnusedTranslations } from "./hooks/useUnusedTranslations.ts";
 import type { QuickItem } from "../../../src/ir/quickSearch.ts";
 import { EditorTabs, elementTab, parseTab, tabExists, textureTab, type TabKey } from "./components/EditorTabs.tsx";
 
@@ -59,6 +62,10 @@ export function App() {
   const [usage, setUsage] = useState<string>();
   const [section, setSection] = useState<Section>("elements");
   const [panel, setPanel] = useState<PanelId>();
+  const unusedTranslations = useUnusedTranslations(snapshot, engineId, panel === "problems");
+  /** The tab the status bar double click brings back (Q209); Problems until one was viewed. */
+  const lastPanel = useRef<PanelId>("problems");
+  if (panel) lastPanel.current = panel;
   const [builds, setBuilds] = useState<Record<string, EngineBuild>>({});
   const [preferences, setPreferencesState] = useState<Preferences>();
   const [typesLoaded, setTypesLoaded] = useState<string>();
@@ -68,7 +75,7 @@ export function App() {
   const [newTexture, setNewTexture] = useState(false);
   const [packDialog, setPackDialog] = useState(false);
   const [resourceTab, setResourceTab] = useState<ResourceTab>("textures");
-  const [dialog, setDialog] = useState<"about" | "docs" | "preferences" | "shortcuts" | "updates" | "connectAgent" | "newProject" | "dataLists" | "gradleTask" | "importZip" | "quickOpen" | "runClient">();
+  const [dialog, setDialog] = useState<"about" | "docs" | "preferences" | "shortcuts" | "updates" | "connectAgent" | "reportBug" | "newProject" | "dataLists" | "gradleTask" | "importZip" | "quickOpen" | "runClient">();
   /** Ctrl+N asked for the New popup; the element list opens it once and clears this. */
   const [newRequest, setNewRequest] = useState(false);
   const [notice, setNotice] = useState<Notice>();
@@ -273,6 +280,7 @@ export function App() {
     openExample: async () => load(await api.openProject(await api.exampleProjectDir())),
     openRecent: async (dir) => load(await api.openProject(dir)),
     closeProject: () => (setSnapshot(undefined), setCode(undefined)),
+    openProjectFolder: () => { const dir = snapshot?.dir ?? code?.dir; if (dir) void api.openProjectFolder(dir); },
     build: (all) => {
       if (code) return codeBuild();
       if (!snapshot) return;
@@ -326,6 +334,7 @@ export function App() {
     checkUpdates: () => setDialog("updates"),
     openDeveloperDocs: () => void api.openExternal("https://github.com/SalihEfeTosunBayraktar/MCEdge/tree/main/docs"),
     connectAgent: () => setDialog("connectAgent"),
+    reportBug: () => setDialog("reportBug"),
     newElement: () => snapshot && (setOpen(undefined), setPainting(undefined), setSection("elements"), setNewRequest(true)),
     closeEditor: activeTab ? () => closeTabs([activeTab]) : undefined,
     back: () => walk(-1),
@@ -523,7 +532,7 @@ export function App() {
               // Every section names itself at the left of its find bar (KUYRUK 122).
               <SectionName.Provider value={t(`section.${section}`)}>
                 {section === "elements" && (
-                  <Workspace newRequest={newRequest} onNewHandled={() => setNewRequest(false)} snapshot={snapshot} coverage={engine?.coverage} engineName={engine?.name ?? ""} selected={selected} usage={usage} onSelect={setSelected} onOpen={setOpen}
+                  <Workspace newRequest={newRequest} onNewHandled={() => setNewRequest(false)} snapshot={snapshot} coverage={engine?.coverage} engineName={engine?.name ?? ""} engineId={engineId} selected={selected} usage={usage} onSelect={setSelected} onOpen={setOpen}
                     onChanged={setSnapshot} onClearUsage={() => setUsage(undefined)} live={recentlyChanged} agentOn={focus?.target}
                     onNewTask={setNewTask} />
                 )}
@@ -560,13 +569,14 @@ export function App() {
           onStart={startBuilds} />
       )}
       {(snapshot || code) && panel && (
-        <BottomPanel panel={panel} issues={snapshot?.issues ?? []} ignoredIssues={snapshot?.ignoredIssues}
+        <BottomPanel panel={panel} issues={[...(snapshot?.issues ?? []), ...unusedTranslations.shown]} ignoredIssues={[...(snapshot?.ignoredIssues ?? []), ...unusedTranslations.ignored]}
+          onProblemFix={snapshot && ((issue) => void api.removeUnusedTranslations(snapshot.dir, issue.path.replace(/^localization\./, ""), engineId || undefined).then(setSnapshot))}
           onProblemAction={snapshot && ((action) => void api.updateProblems(snapshot.dir, action).then(setSnapshot))} console={!!snapshot}
           agent={snapshot && { dir: snapshot.dir, live, now, onOpenTarget: openTarget, show: timelineShow, onConnect: () => setDialog("connectAgent") }}
           tasks={snapshot && { dir: snapshot.dir, tasks, entries: live.entries, onNewTask: setNewTask, onOpenTarget: openTarget,
             onShowStep: (session, step) => (setTimelineShow({ session, step }), setPanel("activity")) }}
           onNewTask={snapshot ? setNewTask : undefined} builds={builds} engineId={engineId} onGradle={(args) => gradle("console", args)}
-          onStopGradle={() => void api.stopGradle(runKey(engineId, "gradle"))} onStopRun={code ? undefined : stopRun} onSelect={setPanel} onClose={() => setPanel(undefined)} />
+          onStopGradle={() => void api.stopGradle(runKey(engineId, "gradle"))} onStopRun={code ? undefined : stopRun} onSelect={setPanel} onClose={() => setPanel(undefined)} onReport={() => setDialog("reportBug")} />
       )}
       {dialog === "newProject" && <NewProjectDialog engines={engines} onCreated={(opened) => (setDialog(undefined), load(opened))} onClose={() => setDialog(undefined)} />}
       {dialog === "preferences" && preferences && <PreferencesDialog preferences={preferences} onChange={setPreferences} onClose={() => setDialog(undefined)} />}
@@ -574,8 +584,9 @@ export function App() {
       {dialog === "docs" && <DocsDialog onClose={() => setDialog(undefined)} />}
       {dialog === "quickOpen" && snapshot && <QuickOpen snapshot={snapshot} onOpen={openQuick} onClose={() => setDialog(undefined)} />}
       {dialog === "shortcuts" && <KeyboardShortcutsDialog onClose={() => setDialog(undefined)} />}
-      {dialog === "updates" && <UpdateDialog onClose={() => setDialog(undefined)} />}
+      {dialog === "updates" && <UpdateDialog check gameRunning={gameRunning(builds)} onClose={() => setDialog(undefined)} />}
       {dialog === "connectAgent" && <ConnectAgentDialog dir={snapshot?.dir ?? code?.dir} onClose={() => setDialog(undefined)} />}
+      {dialog === "reportBug" && <ReportBugDialog engineName={engine?.name ?? ""} buildLines={(Object.values(builds).findLast((b) => b.status === "failed") ?? builds[engineId])?.lines ?? []} onClose={() => setDialog(undefined)} />}
       {dialog === "dataLists" && <DataListsDialog onClose={() => setDialog(undefined)} />}
       {dialog === "importZip" && <ImportZipDialog onImported={(opened) => (setDialog(undefined), load(opened))} onClose={() => setDialog(undefined)} />}
       {dialog === "gradleTask" && (
@@ -588,7 +599,8 @@ export function App() {
       )}
       {notice && <NoticeDialog notice={notice} onClose={() => setNotice(undefined)} />}
       <StatusBar agent={agent} problems={snapshot?.issues.length ?? 0} elements={snapshot && allElements(snapshot).length} builds={builds}
-        engineName={code ? `JDK ${code.jdk}` : engine ? `${engine.name}` : ""} onOpenPanel={(p) => (snapshot || code) && setPanel(p)} open={!!snapshot || !!code} />
+        engineName={code ? `JDK ${code.jdk}` : engine ? `${engine.name}` : ""} onOpenPanel={(p) => (snapshot || code) && setPanel(p)}
+        onTogglePanel={() => setPanel(panel ? undefined : lastPanel.current)} panelOpen={!!panel} open={!!snapshot || !!code} />
     </div>
   );
 }

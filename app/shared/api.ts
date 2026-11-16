@@ -7,6 +7,7 @@ import type { PickerKind, VanillaCatalog } from "../../src/resources/vanillaAsse
 import type { LockedFileChange } from "../../src/generator/lockedCode.ts";
 import type { NewProject } from "../../src/ir/createProject.ts";
 import type { ModInfo, ModProject, Variable } from "../../src/ir/types.ts";
+import type { DeletePlan, DeleteSelection } from "../../src/ir/deleteCascade.ts";
 import type { ValidationIssue } from "../../src/ir/validate.ts";
 import type { ProblemAction } from "../../src/ir/problems.ts";
 import type { Reference, ReferenceReport, UnusedReport } from "../../src/ir/references.ts";
@@ -149,6 +150,9 @@ export interface FsChange {
   paths: string[];
 }
 
+/** The only page Help > Report a bug may open: this repository's new-issue form (Q208). */
+export const ISSUES_NEW = "https://github.com/SalihEfeTosunBayraktar/MCEdge/issues/new?";
+
 export interface AppInfo {
   version: string;
   electron: string;
@@ -182,6 +186,8 @@ export interface Preferences {
   blockbenchPath?: string;
   /** CurseForge API key for dependency jars (KUYRUK 173): this computer's, never stored in a project. */
   curseforgeKey?: string;
+  /** Check for updates on start and every few hours (Q207); unset means on. Help > Check for updates always works. */
+  autoUpdate?: boolean;
 }
 
 /** Result of Edit in Blockbench: started on the work copy, or not found where it was looked for. */
@@ -189,14 +195,21 @@ export type BlockbenchOpen =
   | { ok: true; exe: string; file: string; textures: string[] }
   | { ok: false; searched: string[] };
 
-export interface UpdateCheck {
-  /** "available": a newer release; "latest": this is the newest; "failed": the release list could not be read. */
-  status: "available" | "latest" | "failed";
+/**
+ * Update state of the app (Q207), pushed to the renderer as it changes:
+ *   idle, checking, latest  - nothing to show
+ *   available               - a newer release this copy cannot install itself (portable, dev): `url` links to it
+ *   downloading, ready      - the installed build downloads `latest` (`percent`), then installs it on restart or quit
+ *   failed                  - the last check or download failed (`message`); shown only in Help > Check for updates
+ */
+export interface UpdateState {
+  status: "idle" | "checking" | "latest" | "available" | "downloading" | "ready" | "failed";
   current: string;
   latest?: string;
+  /** Release notes as Markdown-like plain text. */
+  notes?: string;
+  percent?: number;
   url?: string;
-  /** What happens with an available update: the installed build downloads it, the portable and dev builds link to it. */
-  install?: "download" | "manual";
   message?: string;
 }
 
@@ -243,6 +256,8 @@ export interface McedgeApi {
   createProject(options: NewProject): Promise<Opened>;
   /** Opens a folder and starts watching it for outside changes (fs:changed). */
   openProject(dir: string): Promise<Opened>;
+  /** File > Open project folder: shows the folder in the OS file manager; refuses any folder but the open project's. */
+  openProjectFolder(dir: string): Promise<void>;
   /** Re-reads the project after outside changes. */
   reloadProject(dir: string): Promise<ProjectSnapshot>;
   onFsChange(listener: (change: FsChange) => void): () => void;
@@ -310,8 +325,10 @@ export interface McedgeApi {
    * write the editor has not merged yet) is merged three ways instead of overwritten (KUYRUK 159).
    */
   saveElement(dir: string, typeId: string, element: Element, restore?: boolean, base?: Element): Promise<ProjectSnapshot>;
-  /** Removes one element file. */
-  deleteElement(dir: string, typeId: string, id: string): Promise<ProjectSnapshot>;
+  /** Removes one element file, and with `selection` what only it used (see deletePlan); its folder entries go too. */
+  deleteElement(dir: string, typeId: string, id: string, selection?: DeleteSelection, engineId?: string): Promise<ProjectSnapshot>;
+  /** What only this element uses: procedures, GUIs, recipes, textures, models and translation keys (src/ir/deleteCascade.ts). */
+  deletePlan(dir: string, typeId: string, id: string, engineId?: string): Promise<DeletePlan>;
   /** Who uses an element and what it uses (src/ir/references.ts). */
   findReferences(dir: string, typeId: string, id: string): Promise<ReferenceReport>;
   /** Renames an element and everything that names it; `dryRun` only reports. The snapshot comes back when it was written. */
@@ -376,6 +393,10 @@ export interface McedgeApi {
   /** Asks for a CSV or lang JSON file to import and reads it; undefined when cancelled. */
   importTranslations(): Promise<{ path: string; text: string } | undefined>;
   /** Lang keys the generator writes for the project's elements on an engine, by key, with the element (KUYRUK 117). */
+  /** Translation keys nothing uses, one Problems entry per language, split by problems.json into shown and ignored (Q222). */
+  unusedTranslations(dir: string, engineId?: string): Promise<{ shown: ValidationIssue[]; ignored: ValidationIssue[] }>;
+  /** Removes the unused keys of one language; the snapshot comes back. */
+  removeUnusedTranslations(dir: string, language: string, engineId?: string): Promise<ProjectSnapshot>;
   generatedLangKeys(dir: string, engineId: string): Promise<Record<string, import("../../src/ir/localization.ts").ElementKey>>;
   /** Language columns the Localization screen hides in this project (kept in the app state, not the project). */
   hiddenLanguages(dir: string): Promise<string[]>;
@@ -423,6 +444,10 @@ export interface McedgeApi {
   appInfo(): Promise<AppInfo>;
   /** Help > Connect an AI agent: the command that starts this app's MCP server. */
   mcpCommand(): Promise<McpCommand>;
+  /** Home folder and user name of this computer, for masking them in a bug report (Q208). */
+  bugContext(): Promise<{ home: string; user: string }>;
+  /** Opens a new-issue URL of this repository (ISSUES_NEW prefix only) in the default browser. */
+  openIssue(url: string): Promise<void>;
   /** Opens an https link in the default browser. */
   openExternal(url: string): Promise<void>;
   /** Markdown files of docs/ with their first heading. */
@@ -430,7 +455,12 @@ export interface McedgeApi {
   listDocs(language: string): Promise<{ file: string; title: string }[]>;
   readDoc(language: string, file: string): Promise<string>;
   /** Help > Check for updates: compares with the latest GitHub release; an installed build starts downloading it. */
-  checkUpdates(): Promise<UpdateCheck>;
+  checkUpdates(): Promise<UpdateState>;
+  /** The current update state, then every change of it; returns the unsubscribe. */
+  updateState(): Promise<UpdateState>;
+  onUpdateState(listener: (state: UpdateState) => void): () => void;
+  /** Restart now: quits, installs the downloaded update and starts the new version (stops running games). */
+  installUpdate(): Promise<void>;
   /** Recolors the window-controls overlay drawn over the menu bar. */
   setTitleBarTheme(theme: "dark" | "light"): Promise<void>;
 }

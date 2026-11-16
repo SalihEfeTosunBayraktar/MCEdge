@@ -3,6 +3,7 @@ import { idExpr, jstr, list, str } from "../java.ts";
 import { procedureBuild, procedureCall, procedureCallById } from "../procedures.ts";
 import { modClassName } from "../registries.ts";
 import type { ElementContext, GenEnv, TypeModule } from "../typeModule.ts";
+import { textureAnimationsSource } from "../textureAnimations.ts";
 import { imageStates, labelText, stateDraw, stateExpression, stateMembers, stateTextures, zOf, type GuiWidget } from "./gui.ts";
 import SCREENS from "../data/screens.json" with { type: "json" };
 import { anchorParts, fixedScaleOf, scaleModeOf, widgetAnchor } from "../../elements/overlayLayout.ts";
@@ -200,7 +201,7 @@ ${ordered.map((o) => `        ${registration(env, o, owner, anchors.get(o) ?? ""
 ${overlays.map((o) => method(env, o)).join("\n\n")}
 ${overlays.flatMap((o) => stateMembersOf.get(o) ?? []).map((m) => `\n${m}\n`).join("")}}
 `;
-    return { sources: [{ path: `${pkg.replaceAll(".", "/")}/client/${cls}.java`, code }], clientInit: [`${owner}.register();`] };
+    return { sources: [{ path: `${pkg.replaceAll(".", "/")}/client/${cls}.java`, code }, textureAnimationsSource(env)], clientInit: [`${owner}.register();`] };
   },
 } satisfies TypeModule;
 

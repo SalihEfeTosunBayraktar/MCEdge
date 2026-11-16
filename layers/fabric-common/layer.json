@@ -2,7 +2,7 @@
   "$comment": "Element types and fields these templates generate; see src/engines/coverage.ts.",
   "generates": {
     "procedure": [
-      "globalTrigger=no_ext_trigger|mod_load|mod_serverload|world_load|world_unload|player_log_in|player_log_out|player_respawn|player_ticks|world_ticks|server_ticks|block_break|player_right_click_block|player_right_click_item|player_left_click_block|player_use_hoe|player_right_click_entity|entity_dies|entity_attacked|entity_joins_world|chat_sent|block_place"
+      "globalTrigger=no_ext_trigger|mod_load|mod_serverload|world_load|world_unload|player_log_in|player_log_out|player_respawn|player_ticks|world_ticks|server_ticks|block_break|player_right_click_block|player_right_click_item|player_left_click_block|player_use_hoe|player_right_click_entity|entity_dies|entity_attacked|entity_joins_world|chat_sent|block_place|radial_slice_chosen"
     ],
     "fluid": [
       "hasFog",

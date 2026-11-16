@@ -74,7 +74,7 @@ export const CLASS_SUFFIXES = [
 
 /** Procedure block registries that name something besides vanilla ids; the rest use REGISTRY_PROVIDERS. */
 const PROGRAM_REGISTRIES: Record<string, readonly string[]> = {
-  ...REGISTRY_PROVIDERS, fluid: ["fluid"], gui: ["gui"], advancement: ["advancement"],
+  ...REGISTRY_PROVIDERS, fluid: ["fluid"], gui: ["gui"], advancement: ["advancement"], bubble_element: ["bubble"], radial_menu_element: ["radial_menu"],
 };
 
 const WIDGET_PROCEDURES = ["procedure", "textProcedure", "condition", "lockCondition", "stateProcedure"];

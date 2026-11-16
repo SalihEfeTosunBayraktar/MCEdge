@@ -609,9 +609,9 @@ export const RefDatalists = memo(function RefDatalists({ snapshot }: { snapshot:
   const lists = useMemo(() => {
     const fileBase = (path: string) => path.slice(path.lastIndexOf("/") + 1, path.lastIndexOf("."));
     const vanilla = vanillaIds as unknown as Record<string, string[]>;
-    const kinds: readonly string[] = [...REGISTRY_FIELD_TYPES, "sound", "tag", "gui", "advancement", "fluid"];
+    const kinds: readonly string[] = [...REGISTRY_FIELD_TYPES, "sound", "tag", "gui", "advancement", "fluid", "bubble_element", "radial_menu_element"];
     // Block programs also complete GUI and advancement ids, which only this mod's elements provide.
-    const own: Record<string, string[]> = { gui: ["gui"], advancement: ["advancement"], fluid: ["fluid"] };
+    const own: Record<string, string[]> = { gui: ["gui"], advancement: ["advancement"], fluid: ["fluid"], bubble_element: ["bubble"], radial_menu_element: ["radial_menu"] };
     const lists = kinds.map((kind) => {
       const providers = kind in REGISTRY_PROVIDERS ? REGISTRY_PROVIDERS[kind as RegistryKind] : own[kind] ?? [];
       const mod = elementsOf(snapshot, providers).map(({ typeId, element }) => ({ value: element.id, label: elementName(typeId, element) }));
@@ -619,6 +619,8 @@ export const RefDatalists = memo(function RefDatalists({ snapshot }: { snapshot:
       const sounds = kind === "sound" ? snapshot.soundEvents.map((e) => ({ value: `${snapshot.project.mod.id}:${e.name}`, label: e.files.join(", ") })) : [];
       return { kind, options: [...sounds, ...mod, ...(vanilla[kind] ?? []).map((id) => ({ value: id, label: "" }))] };
     });
+    // Bubble icons are the ids of textures/bubbles/<id>.png.
+    lists.push({ kind: "bubble", options: snapshot.textures.filter((path) => path.startsWith("textures/bubbles/")).map((path) => ({ value: fileBase(path), label: "" })) });
     // Imported models are picked by name (models/<name>.json|java|obj).
     lists.push({ kind: "model", options: snapshot.models.map((path) => ({ value: fileBase(path), label: path })) });
     return lists;

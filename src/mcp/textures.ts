@@ -1,4 +1,5 @@
 import { exportTexture } from "../resources/exportTexture.ts";
+import { PLAYBACK_MODES, playbackModeOf, withPlaybackMode, type PlaybackMode } from "../resources/textureAnimation.ts";
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -31,7 +32,8 @@ function animationOf(png: string, image: Rgba): Record<string, unknown> {
   try {
     const a = (JSON.parse(readFileSync(`${png}.mcmeta`, "utf8")) as { animation?: Record<string, unknown> }).animation;
     if (!a) return { note: ".mcmeta without an animation section" };
-    return { frames: Math.floor(image.height / image.width), frametime: a.frametime ?? 1, interpolate: a.interpolate === true, ...(a.frames ? { order: a.frames } : {}) };
+    const raw = JSON.parse(readFileSync(`${png}.mcmeta`, "utf8")) as Record<string, unknown>;
+    return { frames: Math.floor(image.height / image.width), frametime: a.frametime ?? 1, interpolate: a.interpolate === true, ...(a.frames ? { order: a.frames } : {}), mode: playbackModeOf(raw) };
   } catch (e) {
     return { note: `.mcmeta unreadable: ${(e as Error).message}` };
   }
@@ -244,15 +246,18 @@ export function registerTextureTools(server: McpServer, root: string, guard: Gua
     {
       description: "Make a texture animated, change its animation or make it still, like the texture editor's Animation panel. An animated texture is "
         + "a vertical strip of square frames (top first) with \"<png>.mcmeta\"; frametime is in ticks (20 per second), interpolate blends frames, "
-        + "frames optionally sets a play order (frame indexes). still: true deletes the .mcmeta. Build a strip with create_texture "
+        + "frames optionally sets a play order (frame indexes). mode (Q229): loop (default, as Minecraft), hold_last (play once, stay on the last "
+        + "frame), hold_first (play once, then show the first frame) or ping_pong (forwards, then backwards); it is kept in the .mcmeta's own "
+        + "\"mcedge\" section and the generated mod gets the vanilla frame list that plays it. Blocks and items start a once mode when the player "
+        + "enters a world (and after a resource reload); GUI images when their animationStart says. still: true deletes the .mcmeta. Build a strip with create_texture "
         + "(height = width x frames) and write_texture_pixels / draw_texture_shapes per frame (frame i starts at y = i x width).",
       inputSchema: {
         path: PATH,
         frametime: z.number().int().min(1).optional(), interpolate: z.boolean().optional(),
-        frames: z.array(z.number().int().min(0)).optional(), still: z.boolean().optional(),
+        frames: z.array(z.number().int().min(0)).optional(), mode: z.enum(PLAYBACK_MODES as [PlaybackMode, ...PlaybackMode[]]).optional(), still: z.boolean().optional(),
       },
     },
-    ({ path, frametime, interpolate, frames, still }) => guard(() => {
+    ({ path, frametime, interpolate, frames, mode, still }) => guard(() => {
       const image = load(path);
       const meta = `${file(path)}.mcmeta`;
       if (still) {
@@ -268,7 +273,8 @@ export function registerTextureTools(server: McpServer, root: string, guard: Gua
       section.frametime ??= 1;
       if (interpolate !== undefined) interpolate ? (section.interpolate = true) : delete section.interpolate;
       if (frames) section.frames = frames;
-      writeFileSync(meta, JSON.stringify({ ...raw, animation: section }, null, 2) + "\n");
+      const out = mode ? withPlaybackMode({ ...raw, animation: section }, mode) : { ...raw, animation: section };
+      writeFileSync(meta, JSON.stringify(out, null, 2) + "\n");
       return json({ path, animation: animationOf(file(path), image) });
     }),
   );

@@ -1,10 +1,12 @@
 /**
  * KUYRUK #31: every folder filter of Resources shows textures, on a project whose folders are items/ and blocks/
- * rather than MCEdge's item/ and block/ (a converted mod), and a search without a match says so.
+ * rather than MCEdge's item/ and block/ (a converted mod) and with folders of its own (made up by the test, Q213), and a search without a match says so.
  */
 import { assert, copyProject, run } from "./cdp.ts";
+import { seedTextureFolders } from "./fixtures.ts";
 
 const project = copyProject("C:/MyProjects/AI-Assisted/ETREconomy-MCEdge", "etr");
+seedTextureFolders(project, ["Animated", "JobProgress"]);
 const cells = `document.querySelectorAll(".texcell").length`;
 
 await run(async (app) => {

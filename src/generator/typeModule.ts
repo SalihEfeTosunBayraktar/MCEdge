@@ -82,6 +82,14 @@ export interface TagEntry {
 }
 
 /** What a type module may know about the generation target. */
+/**
+ * Test probe (Q218, Q219): generated into dev builds only (run_scenario, tick_profile, `build --probe`), never into
+ * export_jar output or a normal build. `profile` also times every procedure call.
+ */
+export interface ProbeOptions {
+  profile?: boolean;
+}
+
 export interface GenEnv {
   engine: Engine;
   project: ModProject;
@@ -95,6 +103,8 @@ export interface GenEnv {
   generated: Record<string, Element[]>;
   /** forge: and c: tags the project defines itself ("forge:key"). */
   ownTags?: Set<string>;
+  /** Set when the build carries the test probe. */
+  probe?: ProbeOptions;
 }
 
 declare global {

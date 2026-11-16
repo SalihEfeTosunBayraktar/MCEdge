@@ -1,5 +1,5 @@
 {
-  "usage": "usage: mcedge build <project-dir> [--target <engine-id>|all] [--no-gradle]\n       mcedge engines\n       mcedge mcp <project-dir>",
+  "usage": "usage: mcedge build <project-dir> [--target <engine-id>|all] [--no-gradle] [--probe|--profile]\n       mcedge engines\n       mcedge mcp <project-dir>",
   "unknownTarget": "unknown target \"{target}\"; available: {available}",
   "invalidProject": "project is invalid:",
   "projectWarnings": "project has warnings (the build goes on):",
@@ -12,5 +12,6 @@
   "summary": "{ok}/{total} targets built",
   "notAProject": "not an MCEdge project (no mcedge.json): {dir}",
   "engineLine": "{id}\t{name}\t{dir}",
-  "unknownGameRule": "game rule \"{rule}\" is not a Minecraft rule and no game_rule element has it as its ruleName or id (camelCase and snake_case both match); ignore this only when the rule comes from another mod"
+  "unknownGameRule": "game rule \"{rule}\" is not a Minecraft rule and no game_rule element has it as its ruleName or id (camelCase and snake_case both match); ignore this only when the rule comes from another mod",
+  "translatedStore": "translated text stored by a server procedure: the server's language is used for every player, because {block} syncs the value to the clients; store the key (or the raw values) and translate where the text is shown, or show it with the translated message block"
 }

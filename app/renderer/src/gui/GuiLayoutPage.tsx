@@ -11,6 +11,7 @@ import { api } from "../api.ts";
 import { VanillaHud } from "./VanillaHud.tsx";
 import { WidgetTexture } from "./WidgetTexture.tsx";
 import { loadPreviewTexture } from "../textures/animatedTexture.ts";
+import { playbackModeOf, type PlaybackMode } from "../../../../src/resources/textureAnimation.ts";
 import { freeLayerName, hiddenIn, layerOf, layersOf, pinned, sortByLayer, type Layer } from "./layers.ts";
 import { t, type StringKey } from "../strings.ts";
 import { anchorOffset, guiScaleFor, overlayScreen, RESOLUTIONS, widgetAnchor } from "../../../../src/elements/overlayLayout.ts";
@@ -1095,6 +1096,7 @@ function WidgetForm({ index, layoutKey, widget, overlay, ctx, onChange }: {
   const fields = widgetFields(widget.kind, overlay);
   const list = <FieldList fields={fields} scope={{ fields, values: widget as never }} ctx={ctx} prefix={`${layoutKey}[${index}].`} coveragePrefix={`${layoutKey}.`} onChange={onChange} />;
   if (widget.kind === "state_image") return <><StateStrip widget={widget} dir={ctx.snapshot.dir} onChange={onChange} />{list}</>;
+  if (widget.kind === "image" && typeof widget.image === "string" && widget.image) return <><PlaybackNote dir={ctx.snapshot.dir} image={widget.image} />{list}</>;
   if (widget.kind !== "toggle_button") return list;
   // A toggle button's four states side by side, as the game draws them (a missing texture shows the one it falls back to).
   const states = toggleTextures(widget);
@@ -1223,3 +1225,23 @@ function ScreenSettings({ groups, layoutKey, all, draft, ctx, onChange }: {
   );
 }
 
+
+/** Q229: the playback mode of an image's texture (set in the texture editor), shown above its fields; nothing for a still texture. */
+function PlaybackNote({ dir, image }: { dir: string; image: string }) {
+  const [mode, setMode] = useState<PlaybackMode>();
+  useEffect(() => {
+    let alive = true;
+    setMode(undefined);
+    api.codeRead(dir, `${image}.mcmeta`).then((file) => {
+      try {
+        const raw = JSON.parse(file.text) as Record<string, unknown>;
+        if (alive && raw.animation) setMode(playbackModeOf(raw));
+      } catch {
+        // Not valid JSON: the game plays it still, so there is no mode to show.
+      }
+    }, () => {});
+    return () => void (alive = false);
+  }, [dir, image]);
+  if (!mode) return null;
+  return <p className="hint playbacknote" data-mode={mode}>{t("gui.field.playbackMode", { mode: t(`paint.playback.${mode}`) })}</p>;
+}

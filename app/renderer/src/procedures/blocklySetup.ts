@@ -32,6 +32,8 @@ export const setChoiceSource = (source: ChoiceSource) => (choices = source);
 
 export const blockLabel = (id: string): string => (labels.blocks as Record<string, string>)[id] ?? (fallback.blocks as Record<string, string>)[id] ?? id;
 export const categoryLabel = (id: string): string => (labels.categories as Record<string, string>)[id] ?? (fallback.categories as Record<string, string>)[id] ?? id;
+/** A line of help shown on top of a category's blocks ("" for most). */
+const categoryHelp = (id: string): string => (labels.categoryHelp as Record<string, string>)[id] ?? (fallback.categoryHelp as Record<string, string>)[id] ?? "";
 export const sideLabel = (side: Side): string => labels.sides[side] ?? fallback.sides[side];
 const optionLabel = (block: string, value: string): string => {
   const o = labels.options as Record<string, string>;
@@ -295,6 +297,7 @@ export function toolbox(options: ToolboxOptions = {}): Blockly.utils.toolbox.Too
         colour: String(CATEGORY_HUES[category]),
         contents: [
           ...(category === "variables" && options.variables ? variableBlocks(options.variables, options.hidden) : []),
+          ...(categoryHelp(category) ? [{ kind: "label", text: categoryHelp(category) }] : []),
           ...BLOCKS.filter((b) => b.category === category && b.id !== "start" && !options.hidden?.(b)).map((b) => toolboxBlock(b)),
         ],
       })),
@@ -367,7 +370,7 @@ export function calledProcedure(block: Blockly.Block): string | undefined {
 export function toolboxBlock(def: BlockDef, fields?: Record<string, string>): Blockly.utils.toolbox.BlockInfo {
   const inputs: Record<string, unknown> = {};
   for (const input of def.inputs ?? []) {
-    const shadow = literalShadow(input.type, input.default);
+    const shadow = input.shadowBlock ? { type: input.shadowBlock } : literalShadow(input.type, input.default);
     if (shadow) inputs[input.name] = { shadow };
   }
   return { kind: "block", type: def.id, ...(fields ? { fields } : {}), ...(Object.keys(inputs).length ? { inputs } : {}) } as Blockly.utils.toolbox.BlockInfo;

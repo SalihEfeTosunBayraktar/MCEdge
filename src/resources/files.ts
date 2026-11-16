@@ -2,6 +2,7 @@ import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdir
 import { basename, extname, join, relative, resolve } from "node:path";
 import { loadProject } from "../ir/storage.ts";
 import { convertBbmodel } from "./blockbench.ts";
+import { elementsNaming } from "./resourceUse.ts";
 import { unzipToFolder, zipFolder } from "./zip.ts";
 
 /**
@@ -57,16 +58,21 @@ export function importResources(dir: string, kind: ResourceKind, files: string[]
   return { imported, warnings };
 }
 
-/** Deletes an imported resource; refused while an element names it ("<modid>:<name>" or "<name>"). */
-export function deleteResource(dir: string, path: string): void {
-  if (!/^(sounds|models|structures)\/[^/\\]+$/.test(path)) throw new Error(`not a resource: ${path}`);
+/** Why an imported resource cannot be deleted (an element names it, or a sound event plays it); undefined when it can go. */
+export function resourceBlocker(dir: string, path: string): string | undefined {
   const name = basename(path, extname(path));
-  const elements = JSON.stringify(loadProject(dir).elements);
-  if (elements.includes(`:${name}"`) || elements.includes(`"${name}"`)) throw new Error(`resource in use: ${path}`);
+  if (elementsNaming(loadProject(dir).elements)(name)) return `resource in use: ${path}`;
   // A sound file a listed sound event plays stays until the event lets go of it (KUYRUK 132).
   const events = existsSync(join(dir, "sound_events.json")) ? JSON.parse(readFileSync(join(dir, "sound_events.json"), "utf8")) as Record<string, { files?: string[] }> : {};
   const player = path.startsWith("sounds/") ? Object.entries(events).find(([event, e]) => event !== name && (e.files ?? []).includes(name)) : undefined;
-  if (player) throw new Error(`resource in use: ${path} is a file of sound event "${player[0]}"`);
+  return player ? `resource in use: ${path} is a file of sound event "${player[0]}"` : undefined;
+}
+
+/** Deletes an imported resource; refused while an element names it ("<modid>:<name>" or "<name>"). */
+export function deleteResource(dir: string, path: string): void {
+  if (!/^(sounds|models|structures)\/[^/\\]+$/.test(path)) throw new Error(`not a resource: ${path}`);
+  const blocker = resourceBlocker(dir, path);
+  if (blocker) throw new Error(blocker);
   const file = resolve(dir, path);
   if (relative(dir, file).startsWith("..")) throw new Error("path outside project");
   rmSync(file);

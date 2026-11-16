@@ -1,0 +1,8 @@
+@wait 5
+bubbleprobe start
+@wait 3
+bubbleprobe check
+@wait 2
+stop
+@wait 15
+@kill

@@ -19,6 +19,19 @@ const openGui = { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [
   { block: "start" },
   { block: "gui_open", fields: { gui: "ruby_gui" }, inputs: { entity: { block: "dep_entity", fields: { dep: "entity" } } } },
 ] }] };
+/** Q205: the session the entity's open GUI shows, and a log line "<prefix><session> <rest>". */
+const sessionOf = { block: "gui_session_id", inputs: { entity: dep } };
+const sessionLine = (prefix: string, rest: unknown) => ({ block: "text_join", inputs: { a: prefix, b: { block: "text_join", inputs: { a: sessionOf, b: { block: "text_join", inputs: { a: " ", b: rest } } } } } });
+/** Q227: "<menu> <tab> <slice>" of the chosen radial menu slice. */
+const depText = (name: string) => ({ block: "dep_text", fields: { dep: name } });
+const radialChoice = { block: "text_join", inputs: { a: depText("menu"), b: { block: "text_join", inputs: { a: " ", b: { block: "text_join", inputs: { a: depText("tab"),
+  b: { block: "text_join", inputs: { a: " ", b: depText("slice") } } } } } } } };
+/** Q227: a radial menu slice with every slice field (the test project writes list rows of nested lists as given). */
+const slice = (id: string, values: Record<string, unknown>) => ({ id, label: "", description: "", iconKind: "none", icon: "", item: "minecraft:stone", action: "none", command: "",
+  procedure: "", menu: "", gui: "", bubble: "", caption: "", duration: -1, image: "", condition: "", conditionMode: "hidden", ...values });
+/** Q203: the slot id onSlotChanged gets, and the change count it keeps in the block's data. */
+const slotDep = { block: "dep_number", fields: { dep: "slot" } };
+const changes = { block: "block_data_number", inputs: { x: dx, y: dy, z: dz, key: "changes" } };
 export const SPEC: Record<string, Record<string, Record<string, unknown>>> = {
   procedure: {
     // KUYRUK #38: the place trigger on every engine; a dispenser places through BlockItem without a player.
@@ -137,6 +150,126 @@ export const SPEC: Record<string, Record<string, Record<string, unknown>>> = {
       { block: "call_procedure", fields: { procedure: "plain_log" } },
     ] }] } },
     open_ruby_gui: { title: "Open ruby GUI", returnType: "none", program: openGui },
+    // Q229: restarts playback_gui's procedure-started image (a client block, sent to the player from the server).
+    replay_gui_image: { title: "Replay GUI image", returnType: "none", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "gui_image_restart", fields: { gui: "playback_gui" }, inputs: { image: "replay" } },
+    ] }] } },
+    // Q202: the server-wide player loop (with the player's own y and the procedure's world), the default loop (players
+    // of this world only) and player_by_name (case-insensitive, any dimension; none for an unknown name).
+    server_players_probe: { title: "Server players probe", returnType: "none", program: { format: 1, variables: [{ name: "p", type: "entity" }], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "for_each_player", fields: { var: "p", scope: "server" }, inputs: { do: [
+        { block: "log", inputs: { text: { block: "text_join", inputs: { a: "[players] server ", b: { block: "text_join", inputs: { a: { block: "entity_name", inputs: { entity: { block: "local_entity_get", fields: { var: "p" } } } },
+          b: { block: "text_join", inputs: { a: " y ", b: { block: "text_join", inputs: { a: { block: "text_from_number", inputs: { value: { block: "entity_y", inputs: { entity: { block: "local_entity_get", fields: { var: "p" } } } } } },
+            b: { block: "text_join", inputs: { a: " world ", b: { block: "world_dimension_id" } } } } } } } } } } } } },
+      ] } },
+      { block: "for_each_player", fields: { var: "p" }, inputs: { do: [
+        { block: "log", inputs: { text: { block: "text_join", inputs: { a: "[players] dimension ", b: { block: "entity_name", inputs: { entity: { block: "local_entity_get", fields: { var: "p" } } } } } } } },
+      ] } },
+      { block: "log", inputs: { text: { block: "text_join", inputs: { a: "[players] byname ", b: { block: "logic_ternary_text", inputs: {
+        cond: { block: "entity_exists", inputs: { entity: { block: "player_by_name", inputs: { name: "Q202_NETHER" } } } },
+        a: { block: "text_join", inputs: { a: { block: "entity_name", inputs: { entity: { block: "player_by_name", inputs: { name: "Q202_NETHER" } } } },
+          b: { block: "text_join", inputs: { a: " y ", b: { block: "text_from_number", inputs: { value: { block: "entity_y", inputs: { entity: { block: "player_by_name", inputs: { name: "Q202_NETHER" } } } } } } } } } },
+        b: "none" } } } } } },
+      { block: "log", inputs: { text: { block: "text_join", inputs: { a: "[players] missing ", b: { block: "logic_ternary_text", inputs: {
+        cond: { block: "entity_exists", inputs: { entity: { block: "player_by_name", inputs: { name: "nobody" } } } }, a: "found", b: "none" } } } } } },
+    ] }] } },
+    // Q205: session GUI procedures. The lock reads a session value; open and close log the session and its viewers;
+    // open also fills hidden slot 3 and stores a value through the session blocks; the label reads it on the client.
+    session_locked: { title: "Session locked", returnType: "logic", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "return_logic", inputs: { value: { block: "session_data_logic", inputs: { session: sessionOf, key: "locked" } } } },
+    ] }] } },
+    session_open_log: { title: "Session open log", returnType: "none", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "session_set_slot_item", inputs: { session: sessionOf, slot: 3, itemstack: { block: "item_stack", fields: { item: "minecraft:stone" }, inputs: { count: 1 } } } },
+      { block: "session_set_data_text", inputs: { session: sessionOf, key: "note", value: "hello" } },
+      { block: "session_set_data_number", inputs: { session: sessionOf, key: "opens", value: { block: "math_arithmetic", fields: { op: "ADD" }, inputs: { a: { block: "session_data_number", inputs: { session: sessionOf, key: "opens" } }, b: 1 } } } },
+      { block: "log", inputs: { text: sessionLine("[session] open ", { block: "text_join", inputs: { a: { block: "session_data_text", inputs: { session: sessionOf, key: "note" } },
+        b: { block: "text_join", inputs: { a: " opens ", b: { block: "text_from_number", inputs: { value: { block: "session_data_number", inputs: { session: sessionOf, key: "opens" } } } } } } } }) } },
+    ] }] } },
+    session_close_log: { title: "Session close log", returnType: "none", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "log", inputs: { text: sessionLine("[session] closed ", { block: "text_from_number", inputs: { value: { block: "session_viewer_count", inputs: { session: sessionOf } } } }) } },
+    ] }] } },
+    session_end: { title: "Session end", returnType: "none", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "gui_close_session", inputs: { session: sessionOf } },
+    ] }] } },
+    session_open: { title: "Session open", returnType: "none", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "gui_open_session", fields: { gui: "trade_gui" }, inputs: { entity: dep, session: "probe" } },
+    ] }] } },
+    // Q206: status bubble blocks (icons textures/bubbles/trade.png, wave.png); the runtime probe drives the store directly.
+    bubble_probe: { title: "Bubble probe", returnType: "none", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "player_bubble_show", inputs: { entity: dep, icon: "trade", duration: 0 } },
+      // Q214: a caption and an animated icon (textures/bubbles/wave.png, 4 frames, wave.png.mcmeta).
+      { block: "player_bubble_show_text", inputs: { entity: dep, icon: "wave", text: "Ali", duration: 0 } },
+      { block: "log", inputs: { text: { block: "text_join", inputs: { a: "[bubble] block ", b: { block: "player_bubble_icon", inputs: { entity: dep } } } } } },
+      { block: "player_bubble_clear", inputs: { entity: dep } },
+    ] }] } },
+    // Q225: the seat blocks; the runtime probe (seatprobe/) runs it with a fake player next to a chair.
+    seat_probe: { title: "Seat probe", returnType: "none", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "entity_sit_on_block", inputs: { entity: dep, x: { block: "dep_number", fields: { dep: "x" } }, y: { block: "dep_number", fields: { dep: "y" } }, z: { block: "dep_number", fields: { dep: "z" } } } },
+      { block: "log", inputs: { text: { block: "text_join", inputs: { a: "[seat] procedure sitting ", b: { block: "text_from_logic", inputs: { value: { block: "entity_is_sitting", inputs: { entity: dep } } } } } } } },
+      { block: "entity_stand_up", inputs: { entity: dep } },
+      { block: "log", inputs: { text: { block: "text_join", inputs: { a: "[seat] procedure stood ", b: { block: "text_from_logic", inputs: { value: { block: "entity_is_sitting", inputs: { entity: dep } } } } } } } },
+    ] }] } },
+    // Q227: radial menu slices: a slice procedure and the slice chosen trigger log what was chosen, the never condition greys
+    // out a slice, and the radial blocks (open, close, set slice, runtime image bubble) in one procedure.
+    radial_slice: { title: "Radial slice", returnType: "none", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "log", inputs: { text: { block: "text_join", inputs: { a: "[radial] procedure ", b: radialChoice } } } },
+    ] }] } },
+    radial_chosen: { title: "Radial chosen", returnType: "none", globalTrigger: "radial_slice_chosen", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "log", inputs: { text: { block: "text_join", inputs: { a: "[radial] chosen ", b: radialChoice } } } },
+    ] }] } },
+    radial_blocks: { title: "Radial blocks", returnType: "none", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "radial_set_slice", fields: { menu: "wheel", state: "hidden" }, inputs: { entity: dep, tab: "main", slice: "hello" } },
+      { block: "radial_open", fields: { menu: "wheel" }, inputs: { entity: dep } },
+      { block: "radial_close", inputs: { entity: dep } },
+      { block: "runtime_image_bubble", inputs: { entity: dep, image: "emotes/spin", caption: "Ali", duration: -1 } },
+      { block: "log", inputs: { text: { block: "text_join", inputs: { a: "[radial] image bubble ", b: { block: "player_bubble_icon", inputs: { entity: dep } } } } } },
+    ] }] } },
+    // Q216: the standard block with a designed bubble element (trade_offer) and with the default bubble.
+    bubble_designed: { title: "Bubble designed", returnType: "none", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "bubble_show", fields: { bubble: "trade_offer" }, inputs: { entity: dep, caption: "Ali", duration: -1 } },
+      { block: "log", inputs: { text: { block: "text_join", inputs: { a: "[bubble] designed ", b: { block: "player_bubble_icon", inputs: { entity: dep } } } } } },
+      { block: "bubble_show", fields: { bubble: "" }, inputs: { entity: dep, caption: "", duration: 40 } },
+      { block: "player_bubble_clear", inputs: { entity: dep } },
+    ] }] } },
+    session_label: { title: "Session label", returnType: "string", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "return_text", inputs: { value: { block: "text_join", inputs: { a: { block: "session_data_text", inputs: { session: sessionOf, key: "note" } },
+        b: { block: "item_name", inputs: { itemstack: { block: "session_slot_item", inputs: { session: sessionOf, slot: 0 } } } } } } } },
+    ] }] } },
+    // Q203: watch_gui's onSlotChanged counts changes into the block's data and logs "[slot] <id> <count> changes <n>";
+    // a change of slot 2 makes it write slot 2 again (stone x n), which must not run it again. watch_write is a
+    // procedure write into slot 1; session_slot_log logs the session and slot of trade_gui's changes.
+    slot_changed: { title: "Slot changed", returnType: "none", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "block_set_data_number", inputs: { x: dx, y: dy, z: dz, key: "changes", value: { block: "math_arithmetic", fields: { op: "ADD" }, inputs: { a: changes, b: 1 } } } },
+      { block: "log", inputs: { text: { block: "text_join", inputs: { a: "[slot] ", b: { block: "text_join", inputs: { a: { block: "text_from_number", inputs: { value: slotDep } }, b: { block: "text_join", inputs: { a: " ",
+        b: { block: "text_join", inputs: { a: { block: "text_from_number", inputs: { value: { block: "item_count", inputs: { itemstack: { block: "gui_slot_item", inputs: { entity: dep, slot: slotDep } } } } } },
+          b: { block: "text_join", inputs: { a: " changes ", b: { block: "text_from_number", inputs: { value: changes } } } } } } } } } } } } } },
+      { block: "if", inputs: { cond: { block: "logic_compare", fields: { op: "EQ" }, inputs: { a: slotDep, b: 2 } }, then: [
+        { block: "gui_set_slot_item", inputs: { entity: dep, slot: 2, itemstack: { block: "item_stack", fields: { item: "minecraft:stone" }, inputs: { count: changes } } } },
+      ] } },
+    ] }] } },
+    watch_write: { title: "Watch write", returnType: "none", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "gui_set_slot_item", inputs: { entity: dep, slot: 1, itemstack: { block: "item_stack", fields: { item: "minecraft:gold_ingot" }, inputs: { count: 2 } } } },
+    ] }] } },
+    session_slot_log: { title: "Session slot log", returnType: "none", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "log", inputs: { text: sessionLine("[slotchange] ", { block: "text_from_number", inputs: { value: slotDep } }) } },
+    ] }] } },
     // KUYRUK #41: a player opens ruby_gui at 3 100 7 now and then; its label logs the position the client menu has.
     gui_pos_open: { title: "GUI position open", returnType: "none", globalTrigger: "player_ticks", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [
       { block: "start" },
@@ -235,6 +368,17 @@ export const SPEC: Record<string, Record<string, Record<string, unknown>>> = {
       title: "Same Hover", type: 0, width: 176, height: 166,
       components: [{ kind: "image_button", x: 10, y: 10, width: 16, height: 16, image: "textures/two_state.png", hoverImage: "textures/two_state.png", procedure: "plain_log" }],
     },
+    // Q229: playback modes of animated GUI images: hold the last frame from opening, ping-pong on the game clock, and
+    // one started by a procedure (the button) that holds its first frame until then.
+    playback_gui: {
+      title: "Playback", type: 0, width: 176, height: 166,
+      components: [
+        { kind: "image", x: 10, y: 10, width: 32, height: 32, image: "textures/playback_hold.png" },
+        { kind: "image", x: 50, y: 10, width: 32, height: 32, image: "textures/playback_pingpong.png", animationStart: "always" },
+        { kind: "image", name: "replay", x: 90, y: 10, width: 32, height: 32, image: "textures/playback_hold.png", animationStart: "procedure" },
+        { kind: "button", x: 90, y: 50, width: 40, height: 20, text: "Replay", procedure: "replay_gui_image" },
+      ],
+    },
     ruby_gui: {
       title: "Ruby Workbench", type: 1, width: 176, height: 166, onOpen: "entity_log", onClosed: "plain_log", onTick: "gui_tick_write",
       components: [
@@ -270,6 +414,24 @@ export const SPEC: Record<string, Record<string, Record<string, unknown>>> = {
         { kind: "toggle_button", x: 150, y: 52, width: 20, height: 20, image: T, onImage: "textures/ruby_apple.png", procedure: "plain_log" },
       ],
     },
+    // Q205: slots from a shared session (no block); slot 0 locks by a session value, slot 2 is a display slot, slot 3
+    // exists only in the session (inventorySize 4).
+    trade_gui: {
+      title: "Trade", type: 1, width: 176, height: 166, inventorySource: "session", inventorySize: 4,
+      onOpen: "session_open_log", onClosed: "session_close_log", onSlotChanged: "session_slot_log",
+      components: [
+        { kind: "slot", x: 25, y: 30, id: 0, lockCondition: "session_locked" },
+        { kind: "slot", x: 61, y: 30, id: 1 },
+        { kind: "slot", x: 97, y: 30, id: 2, keepOnClose: true },
+        { kind: "label", x: 8, y: 6, textProcedure: "session_label", color: "#404040" },
+        { kind: "button", x: 120, y: 54, width: 40, height: 20, text: "End", procedure: "session_end" },
+      ],
+    },
+    // Q203: three plain slots watched by onSlotChanged (opened over the ruby_chest by the probe, slotchange-runtime.sh).
+    watch_gui: {
+      title: "Watch", type: 1, width: 176, height: 166, onSlotChanged: "slot_changed",
+      components: [{ kind: "slot", x: 25, y: 30, id: 0 }, { kind: "slot", x: 61, y: 30, id: 1 }, { kind: "slot", x: 97, y: 30, id: 2 }],
+    },
     plain_screen: {
       type: 0, width: 200, height: 100, doesPauseGame: true, renderBgLayer: false,
       components: [
@@ -279,6 +441,9 @@ export const SPEC: Record<string, Record<string, Record<string, unknown>>> = {
     },
   },
   block: {
+    // Q229: block textures that play once and hold the last frame, and ping-pong.
+    playback_hold_block: { texture: "textures/playback_hold.png", name: "Playback Hold Block" },
+    playback_pingpong_block: { texture: "textures/playback_pingpong.png", name: "Playback Ping-pong Block" },
     // KUYRUK 46 B2/B4/B5/B6: waterlogging with the sky light rule, middle-click item, faces hidden between neighbours, post-process flag.
     legacy_props_block: { texture: "textures/ruby_block.png", name: "Legacy Props Block", rotationMode: 1, isWaterloggable: true, hasCustomOpacity: true, lightOpacity: 0, connectedSides: true, hasPostProcess: true, emissiveRendering: true, creativePickItem: "ruby" },
     ruby_chest: { texture: "textures/ruby_block.png", name: "Ruby Chest", hasInventory: true, guiBoundTo: "ruby_gui", openGUIOnRightClick: true, inventorySize: 9, inventoryStackSize: 32, inventoryInSlotIDs: [{ slot: 0 }, { slot: 1 }], inventoryOutSlotIDs: [{ slot: 2 }],
@@ -316,6 +481,23 @@ export const SPEC: Record<string, Record<string, Record<string, unknown>>> = {
     ruby_layers: { texture: "textures/ruby_block.png", name: "Ruby Layers", multipartModel: true, hasTransparency: true, transparencyType: "CUTOUT",
       customProperties: [{ name: "top", type: "logic", value: "true" }], states: [{ stateMap: { top: "true" }, texture: "textures/ruby_block.png", renderType: 2, customModelName: "ruby_lamp" }] },
     missing_model_block: { texture: "textures/ruby_block.png", name: "Missing Model Block", renderType: 3, customModelName: "no_such_model" },
+    // Q225 seats: a chair (one seat, auto height on its slab-high seat box, turns with its facing) and a bench (two seats at a manual height).
+    ruby_chair: { texture: "textures/ruby_block.png", name: "Ruby Chair", rotationMode: 1, seatable: true, seats: [{ x: 8, y: 0, z: 7, yaw: 0 }],
+      boundingBoxes: [{ mx: 0, my: 0, mz: 0, Mx: 16, My: 8, Mz: 16, subtract: false }, { mx: 0, my: 8, mz: 13, Mx: 16, My: 16, Mz: 16, subtract: false }] },
+    ruby_bench: { texture: "textures/ruby_block.png", name: "Ruby Bench", seatable: true, seatHeightMode: "manual", seatEmptyHand: false, seatDismount: "front",
+      seats: [{ x: 4, y: 9, z: 8, yaw: 0 }, { x: 12, y: 9, z: 8, yaw: 0 }], boundingBoxes: [{ mx: 0, my: 0, mz: 2, Mx: 16, My: 8, Mz: 14, subtract: false }] },
+    // Q226 multi-blocks (plain box models in project/models): a chair two cells tall, its seat on top of
+    // its lower cell facing away from the backrest; an L sofa over 2x3 cells with four sitting seats and one lying spot
+    // along its long side.
+    tall_chair: { texture: "textures/ruby_block.png", name: "Tall Chair", renderType: 2, customModelName: "tall_chair", customModelTextures: { 0: "textures/ruby_block.png", particle: "textures/ruby_block.png" },
+      rotationMode: 1, hasTransparency: true, multiBlock: true, seatable: true, seats: [{ x: 8, y: 17, z: 9, yaw: 180 }],
+      boundingBoxes: [{ mx: 0, my: 0, mz: 0, Mx: 16, My: 17, Mz: 16, subtract: false }, { mx: 0, my: 17, mz: 0, Mx: 16, My: 32, Mz: 2, subtract: false }] },
+    corner_sofa: { texture: "textures/ruby_block.png", name: "Corner Sofa", renderType: 2, customModelName: "corner_sofa", customModelTextures: { 0: "textures/ruby_block.png", particle: "textures/ruby_block.png" },
+      rotationMode: 1, hasTransparency: true, multiBlock: true, seatable: true,
+      seats: [{ x: 9, y: 7, z: -7, yaw: 180 }, { x: -5, y: 7, z: 3, yaw: 90 }, { x: -5, y: 7, z: 15, yaw: 90 }, { x: -5, y: 7, z: 27, yaw: 90 }, { x: -8, y: 7, z: 15, yaw: 180, pose: "lie" }, { x: 0, y: 7, z: -8, yaw: 270, pose: "lie" }],
+      boundingBoxes: [{ mx: -16, my: 0, mz: -16, Mx: 16, My: 7, Mz: 0, subtract: false }, { mx: -16, my: 0, mz: 0, Mx: 2, My: 7, Mz: 32, subtract: false },
+        { mx: -16, my: 7, mz: -16, Mx: -14, My: 16, Mz: 32, subtract: false }, { mx: -16, my: 7, mz: -16, Mx: 16, My: 9, Mz: -15, subtract: false },
+        { mx: -16, my: 7, mz: 31, Mx: 2, My: 12, Mz: 32, subtract: false }] },
     ruby_safe: { texture: "textures/ruby_block.png", name: "Ruby Safe", hasInventory: true, guiBoundTo: "ruby_gui", openGUIOnRightClick: true, inventoryDropWhenDestroyed: false, inventoryComparatorPower: false, onRightClicked: "entity_log" },
   },
   game_rule: { snake_probe_rule: { displayName: "Snake probe rule", description: "KUYRUK 46 R1: a name that is not camelCase", category: "PLAYER", type: "Number", defaultValueNumber: 7, ruleName: "snake_probe_rule" }, probe_rule: { displayName: "Probe rule", description: "KUYRUK 37", category: "PLAYER", type: "Number", defaultValueNumber: 5 } },
@@ -416,6 +598,45 @@ export const SPEC: Record<string, Record<string, Record<string, unknown>>> = {
     wand_fuel: { item: "ruby_wand", enableFuel: true, fuelPower: 100, fuelPowerProcedure: "fuel_time", fuelSuccessCondition: "always", hasDispenseBehavior: true, dispenseSuccessCondition: "always", dispenseResultItemstack: "dispense_result" },
     apple_dispense: { item: "minecraft:apple", hasDispenseBehavior: true },
   },
+  // Q216: bubble elements. trade_offer: a 9-slice frame (textures/bubble_frame.png), the animated wave icon, a caption
+  // with {text}, pop in and fade up and away (Q228) and a sound; plain_note: the built-in background, an icon, free layout
+  // and fade in and out; timed_note (Q228, Q229): slide and fade
+  // transitions with an ease, a ping-pong background and a play-once icon that holds its last frame.
+  bubble: {
+    trade_offer: { background: "textures/bubble_frame.png", backgroundMode: "nine_slice", sliceBorder: 4, icon: "textures/bubbles/wave.png", iconSize: 16,
+      caption: "Trade: {text}", captionColor: "#ffd24a", captionShadow: true, width: 40, height: 28, padding: 4, tail: 0, scale: 1.2, offset: 0.1,
+      appear: ["scale", "fade"], appearTicks: 6, appearEasing: "back", disappear: ["fade", "slide_up"], disappearTicks: 8, disappearEasing: "ease_out",
+      duration: 0, sound: "minecraft:entity.experience_orb.pickup" },
+    plain_note: { icon: "textures/ruby.png", layout: "free", iconX: 8, iconY: 4, iconSize: 16, caption: "Note", appear: ["fade"], appearTicks: 10, appearEasing: "linear", disappear: ["fade"], disappearTicks: 10, disappearEasing: "linear", duration: 60 },
+    // Q228 client check (transition-client-check.sh): ten second transitions so a window image can land inside each one.
+    slow_note: { background: "textures/bubble_frame.png", backgroundMode: "nine_slice", sliceBorder: 4, icon: "textures/bubbles/wave.png", iconSize: 16, caption: "Slow: {text}",
+      width: 40, height: 28, padding: 4, tail: 0, scale: 1.2, appear: ["fade", "scale", "slide_up"], appearTicks: 200, appearEasing: "ease_out",
+      disappear: ["fade", "scale", "slide_down"], disappearTicks: 200, disappearEasing: "linear", duration: 300 },
+    timed_note: { background: "textures/playback_pingpong.png", backgroundMode: "plain", icon: "textures/playback_hold.png", iconSize: 16, caption: "Timed",
+      appear: ["fade", "slide_up"], appearTicks: 20, appearEasing: "ease_out", disappear: ["fade", "slide_down", "scale"], disappearTicks: 20, disappearEasing: "ease_in_out", duration: 100 },
+  },
+  // Q227: radial menus. wheel: a list tab with a bubble, a command, a procedure, a submenu, a GUI and a greyed out slice
+  // (its condition is false), and a folder tab listing config/wavethree/emotes/ that shows the chosen image as a bubble.
+  radial_menu: {
+    wheel: { openKey: "R", openMode: "hold", title: "Actions", keyName: "Open the wheel", appear: ["fade", "slide_up"], appearTicks: 6, appearEasing: "ease_out", background: "textures/bubble_frame.png", backgroundMode: "nine_slice", sliceBorder: 4,
+      sliceImage: "", hoverImage: "", centerIcon: true, tabs: [
+        { id: "main", label: "Main", source: "list", folder: "", pageSize: 8, action: "none", command: "", procedure: "", menu: "", gui: "", bubble: "", caption: "", duration: -1, slices: [
+          slice("offer", { label: "Offer", description: "Shows the trade bubble", iconKind: "texture", icon: "textures/bubbles/wave.png", action: "bubble", bubble: "trade_offer", caption: "Ali" }),
+          slice("hello", { label: "Say hi", iconKind: "item", item: "minecraft:emerald", action: "command", command: "/say hi" }),
+          slice("run", { label: "Procedure", iconKind: "texture", icon: "textures/playback_pingpong.png", action: "procedure", procedure: "radial_slice" }),
+          slice("more", { label: "More", iconKind: "item", item: "minecraft:compass", action: "menu", menu: "small" }),
+          slice("bag", { label: "Bag", iconKind: "item", item: "minecraft:chest", action: "gui", gui: "ruby_gui" }),
+          slice("locked", { label: "Locked", description: "Its condition is false", iconKind: "item", item: "minecraft:barrier", condition: "never", conditionMode: "disabled" }),
+        ] },
+        { id: "images", label: "Images", source: "folder", folder: "emotes", pageSize: 6, action: "image_bubble", command: "", procedure: "", menu: "", gui: "", bubble: "", caption: "{id}", duration: -1, slices: [] },
+      ] },
+    small: { openKey: "NONE", openMode: "toggle", title: "Small", size: 120, hole: 20, gap: 6, appear: ["fade"], appearTicks: 4, appearEasing: "linear", tabs: [
+      { id: "only", label: "", source: "list", folder: "", pageSize: 8, action: "none", command: "", procedure: "", menu: "", gui: "", bubble: "", caption: "", duration: -1, slices: [
+        slice("note", { label: "Note", iconKind: "texture", icon: "textures/ruby.png", action: "bubble", bubble: "plain_note" }),
+        slice("ping", { label: "Ping", action: "procedure", procedure: "radial_slice" }),
+      ] },
+    ] },
+  },
   overlay: {
     ruby_hud: { priority: "HIGH", displayCondition: "always", baseTexture: "", components: [
       { kind: "label", name: "hello", x: 4, y: 4, text: "Ruby HUD", color: "#FF5555" },
@@ -434,7 +655,7 @@ export const SPEC: Record<string, Record<string, Record<string, unknown>>> = {
     ] },
     styled_hud: { displayCondition: "always", components: [
       { kind: "label", name: "hud_boxed", x: 4, y: 60, text: "Boxed HUD", color: "#FFFF55", background: "#000000", backgroundOpacity: 50 },
-      { kind: "label", name: "hud_mid", x: 213, y: 4, text: "Centred HUD", color: "#FFFFFF", align: "center", anchor: "top" },
+      { kind: "label", name: "hud_mid", x: 213, y: 150, text: "Centred HUD", color: "#FFFFFF", align: "center", anchor: "top" },
     ] },
     // KUYRUK 186: state images on an overlay (static state fields), by conditions and by a procedure read every 5 ticks.
     state_hud: { displayCondition: "always", components: [
@@ -447,6 +668,9 @@ export const SPEC: Record<string, Record<string, Record<string, unknown>>> = {
   },
   item: {
     ruby: { texture: T, name: "Ruby", creativeTabs: ["MATERIALS"] },
+    // Q229: item textures that play once and hold the last frame, and ping-pong.
+    playback_hold_item: { texture: "textures/playback_hold.png", name: "Playback Hold Item" },
+    playback_pingpong_item: { texture: "textures/playback_pingpong.png", name: "Playback Ping-pong Item" },
     // KUYRUK 98: the gem_tab order (gem_c first, a section, a 2-slot spacer, gem_a, the four armor pieces; gem_b unordered).
     // KUYRUK 172: an end marker after the armor, so gem_b (appended) stands outside the section.
     gem_a: { texture: T, name: "Gem A", creativeTabs: ["gem_tab"] },

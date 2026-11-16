@@ -13,7 +13,7 @@
       "showSearch"
     ],
     "procedure": [
-      "globalTrigger=no_ext_trigger|mod_load|mod_serverload|world_load|world_unload|player_log_in|player_log_out|player_respawn|player_ticks|world_ticks|server_ticks|block_break|block_place|player_right_click_block|player_right_click_item|player_left_click_block|player_use_hoe|player_right_click_entity|entity_dies|entity_attacked|entity_joins_world|chat_sent|player_xp_level_change|item_crafted|item_smelted|entity_falls|entity_jumps|entity_healed"
+      "globalTrigger=no_ext_trigger|mod_load|mod_serverload|world_load|world_unload|player_log_in|player_log_out|player_respawn|player_ticks|world_ticks|server_ticks|block_break|block_place|player_right_click_block|player_right_click_item|player_left_click_block|player_use_hoe|player_right_click_entity|entity_dies|entity_attacked|entity_joins_world|chat_sent|player_xp_level_change|item_crafted|item_smelted|entity_falls|entity_jumps|entity_healed|radial_slice_chosen"
     ],
     "potion_effect": [
       "onExpired",

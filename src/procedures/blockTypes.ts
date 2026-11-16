@@ -33,6 +33,8 @@ export interface InputDef {
   type: ValueType | "any" | "statements";
   /** Literal the input starts with (number, text or logic inputs get an editable literal). */
   default?: Literal;
+  /** Block the toolbox puts in the input instead of a plain literal (a block with a picker field for the value). */
+  shadowBlock?: string;
 }
 
 export type FieldKind =
@@ -63,7 +65,7 @@ export interface FieldDef {
 }
 
 export const CATEGORIES = [
-  "flow", "logic", "loops", "math", "text", "lists", "variables", "world", "blocks", "entity", "player", "items",
+  "flow", "logic", "loops", "math", "text", "lists", "variables", "world", "blocks", "entity", "player", "bubbles", "items",
   "effects", "damage", "projectiles", "particles", "sounds", "commands", "advancements", "scoreboard", "gui", "directions", "ai",
 ] as const;
 export type CategoryId = (typeof CATEGORIES)[number];
@@ -71,7 +73,7 @@ export type CategoryId = (typeof CATEGORIES)[number];
 /** Toolbox colour (hue) per category. */
 export const CATEGORY_HUES: Record<CategoryId, number> = {
   flow: 30, logic: 210, loops: 120, math: 230, text: 160, lists: 260, variables: 330, world: 95, blocks: 45,
-  entity: 195, player: 175, items: 350, effects: 290, damage: 0, projectiles: 15, particles: 300, sounds: 270,
+  entity: 195, player: 175, bubbles: 185, items: 350, effects: 290, damage: 0, projectiles: 15, particles: 300, sounds: 270,
   commands: 70, advancements: 55, scoreboard: 140, gui: 240, directions: 20, ai: 110,
 };
 

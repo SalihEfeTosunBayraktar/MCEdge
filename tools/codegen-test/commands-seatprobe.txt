@@ -1,0 +1,10 @@
+@wait 5
+seatprobe start
+@wait 2
+seatprobe check
+@wait 2
+seatprobe after
+@wait 2
+stop
+@wait 15
+@kill

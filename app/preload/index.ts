@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
-import type { BuildEvent, FsChange, McedgeApi } from "../shared/api.ts";
+import type { BuildEvent, FsChange, McedgeApi, UpdateState } from "../shared/api.ts";
 
 const api: McedgeApi = {
   openProjectDialog: () => ipcRenderer.invoke("project:openDialog"),
@@ -54,7 +54,8 @@ const api: McedgeApi = {
   recentProjects: () => ipcRenderer.invoke("recent:list"),
   removeRecentProject: (dir) => ipcRenderer.invoke("recent:remove", dir),
   saveElement: (dir, typeId, element, restore, base) => ipcRenderer.invoke("element:save", dir, typeId, element, restore, base),
-  deleteElement: (dir, typeId, id) => ipcRenderer.invoke("element:delete", dir, typeId, id),
+  deleteElement: (dir, typeId, id, selection, engineId) => ipcRenderer.invoke("element:delete", dir, typeId, id, selection, engineId),
+  deletePlan: (dir, typeId, id, engineId) => ipcRenderer.invoke("element:deletePlan", dir, typeId, id, engineId),
   findReferences: (dir, typeId, id) => ipcRenderer.invoke("references:find", dir, typeId, id),
   renameElement: (dir, typeId, id, newId, dryRun) => ipcRenderer.invoke("element:rename", dir, typeId, id, newId, dryRun),
   unusedElements: (dir) => ipcRenderer.invoke("references:unused", dir),
@@ -88,6 +89,8 @@ const api: McedgeApi = {
   exportFolder: (dir) => ipcRenderer.invoke("export:folder", dir),
   exportTranslations: (name, text) => ipcRenderer.invoke("localization:exportFile", name, text),
   importTranslations: () => ipcRenderer.invoke("localization:importFile"),
+  unusedTranslations: (dir, engineId) => ipcRenderer.invoke("translations:unused", dir, engineId),
+  removeUnusedTranslations: (dir, language, engineId) => ipcRenderer.invoke("translations:removeUnused", dir, language, engineId),
   generatedLangKeys: (dir, engineId) => ipcRenderer.invoke("localization:generatedKeys", dir, engineId),
   hiddenLanguages: (dir) => ipcRenderer.invoke("localization:hidden", dir),
   setHiddenLanguages: (dir, codes) => ipcRenderer.invoke("localization:setHidden", dir, codes),
@@ -114,10 +117,20 @@ const api: McedgeApi = {
   exportWorkspace: (dir) => ipcRenderer.invoke("workspace:export", dir),
   appInfo: () => ipcRenderer.invoke("app:info"),
   mcpCommand: () => ipcRenderer.invoke("app:mcpCommand"),
+  bugContext: () => ipcRenderer.invoke("bug:context"),
+  openIssue: (url) => ipcRenderer.invoke("bug:open", url),
+  openProjectFolder: (dir) => ipcRenderer.invoke("project:reveal", dir),
   openExternal: (url) => ipcRenderer.invoke("shell:external", url),
   listDocs: (language) => ipcRenderer.invoke("docs:list", language),
   readDoc: (language, file) => ipcRenderer.invoke("docs:read", language, file),
   checkUpdates: () => ipcRenderer.invoke("updates:check"),
+  updateState: () => ipcRenderer.invoke("updates:state"),
+  onUpdateState: (listener) => {
+    const handler = (_e: IpcRendererEvent, state: UpdateState) => listener(state);
+    ipcRenderer.on("updates:state", handler);
+    return () => ipcRenderer.removeListener("updates:state", handler);
+  },
+  installUpdate: () => ipcRenderer.invoke("updates:install"),
   onBuildEvent: (listener) => {
     const handler = (_e: IpcRendererEvent, event: BuildEvent) => listener(event);
     ipcRenderer.on("build:event", handler);

@@ -7,13 +7,17 @@ import { PROGRAM_FIELD } from "../../../../src/procedures/project.ts";
 import { merge3, same } from "../live/merge.ts";
 import { api } from "../api.ts";
 import { spriteFor } from "../catalog.ts";
-import { deleteElement, duplicateElement } from "../elementActions.ts";
+import { duplicateElement } from "../elementActions.ts";
 import { useAutosave } from "../hooks/useAutosave.ts";
 import { elementName, elementTexture, findElement, freeId, issuePrefix, toRegistryId, type ElementRef } from "../model.ts";
 import { issueText, t } from "../strings.ts";
 import { typeGenerated, typeOf } from "../types.ts";
 import { FieldList, RefDatalists, type FormContext } from "./ElementFields.tsx";
+import { BubblePreview } from "./BubblePreview.tsx";
+import { RadialPreview } from "./RadialPreview.tsx";
+import { DeleteElementDialog } from "./DeleteElementDialog.tsx";
 import { FormPreview } from "./FormPreview.tsx";
+import { SeatPreview } from "../models/SeatPreview.tsx";
 import { Sprite } from "./Sprite.tsx";
 import { Texture } from "./Texture.tsx";
 import { ActionBar, ActionButton, ContextMenu, Dialog, FormGroup, MenuList, Problems, Separator } from "./ui.tsx";
@@ -101,6 +105,7 @@ export function ElementEditor({ snapshot, target, coverage, engineName, engine, 
   // The element was deleted on disk (by an agent, git, another program). Nothing is written back silently: a waiting
   // save is dropped; with unsaved edits the user chooses, otherwise the editor closes and says why.
   const deletingSelf = useRef(false);
+  const [deleting, setDeleting] = useState(false);
   useEffect(() => {
     if (external || !base.current || !draftRef.current || deletingSelf.current) return;
     const unsaved = !same(draftRef.current, base.current);
@@ -177,12 +182,17 @@ export function ElementEditor({ snapshot, target, coverage, engineName, engine, 
     onSaved(next);
     onOpen(copy);
   };
-  const remove = async () => {
+  const remove = () => {
     deletingSelf.current = true;
-    const next = await deleteElement(snapshot, target);
-    deletingSelf.current = !!next;
-    if (next) (onSaved(next), onClose());
+    setDeleting(true);
   };
+  const deleteDialog = deleting && (
+    <DeleteElementDialog snapshot={snapshot} target={target} engineId={engine?.id} onDone={(next) => {
+      deletingSelf.current = !!next;
+      setDeleting(false);
+      if (next) (onSaved(next), onClose());
+    }} />
+  );
   const showPage = (id: string) => {
     lastPage.set(type.id, id);
     setPageId(id);
@@ -196,7 +206,7 @@ export function ElementEditor({ snapshot, target, coverage, engineName, engine, 
   );
   const head = (
     <div className="findbar edhead">
-      {deletedDialog}
+      {deletedDialog}{deleteDialog}
       <span className="slot small">
         {texture ? <Texture dir={snapshot.dir} path={texture} size={24} /> : <Sprite name={spriteFor(type.id)} size={24} />}
       </span>
@@ -245,7 +255,7 @@ export function ElementEditor({ snapshot, target, coverage, engineName, engine, 
   return (
     <section className="view">
       <div className="findbar edhead">
-        {deletedDialog}
+        {deletedDialog}{deleteDialog}
         <span className="slot small">
           {texture ? <Texture dir={snapshot.dir} path={texture} size={24} /> : <Sprite name={spriteFor(type.id)} size={24} />}
         </span>
@@ -307,7 +317,15 @@ export function ElementEditor({ snapshot, target, coverage, engineName, engine, 
           ))}
           <Problems issues={issues.map((i) => ({ path: `${issuePrefix(target)}.${i.path}`, message: issueText(i) }))} />
         </div>
-        <FormPreview snapshot={snapshot} type={type} draft={draft} name={elementName(type.id, draft)} />
+        {/* Bubbles are designed on a canvas like a small overlay (Q216); other types show their textures. */}
+        {type.id === "bubble" ? <BubblePreview snapshot={snapshot} draft={draft} onChange={setField} />
+          // Radial menus show their wheel (Q227).
+          : type.id === "radial_menu" ? <RadialPreview snapshot={snapshot} draft={draft} />
+          // Seats are placed on the block's model (Q225).
+          : type.id === "block" && page.id === "seat" && draft.seatable === true ? <SeatPreview snapshot={snapshot} draft={draft} onChange={setField} />
+          // A block spanning several cells shows them over its model (Q226).
+          : type.id === "block" && page.id === "bounding_boxes" && draft.multiBlock === true ? <SeatPreview snapshot={snapshot} draft={draft} onChange={setField} cellsOnly />
+          : <FormPreview snapshot={snapshot} type={type} draft={draft} name={elementName(type.id, draft)} />}
         </div>
       </div>
     </section>

@@ -45,7 +45,7 @@ export function newIdProblem(input: ScanInput, target: ElementRef, newId: string
 }
 
 /** Paths of the textures an element names (texture fields, list rows, GUI widget images), with where. */
-function texturePaths(type: ElementType | undefined, element: Element): string[] {
+export function texturePaths(type: ElementType | undefined, element: Element): string[] {
   const found: string[] = [];
   const visit = (fields: FieldDef[], values: Record<string, unknown>) => {
     for (const field of fields) {

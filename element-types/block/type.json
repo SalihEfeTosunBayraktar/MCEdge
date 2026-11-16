@@ -766,7 +766,7 @@
               "key": "boundingBoxes",
               "type": "list",
               "label": "Boxes",
-              "help": "Outline and collision shape in pixels (0-16 per axis).",
+              "help": "Outline and collision shape in pixels (0-16 per axis; further only for a block that spans several blocks).",
               "default": [
                 {
                   "mx": 0,
@@ -853,6 +853,171 @@
                 }
               ],
               "mcreator": "boundingBoxes"
+            },
+            {
+              "key": "multiBlock",
+              "type": "boolean",
+              "label": "Spans several blocks",
+              "help": "Boxes may reach past the block's own cell (below 0 or above 16): every cell they cover becomes part of the block. Placing it needs those cells free, breaking any part breaks the whole block and drops it once, and it turns with its facing. Only for blocks without a base that face nowhere or the four horizontal directions.",
+              "default": false,
+              "showIf": {
+                "key": "blockBase",
+                "equals": ""
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "seat",
+      "title": "Seat",
+      "groups": [
+        {
+          "title": "Seat",
+          "fields": [
+            {
+              "key": "seatable",
+              "type": "boolean",
+              "label": "Seatable",
+              "help": "Players sit on the block when they right-click it; sneaking stands them up, and breaking the block stands everyone up. No procedure or code is needed.",
+              "default": false
+            },
+            {
+              "key": "seatHeightMode",
+              "type": "select",
+              "label": "Sit height",
+              "help": "Automatic: each seat sits on the top of the block's boxes under it (a slab-high box gives 0.5 blocks). Manual: each seat keeps its own height.",
+              "default": "auto",
+              "options": [
+                {
+                  "value": "auto",
+                  "label": "Automatic, from the boxes"
+                },
+                {
+                  "value": "manual",
+                  "label": "Manual, per seat"
+                }
+              ],
+              "showIf": {
+                "key": "seatable",
+                "equals": true
+              }
+            },
+            {
+              "key": "seats",
+              "type": "list",
+              "label": "Seats",
+              "help": "One row per player who can sit, in pixels from the north-west bottom corner (16 = one block) for the block facing north; a block with a facing turns its seats with it. Facing is in degrees from the block's front (0 looks out of the north face, 90 east). Click the preview to add a seat, drag a seat to move it.",
+              "default": [
+                {
+                  "x": 8,
+                  "y": 16,
+                  "z": 8,
+                  "yaw": 0,
+                  "pose": "sit"
+                }
+              ],
+              "showIf": {
+                "key": "seatable",
+                "equals": true
+              },
+              "fields": [
+                {
+                  "key": "x",
+                  "type": "number",
+                  "label": "X",
+                  "default": 8,
+                  "min": -100,
+                  "max": 100,
+                  "step": 0.5
+                },
+                {
+                  "key": "y",
+                  "type": "number",
+                  "label": "Height (Y)",
+                  "help": "The seat surface; shown when the sit height is manual.",
+                  "default": 16,
+                  "min": -100,
+                  "max": 100,
+                  "step": 0.5,
+                  "showIf": {
+                    "key": "seatHeightMode",
+                    "equals": "manual"
+                  }
+                },
+                {
+                  "key": "z",
+                  "type": "number",
+                  "label": "Z",
+                  "default": 8,
+                  "min": -100,
+                  "max": 100,
+                  "step": 0.5
+                },
+                {
+                  "key": "yaw",
+                  "type": "number",
+                  "label": "Facing",
+                  "default": 0,
+                  "min": -360,
+                  "max": 360,
+                  "step": 15
+                },
+                {
+                  "key": "pose",
+                  "type": "select",
+                  "label": "Pose",
+                  "help": "Sit: the player sits looking along the facing. Lie: the player lies on their back, head along the facing, the middle of the body on the point (a sofa's long side); no bed, no sleeping.",
+                  "default": "sit",
+                  "options": [
+                    {
+                      "value": "sit",
+                      "label": "Sit"
+                    },
+                    {
+                      "value": "lie",
+                      "label": "Lie down"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "key": "seatEmptyHand",
+              "type": "boolean",
+              "label": "Only with an empty hand",
+              "help": "A player holding something uses it on the block as usual (places a block, eats) instead of sitting.",
+              "default": true,
+              "showIf": {
+                "key": "seatable",
+                "equals": true
+              }
+            },
+            {
+              "key": "seatDismount",
+              "type": "select",
+              "label": "Stand up at",
+              "help": "Where a player stands when they get up. Front falls back to the top when the space in front is blocked.",
+              "default": "top",
+              "options": [
+                {
+                  "value": "top",
+                  "label": "On top of the block"
+                },
+                {
+                  "value": "front",
+                  "label": "In front of the seat"
+                },
+                {
+                  "value": "back",
+                  "label": "Where they stood before"
+                }
+              ],
+              "showIf": {
+                "key": "seatable",
+                "equals": true
+              }
             }
           ]
         }

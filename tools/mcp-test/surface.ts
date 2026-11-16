@@ -70,6 +70,12 @@ try {
   // ---- procedures, GUI layout ----
   await mcp.call("create_element", { type: "procedure", id: "on_craft" });
   assert((await mcp.call("read_procedure", { id: "on_craft" })) !== undefined, "read_procedure");
+  // Q202: the server-wide player loop and the online player by name in the block catalog.
+  const playerBlocks = (await mcp.call("procedure_blocks", { query: "player" })).blocks as { id: string; fields: { name: string; options?: string[]; default?: unknown }[]; engines: string[] }[];
+  const loop = playerBlocks.find((b) => b.id === "for_each_player");
+  const byName = playerBlocks.find((b) => b.id === "player_by_name");
+  assert(loop?.fields.some((f) => f.name === "scope" && f.options?.join() === "dimension,server" && f.default === "dimension") && byName?.engines.length === 5,
+    "procedure_blocks lists for_each_player's scope field and player_by_name on 5 engines");
   await mcp.call("create_element", { type: "gui", id: "forge_gui", values: { type: 1 } });
   await mcp.call("write_gui_layout", {
     type: "gui", id: "forge_gui", widgets: [
@@ -107,6 +113,13 @@ try {
     && String(badState).includes("1: a state_image needs states") && String(badState).includes("2: states, stateValue"), `state_image checks: ${badState}`);
   const dupSlot = await mcp.call("write_gui_layout", { type: "gui", id: "forge_gui", widgets: [{ kind: "slot", x: 0, y: 0, id: 0 }, { kind: "slot", x: 20, y: 0, id: 0 }] }, true);
   assert(String(dupSlot).includes("used twice"), "duplicate slot index refused");
+  // Q203: a GUI's onSlotChanged procedure, given the slot id, is in the schema; update_element sets it.
+  const guiSchema = await mcp.call("element_type_schema", { type: "gui" });
+  const slotField = guiSchema.pages.flatMap((p: { groups: { fields: { key: string }[] }[] }) => p.groups.flatMap((g) => g.fields)).find((f: { key: string }) => f.key === "onSlotChanged");
+  assert(slotField?.type === "procedure" && slotField.dependencies.includes("slot") && guiSchema.jsonSchema.properties.onSlotChanged, "element_type_schema gui lists onSlotChanged with the slot dependency");
+  await mcp.call("update_element", { type: "gui", id: "forge_gui", values: { onSlotChanged: "on_craft" } });
+  assert((await mcp.call("read_element", { type: "gui", id: "forge_gui" })).onSlotChanged === "on_craft", "update_element sets onSlotChanged");
+  assert(JSON.stringify(await mcp.call("find_references", { type: "procedure", id: "on_craft" })).includes("onSlotChanged"), "onSlotChanged is a reference");
   await mcp.call("create_element", { type: "overlay", id: "hud" });
   const overlayButton = await mcp.call("write_gui_layout", { type: "overlay", id: "hud", widgets: [{ kind: "button", x: 0, y: 0 }] }, true);
   assert(String(overlayButton).includes("labels, images and state images only"), "overlays refuse buttons");

@@ -1,0 +1,6 @@
+@wait 5
+sessionprobe
+@wait 2
+stop
+@wait 15
+@kill

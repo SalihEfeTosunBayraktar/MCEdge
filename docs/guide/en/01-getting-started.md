@@ -17,6 +17,8 @@ MCEdge makes Minecraft mods without writing Java. A project is a folder with an 
 
 Everything you change is saved on its own. **Window > Preferences...** sets the language, the theme and the text size.
 
+The installed MCEdge updates itself: a new release downloads in the background and the status bar shows its progress, then **Restart now** installs it (or it installs when you quit). Click the status bar item for the release notes. **Help > Check for updates...** checks at once; Preferences can turn the automatic checks off.
+
 ## Next
 
 - Make your first item

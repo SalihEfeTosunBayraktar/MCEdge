@@ -17,12 +17,18 @@ import { javaModelOutputs } from "./javaModels.ts";
 import { projectModelOutputs, type ModelOutputs } from "./models.ts";
 import { itemPropertyOutputs } from "./states.ts";
 import { projectSounds } from "./sounds.ts";
+import { bubbleDataPath, bubbleOutputs } from "./bubbles.ts";
+import { radialDataPath, radialOutputs } from "./radial.ts";
+import { seatOutputs } from "./seats.ts";
 import { readPng, remapTexture, writePng, type Rgba } from "./png.ts";
+import { vanillaMcmeta } from "../resources/textureAnimation.ts";
+import { spriteAnimationOutputs } from "./textureAnimations.ts";
 import { render, type Context } from "./render.ts";
 import { writeSourceMap } from "./sourceMap.ts";
 import { applyLockedCode } from "./lockedCode.ts";
 import { projectTags } from "./tags.ts";
-import { TYPE_MODULES, type ElementContext, type GenEnv, type JavaSourceFile, type ResourceFile } from "./typeModule.ts";
+import { probeOutputs } from "./probe.ts";
+import { TYPE_MODULES, type ElementContext, type GenEnv, type JavaSourceFile, type ProbeOptions, type ResourceFile } from "./typeModule.ts";
 
 /**
  * A path segment "[name]" repeats a template file once per entry of a context list: the elements of the type
@@ -45,11 +51,11 @@ export interface GenerateResult {
 }
 
 /** `lockedCode: false` leaves out the locked files of elements (KUYRUK 131); lockedCode.ts uses it to see fresh output. */
-export function generateTarget(project: ModProject, projectDir: string, engine: Engine, outDir: string, options: { lockedCode?: boolean } = {}): GenerateResult {
+export function generateTarget(project: ModProject, projectDir: string, engine: Engine, outDir: string, options: { lockedCode?: boolean; probe?: ProbeOptions } = {}): GenerateResult {
   // Only generated sources are replaced; run/ (test worlds, options) and Gradle caches survive regeneration.
   rmSync(join(outDir, "src"), { recursive: true, force: true });
   const { generated, skipped } = generatedElements(project, engine);
-  const env = genEnv(project, projectDir, engine, generated);
+  const env = genEnv(project, projectDir, engine, generated, options.probe);
   const { context, elementContexts, models } = buildContext(env);
 
   for (const layerDir of layerDirs(engine)) {
@@ -77,6 +83,21 @@ export function generateTarget(project: ModProject, projectDir: string, engine: 
       copyTexture(resolve(projectDir, from), target);
     }
   }
+  // Status bubbles (Q206, Q216): their images and bubbles.json, the data one renderer draws every bubble from.
+  const bubbles = bubbleOutputs(env, procedureBuild(env).bubbles);
+  // Radial menus (Q227): their images and radial_menus.json, the data one runtime opens and draws every menu from.
+  const radial = radialOutputs(env);
+  for (const [outputs, dataPath] of [[bubbles, bubbleDataPath(project.mod.id)], [radial, radialDataPath(project.mod.id)]] as const) {
+    for (const { to, bytes } of outputs.images) {
+      mkdirSync(dirname(join(modelTextures, `${to}.png`)), { recursive: true });
+      writeFileSync(join(modelTextures, `${to}.png`), bytes);
+    }
+    if (outputs.json) {
+      const data = join(outDir, "src/main/resources", dataPath);
+      mkdirSync(dirname(data), { recursive: true });
+      writeFileSync(data, outputs.json);
+    }
+  }
   for (const { from, to } of projectSounds(env).copies) {
     const target = join(outDir, "src/main/resources", to);
     mkdirSync(dirname(target), { recursive: true });
@@ -89,12 +110,12 @@ export function generateTarget(project: ModProject, projectDir: string, engine: 
   writeSourceMap(env, outDir, locked);
   const unresolved = dependencyGradle(project.mod.dependencies, engine).unresolved.filter((r) => r.required)
     .map((r) => `required mod ${r.modId} has no jar for dev runs on ${engine.id} (${r.message ?? r.status}); resolve_dependencies downloads it`);
-  return { skipped, warnings: [...procedureBuild(env).warnings, ...projectTags(env).skipped, ...unresolved] };
+  return { skipped, warnings: [...procedureBuild(env).warnings, ...bubbles.problems, ...radial.problems, ...projectTags(env).skipped, ...unresolved] };
 }
 
-export function genEnv(project: ModProject, projectDir: string, engine: Engine, generated: Record<string, Element[]>): GenEnv {
+export function genEnv(project: ModProject, projectDir: string, engine: Engine, generated: Record<string, Element[]>, probe?: ProbeOptions): GenEnv {
   const mc = engine.minecraft === "1.16.5" ? "1.16.5" : engine.minecraft.startsWith("1.21") ? "1.21.5" : "26.3";
-  return { engine, project, projectDir, modId: project.mod.id, mc, loader: engine.loader as GenEnv["loader"], generated, ownTags: ownTags(projectDir) };
+  return { engine, project, projectDir, modId: project.mod.id, mc, loader: engine.loader as GenEnv["loader"], generated, ownTags: ownTags(projectDir), ...(probe ? { probe } : {}) };
 }
 
 /** Elements this engine generates, by type id; the rest are reported instead of producing broken code. */
@@ -171,6 +192,8 @@ function buildContext(env: GenEnv): { context: Context; elementContexts: Record<
   // A command's argument program is a procedure unit: the procedure runtime writes its class even when the project
   // has no procedure elements.
   if (byType.command?.length) byType.procedure ??= [];
+  // Radial menus (Q227) run on the procedure runtime (packets, bubbles) even in a mod without procedures.
+  if (byType.radial_menu?.length) byType.procedure ??= [];
   for (const [typeId, elements] of Object.entries(byType)) {
     const module = TYPE_MODULES.get(typeId)!;
     const contexts = elements.map((element) => ({
@@ -193,6 +216,12 @@ function buildContext(env: GenEnv): { context: Context; elementContexts: Record<
   resourceFiles.push(...sounds.files);
   javaSources.push(...sounds.sources);
   runtimeInit.push(...sounds.init);
+  // Seatable blocks (Q225): seats.json and one shared seat runtime reading it.
+  const seats = seatOutputs(env);
+  resourceFiles.push(...seats.files);
+  javaSources.push(...seats.sources);
+  runtimeInit.push(...seats.init);
+  clientInit.push(...seats.clientInit);
   // Project block/item models the elements use (models/*.json, .obj): written once.
   const models = projectModelOutputs(env);
   resourceFiles.push(...models.files);
@@ -207,7 +236,15 @@ function buildContext(env: GenEnv): { context: Context; elementContexts: Record<
   javaSources.push(...itemProperties.sources);
   clientInit.push(...itemProperties.clientInit);
   javaSources.push(...integrationCode.flatMap((c) => c.sources));
-  const allMixins = [...Object.values(elementContexts).flat().flatMap((ctx) => ctx.mixins ?? []), ...javaModels.mixins, ...itemProperties.mixins, ...procedureBuild(env).mixins];
+  // Block and item textures that play once start again at world join (Q229).
+  const sprites = spriteAnimationOutputs(env);
+  javaSources.push(...sprites.sources);
+  clientInit.push(...sprites.clientInit);
+  // The test probe of dev builds (Q218, Q219).
+  const probe = probeOutputs(env);
+  javaSources.push(...probe.sources);
+  runtimeInit.push(...probe.init);
+  const allMixins = [...Object.values(elementContexts).flat().flatMap((ctx) => ctx.mixins ?? []), ...javaModels.mixins, ...itemProperties.mixins, ...seats.mixins, ...procedureBuild(env).mixins];
   // Every type's list exists so templates can loop over types the project does not use.
   for (const type of registry.types) perType[type.folder] ??= [];
 
@@ -396,10 +433,17 @@ function stacked(top: Rgba, bottom: Rgba): Rgba {
   return { width, height: height * 2, data };
 }
 
-/** Copies a file with the .mcmeta beside it, which is what makes a texture animated. */
+/**
+ * Copies a file with the .mcmeta beside it, which is what makes a texture animated; a playback mode (Q229) becomes the
+ * vanilla frame list that plays it, so the game needs no code of ours for it.
+ */
 function copyTexture(from: string, to: string): void {
   copyFileSync(from, to);
-  if (existsSync(`${from}.mcmeta`)) copyFileSync(`${from}.mcmeta`, `${to}.mcmeta`);
+  if (!existsSync(`${from}.mcmeta`)) return;
+  const text = readFileSync(`${from}.mcmeta`, "utf8");
+  if (!text.includes('"mcedge"')) return copyFileSync(`${from}.mcmeta`, `${to}.mcmeta`);
+  const png = readPng(readFileSync(from));
+  writeFileSync(`${to}.mcmeta`, vanillaMcmeta(text, png.width, png.height));
 }
 
 function* walk(dir: string): Generator<string> {

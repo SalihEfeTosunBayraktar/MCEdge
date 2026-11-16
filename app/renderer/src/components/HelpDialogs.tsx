@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { AppInfo, McpCommand, UpdateCheck } from "../../../shared/api.ts";
+import type { AppInfo, McpCommand } from "../../../shared/api.ts";
 import { api } from "../api.ts";
 import { language, t } from "../strings.ts";
 import { LogoMark, Wordmark } from "./Brand.tsx";
@@ -18,10 +18,12 @@ export interface Notice {
 }
 
 /** Inventory-panel modal with buttons at the bottom; Escape and the backdrop close it. */
-export function Modal({ title, className = "", onClose, buttons, children }: {
+export function Modal({ title, className = "", onClose, closeLabel, buttons, children }: {
   title: string;
   className?: string;
   onClose: () => void;
+  /** Text of the closing button; "Close" by default. */
+  closeLabel?: string;
   buttons?: React.ReactNode;
   children: React.ReactNode;
 }) {
@@ -37,7 +39,7 @@ export function Modal({ title, className = "", onClose, buttons, children }: {
         {children}
         <div className="dlg-buttons">
           {buttons}
-          <button type="button" className="abtn" onClick={onClose} autoFocus><span>{t("dialog.close")}</span></button>
+          <button type="button" className="abtn" onClick={onClose} autoFocus><span>{closeLabel ?? t("dialog.close")}</span></button>
         </div>
       </div>
     </div>
@@ -184,23 +186,6 @@ export function ConnectAgentDialog({ dir, onClose }: { dir?: string; onClose: ()
           </FormGroup>
         ))}
       </div>
-    </Modal>
-  );
-}
-
-/** Help > Check for updates: the result of asking GitHub for the latest release. */
-export function UpdateDialog({ onClose }: { onClose: () => void }) {
-  const [check, setCheck] = useState<UpdateCheck>();
-  useEffect(() => void api.checkUpdates().then(setCheck), []);
-  const text = !check ? t("updates.checking")
-    : check.status === "latest" ? t("updates.latest", { version: check.current })
-    : check.status === "failed" ? t("updates.failed", { message: check.message ?? "" })
-    : t(check.install === "download" ? "updates.downloading" : "updates.manual", { latest: check.latest ?? "", version: check.current });
-  return (
-    <Modal title={t("updates.title")} onClose={onClose} buttons={check?.url && (
-      <button type="button" className="abtn primary" onClick={() => void api.openExternal(check.url!)}><Icon name="globe" /><span>{t("updates.open")}</span></button>
-    )}>
-      <p className="notice" data-testid="update-status" data-status={check?.status ?? "checking"}>{text}</p>
     </Modal>
   );
 }

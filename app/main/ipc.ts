@@ -22,7 +22,10 @@ import { changeModIdentity, type IdentityChange } from "../../src/ir/modIdentity
 import { renameElement, renameSummary } from "../../src/ir/rename.ts";
 import { createProject, type NewProject } from "../../src/ir/createProject.ts";
 import { generatedLangKeys } from "../../src/generator/langKeys.ts";
-import { deleteElement, isProjectDir, loadElement, loadProject, needsMigration, refreshSchemas, saveElement, saveFolders, saveLocalization, saveModInfo, saveTextureFolders, saveVariables, TEXTURE_FOLDERS_FILE, loadProblemSettings, saveProblemSettings, PROBLEMS_FILE } from "../../src/ir/storage.ts";
+import { applyDelete, planDelete, type DeletePlan, type DeleteSelection } from "../../src/ir/deleteCascade.ts";
+import { projectUnusedTranslations, removeUnusedTranslations } from "../../src/ir/unusedTranslations.ts";
+import { unusedIssues } from "../../src/ir/translationUse.ts";
+import { isProjectDir, loadElement, loadProject, needsMigration, refreshSchemas, saveElement, saveFolders, saveLocalization, saveModInfo, saveTextureFolders, saveVariables, TEXTURE_FOLDERS_FILE, loadProblemSettings, saveProblemSettings, PROBLEMS_FILE } from "../../src/ir/storage.ts";
 import { applyProblemAction, classify, type ProblemAction } from "../../src/ir/problems.ts";
 import type { ModProject } from "../../src/ir/types.ts";
 import { validateProject } from "../../src/ir/validate.ts";
@@ -37,7 +40,7 @@ import { changelogSinceExport, LAST_EXPORT, recordExport } from "../../src/vcs/c
 import { isGradleModProject } from "../../src/projects/gradleMod.ts";
 import { listDrafts, readAppState, rememberProject, saveDraft, updateAppState } from "./appState.ts";
 import { codeProjectInfo } from "./codeProject.ts";
-import { markOwn, ownWrite, watchProject } from "./watch.ts";
+import { markOwn, ownWrite, watchedDir, watchProject } from "./watch.ts";
 import {
   clientRunKey,
   type ClientRunOptions,
@@ -75,6 +78,13 @@ export function registerIpc(): void {
   });
   ipcMain.handle("project:open", (event, dir: string) => opened(event.sender, dir));
   ipcMain.handle("project:reload", (_e, dir: string) => snapshot(dir));
+  // File > Open project folder (Q210): the window's own project folder only, never a path the renderer picks.
+  ipcMain.handle("project:reveal", async (event, dir: string) => {
+    const current = watchedDir(event.sender.id);
+    if (!current || resolve(current) !== resolve(dir)) throw new Error("only the open project's folder");
+    const failure = await shell.openPath(current);
+    if (failure) throw new Error(failure);
+  });
   ipcMain.handle("project:example", () => exampleProject());
   // File > New project (KUYRUK 126): the suggested parent folder, and the project made and opened.
   ipcMain.handle("project:newFolder", () => join(app.getPath("documents"), "MCEdge"));
@@ -121,9 +131,13 @@ export function registerIpc(): void {
     markOwn([file]);
     return { ...snapshotWithElement(dir, typeId, element.id), ...(merged ? { merged } : {}) };
   });
-  ipcMain.handle("element:delete", (_e, dir: string, typeId: string, id: string) => {
-    deleteElement(dir, typeId, id);
-    markOwn([elementFile(dir, typeId, id)]);
+  // What only the element used (Q220); the engine decides which translation keys the generator writes for it.
+  ipcMain.handle("element:deletePlan", (_e, dir: string, typeId: string, id: string, engineId?: string) =>
+    planDelete(dir, { type: typeId, id }, listEngines().find((e) => e.id === engineId)));
+  ipcMain.handle("element:delete", (_e, dir: string, typeId: string, id: string, selection?: DeleteSelection, engineId?: string) => {
+    const target = { type: typeId, id };
+    const plan: DeletePlan = selection ? planDelete(dir, target, listEngines().find((e) => e.id === engineId)) : { element: target, elements: [], textures: [], models: [], langKeys: [] };
+    markOwn(applyDelete(dir, plan, selection ?? {}).files);
     return snapshot(dir);
   });
   ipcMain.handle("references:find", (_e, dir: string, typeId: string, id: string) => referencesOf(findAllReferences(loadReferenceInput(dir)), { type: typeId, id }));
@@ -238,6 +252,14 @@ export function registerIpc(): void {
   ipcMain.handle("localization:generatedKeys", (_e, dir: string, engineId: string) => {
     const engine = listEngines().find((e) => e.id === engineId);
     return engine ? generatedLangKeys(loadProject(dir), dir, engine) : {};
+  });
+  // The Problems tab's unused translation keys (Q222), rated by problems.json; computed on request, not with the snapshot.
+  ipcMain.handle("translations:unused", (_e, dir: string, engineId?: string) =>
+    classify(unusedIssues(projectUnusedTranslations(dir, listEngines().find((e) => e.id === engineId))), loadProblemSettings(dir)));
+  ipcMain.handle("translations:removeUnused", (_e, dir: string, language: string, engineId?: string) => {
+    removeUnusedTranslations(dir, listEngines().find((e) => e.id === engineId), [language]);
+    markOwn([join(dir, "localization", `${language}.json`)]);
+    return snapshot(dir);
   });
   ipcMain.handle("localization:hidden", (_e, dir: string) => readAppState().hiddenLanguages?.[dir] ?? []);
   ipcMain.handle("localization:setHidden", (_e, dir: string, codes: string[]) =>

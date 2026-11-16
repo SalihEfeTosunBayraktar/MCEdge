@@ -10,7 +10,8 @@ import { dropDraft, persistDraft, putDraft, takeDraft } from "./drafts.ts";
 import { TexturePreview } from "./TexturePreview.tsx";
 import { SaveAsDialog } from "./NewTextureDialog.tsx";
 import { flip, mirror, shape, type Point, type ShapeKind } from "../../../../src/textures/shapes.ts";
-import { blend, joinFrames, mcmetaText, NEW_ANIMATION, parseMcmeta, splitFrames, type Animation } from "./animation.ts";
+import { blend, joinFrames, mcmetaText, NEW_ANIMATION, parseMcmeta, scheduleOf, splitFrames, type Animation } from "./animation.ts";
+import { frameAt, PLAYBACK_MODES, type PlaybackMode } from "../../../../src/resources/textureAnimation.ts";
 import { blank, clone, decodePng, encodePng, floodFill, fromHex, getPixel, line, resize, setPixel, toHex, type Pixels, type Rgba } from "./pixels.ts";
 import { useCtrlWheel } from "../hooks/useCtrlWheel.ts";
 import { ANCHORS, clearRegion, clip, copyRegion, desaturate, pasteRegion, resizeCanvas, shiftHue, type Anchor, type Rect } from "../../../../src/textures/edit.ts";
@@ -313,8 +314,10 @@ export function TextureEditor({ snapshot, path, onSaved, onClose }: Props) {
       pv.getContext("2d")!.putImageData(new ImageData(new Uint8ClampedArray(img.data), img.width, img.height), 0, 0);
     }
   });
-  // Playback on the main canvas at the frame time (a tick is 50 ms), blending into the next frame with interpolate on;
-  // after Stop the next render draws the frame being edited again. A layout effect, so Stop cancels the loop before that draw.
+  // Playback on the main canvas as the game plays it (the shared model: frame time, a tick is 50 ms, frame order and
+  // playback mode, Q229), blending into the next frame with interpolate on; it starts again when the animation settings
+  // change, so a once mode shows its end. After Stop the next render draws the frame being edited again. A layout
+  // effect, so Stop cancels the loop before that draw.
   useLayoutEffect(() => {
     if (!playing || !anim) return;
     let raf = 0, start: number | undefined;
@@ -322,9 +325,12 @@ export function TextureEditor({ snapshot, path, onSaved, onClose }: Props) {
       // Timed from the first frame: a frame's timestamp can be earlier than performance.now() when the loop started.
       start ??= now;
       const frames = allFrames();
-      const pos = (now - start) / (anim.frametime * 50);
-      const i = Math.floor(pos) % frames.length;
-      drawCanvas(anim.interpolate ? blend(frames[i], frames[(i + 1) % frames.length], pos % 1) : frames[i], false);
+      const schedule = scheduleOf(anim, frames.length, frames[0].width, frames[0].height);
+      if (schedule) {
+        const at = frameAt(schedule, now - start);
+        drawCanvas(at.blend > 0 ? blend(frames[at.index], frames[at.next], at.blend) : frames[at.index], false);
+        canvas.current?.setAttribute("data-frame", String(at.index));
+      } else drawCanvas(frames[0], false);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -829,6 +835,12 @@ export function TextureEditor({ snapshot, path, onSaved, onClose }: Props) {
                     </FormRow>
                     <FormRow label={t("paint.interpolate")}>
                       <label className="check"><input type="checkbox" checked={anim.interpolate} onChange={(e) => setAnimation({ interpolate: e.target.checked })} /></label>
+                    </FormRow>
+                    <FormRow label={t("paint.playback")}>
+                      <select className="playbackmode" value={anim.mode} aria-label={t("paint.playback")} onChange={(e) => setAnimation({ mode: e.target.value as PlaybackMode })}>
+                        {PLAYBACK_MODES.map((m) => <option key={m} value={m}>{t(`paint.playback.${m}`)}</option>)}
+                      </select>
+                      <p className="fhelp">{t(`paint.playbackHelp.${anim.mode}`)}</p>
                     </FormRow>
                     <FormRow label={t("paint.animPreview")}>
                       <button type="button" className="abtn" title={t(playing ? "paint.stopHint" : "paint.playHint")} onClick={togglePlay}>

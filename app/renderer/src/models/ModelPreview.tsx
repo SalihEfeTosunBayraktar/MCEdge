@@ -72,20 +72,9 @@ export function ModelPreview({ dir, modId, model, textures, height = 260, itemDi
   useEffect(() => {
     let alive = true;
     setError(undefined);
-    const read = async (name: string): Promise<BlockModelJson | undefined> => {
-      try {
-        const file = await api.codeRead(dir, `models/${name}.json`);
-        return file.binary ? undefined : (JSON.parse(file.text) as BlockModelJson);
-      } catch (e) {
-        if (e instanceof SyntaxError) throw new Error(`models/${name}.json: ${e.message}`);
-        return undefined;
-      }
-    };
     void (async () => {
       try {
-        const resolvedModel = await resolveModel(model, modId, read, vanillaModels as unknown as Record<string, BlockModelJson>);
-        const next = { ...resolvedModel, textures: { ...resolvedModel.textures, ...overrides } };
-        const images = await loadImages(dir, modId, next, textures);
+        const { model: next, images } = await loadProjectModel(dir, modId, model, textures, overrides);
         if (!alive) return;
         setResolved(next);
         stage.current?.show(next, images);
@@ -127,6 +116,22 @@ export function ModelPreview({ dir, modId, model, textures, height = 260, itemDi
       {resolved && !resolved.elements.length && !error && <p className="fhelp">{t("model.noElements")}</p>}
     </div>
   );
+}
+
+/** A project block model resolved through its parents, with slot textures replaced by `overrides`, and its face images. */
+export async function loadProjectModel(dir: string, modId: string, model: string, textures: string[], overrides: Record<string, string> = {}) {
+  const read = async (name: string): Promise<BlockModelJson | undefined> => {
+    try {
+      const file = await api.codeRead(dir, `models/${name}.json`);
+      return file.binary ? undefined : (JSON.parse(file.text) as BlockModelJson);
+    } catch (e) {
+      if (e instanceof SyntaxError) throw new Error(`models/${name}.json: ${e.message}`);
+      return undefined;
+    }
+  };
+  const resolvedModel = await resolveModel(model, modId, read, vanillaModels as unknown as Record<string, BlockModelJson>);
+  const next: ResolvedModel = { ...resolvedModel, textures: { ...resolvedModel.textures, ...overrides } };
+  return { model: next, images: await loadImages(dir, modId, next, textures) };
 }
 
 /** The display object of an item display field; nothing when the text is empty or not a JSON object. */

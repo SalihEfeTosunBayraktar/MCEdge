@@ -45,6 +45,7 @@ export function MenuBar({ cmd, projectName, engines, engineId, onEngineChange }:
         sep,
         { label: t("menu.closeEditor"), shortcut: "Ctrl+W", onClick: cmd.closeEditor },
         { label: t("menu.closeProject"), onClick: when(p || cmd.codeMode, cmd.closeProject) },
+        { label: t("menu.openProjectFolder"), onClick: when(p || cmd.codeMode, cmd.openProjectFolder) },
         sep,
         { label: t("menu.exportJar"), shortcut: "Ctrl+E", onClick: when(cmd.canBuild, cmd.exportJar) },
         { label: t("menu.exportWorkspace"), onClick: when(p, cmd.exportWorkspace) },
@@ -121,6 +122,7 @@ export function MenuBar({ cmd, projectName, engines, engineId, onEngineChange }:
         { label: t("menu.shortcuts"), onClick: cmd.showShortcuts },
         { label: t("menu.developerDocs"), onClick: cmd.openDeveloperDocs },
         { label: t("menu.connectAgent"), onClick: cmd.connectAgent },
+        { label: t("menu.reportBug"), onClick: cmd.reportBug },
         sep,
         { label: t("menu.checkUpdates"), onClick: cmd.checkUpdates },
         { label: t("menu.about"), onClick: cmd.showAbout },
@@ -144,7 +146,7 @@ export function MenuBar({ cmd, projectName, engines, engineId, onEngineChange }:
       </nav>
       {projectName && (
         <div className="wsname">
-          <span className="wsdot" />{projectName}
+          <span className="wsdot" /><span className="wsn" title={projectName}>{projectName}</span>
           {cmd.codeMode && <span className="dim">{t("code.mode")}</span>}
           <div className="tbtns">
             <button className="tbtn" title={`${t("top.build")} (Ctrl+B)`} aria-label={t("top.build")} data-testid="top-build"
@@ -161,7 +163,7 @@ export function MenuBar({ cmd, projectName, engines, engineId, onEngineChange }:
           </div>
           {engines.length > 0 && <div className="menuwrap">            <button className={`enginebtn ${open === "engine" ? "on" : ""}`} title={t("top.engine")}
               onClick={() => setOpen(open === "engine" ? undefined : "engine")}>
-              {engines.find((e) => e.id === engineId)?.name}
+              <span className="engname">{engines.find((e) => e.id === engineId)?.name}</span>
               <Icon name="chev" size={10} />
             </button>
             {open === "engine" && (

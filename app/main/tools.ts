@@ -1,4 +1,5 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { homedir, userInfo } from "node:os";
 import { join } from "node:path";
 import { app, BrowserWindow, dialog, ipcMain, shell, type WebContents } from "electron";
 import { engineSetup, logPath, runGradle, type GradleRun } from "../../src/build/gradle.ts";
@@ -12,9 +13,9 @@ import { ROOT } from "../../src/paths.ts";
 import { clearGradleCaches, deleteResource, exportWorkspace, importResources, resourceExtensions } from "../../src/resources/files.ts";
 import { deleteSoundEvent, saveSoundEvent, type SoundEventChange } from "../../src/resources/soundEvents.ts";
 import { createPack, previewPack, type PackOptions } from "../../src/ir/packs.ts";
-import { runKey, type AppInfo, type McpCommand, type BuildEvent, type GradleMode, type ResourceImport, type ResourceKind } from "../shared/api.ts";
+import { ISSUES_NEW, runKey, type AppInfo, type McpCommand, type BuildEvent, type GradleMode, type ResourceImport, type ResourceKind } from "../shared/api.ts";
 import { buildRunning, cancelBuild, insideProject, snapshot } from "./ipc.ts";
-import { checkForUpdatesNow } from "./updater.ts";
+import { checkForUpdatesNow, installUpdate, updateState } from "./updater.ts";
 
 /** Running Gradle tasks by build-event key ("fabric-1.21.5 server"), so Stop can end them. */
 const runs = new Map<string, GradleRun>();
@@ -82,6 +83,12 @@ export function registerTools(): void {
     if (!/^https:\/\//.test(url)) throw new Error("only https links");
     return shell.openExternal(url);
   });
+  // Help > Report a bug (Q208): the home folder and user name the report masks, and the one URL the dialog may open.
+  ipcMain.handle("bug:context", () => ({ home: homedir(), user: userInfo().username }));
+  ipcMain.handle("bug:open", (_e, url: string) => {
+    if (!url.startsWith(ISSUES_NEW)) throw new Error("only this repository's new-issue page");
+    return shell.openExternal(url);
+  });
   // Help > User guide (KUYRUK 128): docs/guide/<language>/*.md in file order; English where a language has no guide.
   const guideFolder = (language: string) => {
     const folder = join(ROOT, "docs", "guide", /^[a-z]{2}$/.test(language) ? language : "en");
@@ -100,6 +107,8 @@ export function registerTools(): void {
     return readFileSync(join(guideFolder(language), file), "utf8");
   });
   ipcMain.handle("updates:check", () => checkForUpdatesNow());
+  ipcMain.handle("updates:state", () => updateState());
+  ipcMain.handle("updates:install", () => installUpdate());
   app.on("before-quit", () => runs.forEach((run) => run.stop()));
 }
 

@@ -3,28 +3,20 @@ import { useViewState } from "../hooks/useViewState.ts";
 import { addFolder, elementKey, folderName, moveElements, NO_FOLDERS, parentFolder, moveFolder, removeFolder, renameFolder, setFolderColor, setFolderIcon, FOLDER_ICONS, subfolders, type ProjectFolders } from "../../../../src/ir/folders.ts";
 import type { Coverage, ProjectSnapshot, TaskSource } from "../../../shared/api.ts";
 import { api } from "../api.ts";
-import { deleteElement, duplicateElement } from "../elementActions.ts";
+import { duplicateElement } from "../elementActions.ts";
 import { allElements, elementName, elementTexture, findElement, issuesFor, type ElementRef } from "../model.ts";
 import { t } from "../strings.ts";
 import { typeGenerated, typeOf } from "../types.ts";
 import { ELEMENT_DRAG, ElementTile } from "./ElementTile.tsx";
+import { DeleteElementDialog } from "./DeleteElementDialog.tsx";
 import { Icon, type IconName } from "./Icon.tsx";
 import { NewElementPopup } from "./NewElementPopup.tsx";
 import { ReferencesDialog } from "./ReferencesDialog.tsx";
 import { RenameDialog } from "./RenameDialog.tsx";
 import { UnlockCodeDialog } from "./LockedCodeDialog.tsx";
 import type { LockedFileChange } from "../../../../src/generator/lockedCode.ts";
+import { FOLDER_COLORS, COLOR_VALUE } from "../folderColors.ts";
 import { ActionBar, ActionButton, ContextMenu, DataTable, FindBar, FindSelect, Separator, type MenuItem } from "./ui.tsx";
-
-/**
- * Folder colours the menu offers: Minecraft's 16 dye colours (KUYRUK 178; a folder keeps any "#rrggbb" an agent sets,
- * and the earlier eight still show).
- */
-const FOLDER_COLORS = ["white", "light_gray", "gray", "black", "brown", "red", "orange", "yellow", "lime", "green", "cyan", "light_blue", "blue", "purple", "magenta", "pink"] as const;
-const COLOR_VALUE: Record<(typeof FOLDER_COLORS)[number], string> = {
-  white: "#f9fffe", light_gray: "#9d9d97", gray: "#474f52", black: "#1d1d21", brown: "#835432", red: "#b02e26", orange: "#f9801d", yellow: "#fed83d",
-  lime: "#80c71f", green: "#5e7c16", cyan: "#169c9c", light_blue: "#3ab3da", blue: "#3c44aa", purple: "#8932b8", magenta: "#c74ebd", pink: "#f38baa",
-};
 
 /** Drag data of a folder tile (KUYRUK 175); the path being dragged is kept too, as drag-over cannot read the data. */
 const FOLDER_DRAG = "application/x-mcedge-folder";
@@ -54,6 +46,7 @@ interface Props {
   snapshot: ProjectSnapshot;
   coverage?: Coverage;
   engineName: string;
+  engineId?: string;
   selected?: ElementRef;
   /** Texture path; when set only elements using it are shown ("Search usages" from Resources). */
   usage?: string;
@@ -73,12 +66,13 @@ interface Props {
 }
 
 /** Mod elements: the section toolbar (New first, Delete last) over dense, selectable tiles. */
-export function Workspace({ snapshot, coverage, engineName, selected, usage, onSelect, onOpen, onChanged, onClearUsage, live, agentOn, onNewTask, newRequest, onNewHandled }: Props) {
+export function Workspace({ snapshot, coverage, engineName, engineId, selected, usage, onSelect, onOpen, onChanged, onClearUsage, live, agentOn, onNewTask, newRequest, onNewHandled }: Props) {
   // Kept while an element editor is open, so coming back shows the same list (per project).
   const [filter, setFilter] = useViewState<Filter>(snapshot.dir, "filter", "all");
   const [sort, setSort] = useViewState<Sort>(snapshot.dir, "sort", "type");
   const [query, setQuery] = useViewState(snapshot.dir, "query", "");
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<ElementRef>();
   const [view, setViewState] = useState<View>(lastView ?? "tiles");
   useEffect(() => {
     if (!lastView) void api.uiState(VIEW_KEY).then((saved) => saved === "details" && setViewState((lastView = "details")));
@@ -190,9 +184,8 @@ export function Workspace({ snapshot, coverage, engineName, selected, usage, onS
     if (result.snapshot) (setUnlocking(undefined), onChanged(result.snapshot));
     else setUnlocking({ ref, changes: result.changes });
   };
-  const remove = async () => {
-    const next = current && !several && (await deleteElement(snapshot, current));
-    if (next) (onChanged(next), onSelect(undefined));
+  const remove = () => {
+    if (current && !several) setDeleting(current);
   };
 
   useEffect(() => {
@@ -439,6 +432,9 @@ export function Workspace({ snapshot, coverage, engineName, selected, usage, onS
         {unlocking && (
           <UnlockCodeDialog name={elementName(unlocking.ref.typeId, findElement(snapshot, unlocking.ref)!)} changes={unlocking.changes}
             onUnlock={() => void unlockCode(unlocking.ref, true)} onCancel={() => setUnlocking(undefined)} />
+        )}
+        {deleting && (
+          <DeleteElementDialog snapshot={snapshot} target={deleting} engineId={engineId} onDone={(next) => (setDeleting(undefined), next && (onChanged(next), onSelect(undefined)))} />
         )}
         {creating && (
           <NewElementPopup snapshot={snapshot} coverage={coverage} engineName={engineName} onCancel={() => setCreating(false)}
