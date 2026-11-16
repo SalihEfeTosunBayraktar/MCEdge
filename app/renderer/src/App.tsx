@@ -43,6 +43,7 @@ import type { ResourceTab } from "./components/ResourcesView.tsx";
 import { QuickOpen } from "./components/QuickOpen.tsx";
 import { reveal } from "./hooks/reveal.ts";
 import { useUnusedTranslations } from "./hooks/useUnusedTranslations.ts";
+import { useAiPanel } from "./hooks/useAiPanel.ts";
 import type { QuickItem } from "../../../src/ir/quickSearch.ts";
 import { EditorTabs, elementTab, parseTab, tabExists, textureTab, type TabKey } from "./components/EditorTabs.tsx";
 
@@ -70,6 +71,8 @@ export function App() {
   const [preferences, setPreferencesState] = useState<Preferences>();
   const [typesLoaded, setTypesLoaded] = useState<string>();
   const [exporting, setExporting] = useState(false);
+  /** Counts Ctrl+Shift+A presses: the Agents panel shows the AI assistant and focuses its input (Q239). */
+  const [aiFocus, setAiFocus] = useState(0);
   /** Texture open in the texture editor, which then replaces the section view. */
   const [painting, setPainting] = useState<string>();
   const [newTexture, setNewTexture] = useState(false);
@@ -266,6 +269,7 @@ export function App() {
 
   const cmd: Commands = {
     hasProject: !!snapshot,
+    openAiPanel: () => (setPanel("agents"), setAiFocus((n) => n + 1)),
     codeMode: !!code,
     building,
     running,
@@ -377,6 +381,7 @@ export function App() {
         : plain && e.code === "KeyN" ? free && c.hasProject && c.newElement
         : plain && e.code === "KeyW" ? free && c.closeEditor
         : plain && e.code === "KeyK" ? free && c.hasProject && c.quickOpen
+        : e.ctrlKey && e.shiftKey && !e.altKey && e.code === "KeyA" ? free && c.hasProject && c.openAiPanel
         : e.altKey && !e.ctrlKey && (e.key === "ArrowLeft" || e.key === "ArrowRight") && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target as HTMLElement).tagName)
           ? free && c.hasProject && (e.key === "ArrowLeft" ? c.back : c.forward)
         : plain && e.code === "KeyF" ? free && (() => {
@@ -395,6 +400,7 @@ export function App() {
 
   // Live co-editing: files an AI agent (or any program) changes reload the project; the open editor merges them.
   const projectDir = snapshot?.dir;
+  const ai = useAiPanel(projectDir);
   useEffect(() => {
     if (!projectDir) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -572,7 +578,9 @@ export function App() {
         <BottomPanel panel={panel} issues={[...(snapshot?.issues ?? []), ...unusedTranslations.shown]} ignoredIssues={[...(snapshot?.ignoredIssues ?? []), ...unusedTranslations.ignored]}
           onProblemFix={snapshot && ((issue) => void api.removeUnusedTranslations(snapshot.dir, issue.path.replace(/^localization\./, ""), engineId || undefined).then(setSnapshot))}
           onProblemAction={snapshot && ((action) => void api.updateProblems(snapshot.dir, action).then(setSnapshot))} console={!!snapshot}
-          agent={snapshot && { dir: snapshot.dir, live, now, onOpenTarget: openTarget, show: timelineShow, onConnect: () => setDialog("connectAgent") }}
+          scenariosDir={snapshot?.dir}
+          agent={snapshot && { dir: snapshot.dir, live, now, onOpenTarget: openTarget, show: timelineShow, onConnect: () => setDialog("connectAgent"),
+            ai: { chat: ai, preferencesRev: preferences?.ai, onPreferences: cmd.showPreferences, focusRequest: aiFocus } }}
           tasks={snapshot && { dir: snapshot.dir, tasks, entries: live.entries, onNewTask: setNewTask, onOpenTarget: openTarget,
             onShowStep: (session, step) => (setTimelineShow({ session, step }), setPanel("activity")) }}
           onNewTask={snapshot ? setNewTask : undefined} builds={builds} engineId={engineId} onGradle={(args) => gradle("console", args)}

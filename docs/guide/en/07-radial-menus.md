@@ -12,7 +12,7 @@ A radial menu is a wheel of slices that opens on a key: the player moves the mou
 | Wheel | Size, hole, the gap between slices, slice colours (normal, under the mouse, disabled) and opacity, or images drawn under each slice's icon. |
 | Background | An optional image behind the wheel, stretched or 9-sliced, with padding. |
 | Centre | Title, whether the hovered slice's label and description show, an icon in the middle, text colour, how it opens (fade, grow, slide up or down, with a length and an easing: the same timing model as bubbles). |
-| Tabs | Up to 9 tabs; the mouse wheel, the arrows over the wheel or the number keys switch them. |
+| Tabs | Up to 9 tabs; the mouse wheel (up: next tab, down: previous), the arrows over the wheel or the number keys switch them. |
 
 ## 2. Slices
 

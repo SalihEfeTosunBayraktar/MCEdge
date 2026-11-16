@@ -19,6 +19,8 @@ await run(async (app) => {
   await app.waitFor(`document.querySelector(".prefsdialog")`);
   const group = await app.eval<boolean>(`[...document.querySelectorAll(".prefsdialog *")].some((e) => e.children.length === 0 && e.textContent.trim().toLowerCase() === ${JSON.stringify(strings["prefs.modSources"].toLowerCase())})`);
   assert(group, "Preferences has a Mod sources group");
+  // The group starts collapsed (Q242): open it from its title.
+  await app.click(".prefsdialog .fgtoggle", strings["prefs.modSources"]);
   const type = await app.eval<string>(`[...document.querySelectorAll(".prefsdialog .frow")].find((r) => r.querySelector("label")?.textContent.trim() === ${JSON.stringify(strings["prefs.curseforgeKey"])}).querySelector("input").type`);
   assert(type === "password", "the key field hides what is typed");
   await app.setField(strings["prefs.curseforgeKey"], "  my-cf-key  ", ".prefsdialog");

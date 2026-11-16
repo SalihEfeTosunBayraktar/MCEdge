@@ -146,6 +146,15 @@
           },
           "minItems": 1,
           "uniqueItems": true
+        },
+        "publish": {
+          "type": "object",
+          "description": "Where the jars are published: Modrinth project slug or id, CurseForge project id",
+          "additionalProperties": false,
+          "properties": {
+            "modrinth": { "type": "string" },
+            "curseforge": { "type": "string" }
+          }
         }
       }
     }

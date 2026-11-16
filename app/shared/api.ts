@@ -10,11 +10,15 @@ import type { ModInfo, ModProject, Variable } from "../../src/ir/types.ts";
 import type { DeletePlan, DeleteSelection } from "../../src/ir/deleteCascade.ts";
 import type { ValidationIssue } from "../../src/ir/validate.ts";
 import type { ProblemAction } from "../../src/ir/problems.ts";
+import type { JavaStatus, LspCompletionItem, LspDiagnostic, LspHover, LspPosition } from "../../src/java/jdtls.ts";
+import type { ResourceId } from "../../src/java/resourceIds.ts";
 import type { Reference, ReferenceReport, UnusedReport } from "../../src/ir/references.ts";
 import type { IdentityChange, IdentityResult } from "../../src/ir/modIdentity.ts";
 import type { RenameResult } from "../../src/ir/rename.ts";
 import { DEFAULT_PLAYER } from "../../src/build/players.ts";
+import type { AiConfig, AiEvent } from "../../src/ai/providers.ts";
 
+export type { AiConfig, AiEvent };
 export type { Coverage, Element, PickerKind, VanillaCatalog, ElementType, IdentityChange, IdentityResult, ModInfo, Reference, ReferenceReport, RenameResult, UnusedReport, ValidationIssue, Variable };
 export type Localization = ModProject["localization"];
 
@@ -81,6 +85,24 @@ export const isRunKey = (key: string) => / (server|gradle)$/.test(key) || client
 export interface ClientRunOptions {
   player?: string;
   join?: boolean;
+}
+
+/** The Scenarios panel (Q241): what a run of a scenario file answered, and who has the engine's dedicated server. */
+export type { ScenarioFile } from "../../src/build/scenarioRun.ts";
+export type { ProbeResult } from "../../src/build/scenario.ts";
+export interface ScenarioRunOutcome {
+  ok: boolean;
+  result?: import("../../src/build/scenario.ts").ProbeResult & { log?: string };
+  /** A reason: "serverRunning" (this app's server of the engine runs), "serverForeign" (something else holds the test port), or the problem text. */
+  error?: string;
+}
+export interface ScenarioStatus {
+  /** The app's dedicated server of the engine runs. */
+  own: boolean;
+  /** A server not started here answers on the engine's test port. */
+  foreign: boolean;
+  /** Reload data can reach the server (it has RCON). */
+  reloadable: boolean;
 }
 
 /** Gradle work besides build and run: Tools > Gradle console, Reload Gradle project, Debug client, Run server. */
@@ -186,6 +208,11 @@ export interface Preferences {
   blockbenchPath?: string;
   /** CurseForge API key for dependency jars (KUYRUK 173): this computer's, never stored in a project. */
   curseforgeKey?: string;
+  /** Tokens that publish jars (Q238): this computer's, never stored in a project. */
+  modrinthToken?: string;
+  curseforgeToken?: string;
+  /** The AI panel's provider (Q239): this computer's, never stored in a project. $MCEDGE_AI_* override it. */
+  ai?: AiConfig;
   /** Check for updates on start and every few hours (Q207); unset means on. Help > Check for updates always works. */
   autoUpdate?: boolean;
 }
@@ -225,6 +252,15 @@ export interface RecentProject {
 }
 
 /** Outcome of exporting one engine's jar. */
+export type { Platform, PublishOptions, PublishOutcome, PublishProblem, ReleaseType } from "../../src/build/publish.ts";
+
+/** File > Export with publishing on (Q238): what stopped it before the builds, the builds, then the gate and uploads. */
+export interface PublishRun {
+  problems: import("../../src/build/publish.ts").PublishProblem[];
+  results: ExportResult[];
+  outcome?: import("../../src/build/publish.ts").PublishOutcome;
+}
+
 export interface ExportResult {
   engineId: string;
   ok: boolean;
@@ -272,6 +308,21 @@ export interface McedgeApi {
   codeStop(): Promise<void>;
   /** Builds, then copies the jar where the user picks; the copied path or null. */
   codeExport(dir: string): Promise<string | null>;
+  /** Java language server (jdtls) of a code project: documents are synced as full text; it starts on the first open. */
+  javaOpen(dir: string, path: string, text: string): Promise<void>;
+  javaChange(dir: string, path: string, text: string): Promise<void>;
+  javaClose(dir: string, path: string): Promise<void>;
+  javaComplete(dir: string, path: string, position: LspPosition): Promise<{ items: LspCompletionItem[]; incomplete: boolean }>;
+  javaResolve(dir: string, item: LspCompletionItem): Promise<LspCompletionItem>;
+  javaHover(dir: string, path: string, position: LspPosition): Promise<LspHover | null>;
+  /** Null before the first Java file opened. */
+  javaStatus(dir: string): Promise<JavaStatus | null>;
+  /** The mod's registry ids and resource paths, read from src/main/resources. */
+  javaResources(dir: string): Promise<ResourceId[]>;
+  /** Stops the project's jdtls (the project closed). */
+  javaStop(dir: string): Promise<void>;
+  onJavaStatus(listener: (status: JavaStatus & { dir: string }) => void): () => void;
+  onJavaDiagnostics(listener: (event: { dir: string; path: string; diagnostics: LspDiagnostic[] }) => void): () => void;
   gitStatus(dir: string): Promise<GitStatus>;
   gitInit(dir: string): Promise<GitStatus>;
   /** Diff of one file; staged=true for what is staged. */
@@ -385,7 +436,25 @@ export interface McedgeApi {
   runClient(dir: string, engineId: string, options?: ClientRunOptions): Promise<void>;
   /** Stops the client run of this key (clientRunKey), or every client run without one. */
   stopClient(key?: string): Promise<void>;
+  /** Scenarios panel (Q241): scenarios/*.json of the project, read, saved (a draft with problems is saved too; the problems come back), a template, a run on a dedicated server, Reload data. */
+  listScenarios(dir: string): Promise<import("../../src/build/scenarioRun.ts").ScenarioFile[]>;
+  readScenario(dir: string, name: string): Promise<string>;
+  writeScenario(dir: string, name: string, text: string): Promise<string[]>;
+  scenarioTemplate(): Promise<string>;
+  scenarioProblems(text: string): Promise<string[]>;
+  scenarioStatus(dir: string, engineId: string): Promise<ScenarioStatus>;
+  runScenario(dir: string, engineId: string, name: string): Promise<ScenarioRunOutcome>;
+  reloadData(dir: string, engineId: string): Promise<{ ok: boolean; message: string }>;
   onBuildEvent(listener: (event: BuildEvent) => void): () => void;
+  /** AI panel (Q239): whether a provider is set (Preferences or $MCEDGE_AI_*), and the client name the panel's calls carry in the activity log. */
+  aiStatus(): Promise<{ configured: boolean; client: string }>;
+  /** Runs one reply in this project's conversation; resolves when it ended. Its events arrive through onAiEvent. */
+  aiSend(dir: string, reply: string, text: string): Promise<void>;
+  /** Stops the running reply of the project. */
+  aiStop(dir: string): Promise<void>;
+  /** New conversation: forgets the history (the MCP connection stays). With `close`, the project's panel MCP server is stopped too. */
+  aiReset(dir: string, close?: boolean): Promise<void>;
+  onAiEvent(listener: (event: { dir: string; reply: string; event: AiEvent }) => void): () => void;
   /** Last export folder of the project, or <project>/dist. */
   exportFolder(dir: string): Promise<string>;
   /** Asks where to save an exported translation file (name: suggested file name, .csv or .json); undefined when cancelled. */
@@ -416,6 +485,10 @@ export interface McedgeApi {
   pickProgram(current: string): Promise<string | null>;
   /** Builds the engines one after another and copies each jar to the folder under the file name pattern; when all build, the changelog starts again from here. */
   exportJars(dir: string, engineIds: string[], folder: string, pattern: string): Promise<ExportResult[]>;
+  /** Export, then the publish gate (server smoke test per engine) and the uploads (Q238); nothing uploads when a step fails. */
+  /** What stops a publish before any build (Q238): a platform without its project or token, a version already tagged. */
+  publishCheck(dir: string, platforms: import("../../src/build/publish.ts").Platform[]): Promise<import("../../src/build/publish.ts").PublishProblem[]>;
+  publishJars(dir: string, engineIds: string[], folder: string, pattern: string, options: import("../../src/build/publish.ts").PublishOptions): Promise<PublishRun>;
   /** Opens a file or folder with the system's default app (export folder, build log). */
   openPath(path: string): Promise<void>;
   /** Copies picked .ogg sounds, models (a .bbmodel is converted to a JSON model) or .nbt structures into the project; null when cancelled. */

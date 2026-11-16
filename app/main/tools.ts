@@ -4,6 +4,8 @@ import { join } from "node:path";
 import { app, BrowserWindow, dialog, ipcMain, shell, type WebContents } from "electron";
 import { engineSetup, logPath, runGradle, type GradleRun } from "../../src/build/gradle.ts";
 import { clientTasks, DEBUG_PORT, muteClient, serverTasks } from "../../src/build/runs.ts";
+import { enableRcon, type RconConfig } from "../../src/build/rcon.ts";
+import type { ProbeOptions } from "../../src/generator/typeModule.ts";
 import { listEngines, toolchainNeeds } from "../../src/engines/registry.ts";
 import { ensureToolchains } from "../../src/engines/toolchains.ts";
 import { generateTarget } from "../../src/generator/generate.ts";
@@ -21,8 +23,31 @@ import { checkForUpdatesNow, installUpdate, updateState } from "./updater.ts";
 const runs = new Map<string, GradleRun>();
 /** Runs the user stopped: their end is "stopped", not a crash (KUYRUK 154). */
 const stopping = new Set<string>();
+/** Keys whose run is being prepared or runs (a build before Gradle starts counts), so a second start is refused. */
+const active = new Set<string>();
+/** What a dedicated server run of the app left: its RCON (Reload data, Q241), the lines of the last run and its end. */
+interface ServerRunState { rcon?: RconConfig; lines: string[]; logFile?: string; exitCode?: number }
+const serverRuns = new Map<string, ServerRunState>();
+
+/** True while the run of this key is being prepared or running. */
+export const runActive = (key: string): boolean => active.has(key);
+export const serverRun = (key: string) => serverRuns.get(key);
+/** Starts the engine's dedicated server like Build & run > Run server; `probe` builds it with the scenario probe. Resolves when it ended. */
+export const startServer = (sender: WebContents, dir: string, engineId: string, probe?: ProbeOptions): Promise<void> => gradle(sender, dir, engineId, "server", [], probe);
+/** Stops the run of this key and waits (bounded) until it is over. */
+export async function stopRun(key: string, waitMs = 30_000): Promise<void> {
+  const run = runs.get(key);
+  if (run) (stopping.add(key), run.stop());
+  for (const end = Date.now() + waitMs; active.has(key) && Date.now() < end;) await new Promise((r) => setTimeout(r, 200));
+}
 
 const FILTER_NAMES: Record<ResourceKind, string> = { sound: "Ogg Vorbis", model: "Blockbench, JSON, Java or OBJ model", structure: "Structure template" };
+
+/** The command that starts this app's MCP server (Connect an AI agent shows it; the AI panel runs it, Q239). */
+export const mcpCommand = (): McpCommand => ({
+  command: app.getPath("exe"), args: [join(app.getAppPath(), "out", "cli", "index.js")], env: { ELECTRON_RUN_AS_NODE: "1" },
+  portable: !!process.env.PORTABLE_EXECUTABLE_FILE,
+});
 
 export function registerTools(): void {
   ipcMain.handle("resource:import", async (event, dir: string, kind: ResourceKind): Promise<ResourceImport | null> => {
@@ -75,10 +100,7 @@ export function registerTools(): void {
   }));
   // The app's exe run as Node on the CLI bundled at out/cli (vite.cli.config.ts); app.asar when installed, the
   // repository (after a build) in development.
-  ipcMain.handle("app:mcpCommand", (): McpCommand => ({
-    command: app.getPath("exe"), args: [join(app.getAppPath(), "out", "cli", "index.js")], env: { ELECTRON_RUN_AS_NODE: "1" },
-    portable: !!process.env.PORTABLE_EXECUTABLE_FILE,
-  }));
+  ipcMain.handle("app:mcpCommand", mcpCommand);
   ipcMain.handle("shell:external", (_e, url: string) => {
     if (!/^https:\/\//.test(url)) throw new Error("only https links");
     return shell.openExternal(url);
@@ -125,19 +147,26 @@ function importResult(dir: string, kind: ResourceKind, files: string[]): Resourc
  *   debug    - the client with a JDWP agent for an IDE debugger (Build & run > Debug client)
  *   server   - a dedicated server with the mod (Build & run > Run server)
  */
-async function gradle(sender: WebContents, dir: string, engineId: string, mode: GradleMode, args: string[]): Promise<void> {
+async function gradle(sender: WebContents, dir: string, engineId: string, mode: GradleMode, args: string[], probe?: ProbeOptions): Promise<void> {
   const engine = listEngines().find((e) => e.id === engineId);
   const key = runKey(engineId, mode === "debug" ? "client" : mode === "server" ? "server" : "gradle");
-  if (!engine || runs.has(key)) return;
+  if (!engine || active.has(key)) return;
+  active.add(key);
   const send = (event: BuildEvent) => sender.send("build:event", event);
-  const line = (text: string) => send({ type: "line", engineId: key, line: text });
+  const state = mode === "server" ? { lines: [] } as ServerRunState : undefined;
+  if (state) serverRuns.set(key, state);
+  const line = (text: string) => {
+    state?.lines.push(text);
+    if (state && state.lines.length > 4000) state.lines.shift();
+    send({ type: "line", engineId: key, line: text });
+  };
   send({ type: "start", engineId: key });
   try {
     await ensureToolchains(toolchainNeeds(engine), (p) => line(`[mcedge] downloading ${p.kind} ${p.version}: ${Math.round(p.received / 1e6)} MB`));
     const outDir = join(dir, "out", engine.id);
     if (mode !== "console") await resolveModDependencies(loadProject(dir).mod.dependencies, engine, { onLine: line });
     if (mode !== "console" || !existsSync(join(outDir, "build.gradle"))) {
-      const { warnings } = generateTarget(loadProject(dir), dir, engine, outDir);
+      const { warnings } = generateTarget(loadProject(dir), dir, engine, outDir, { probe });
       warnings.forEach((w) => line(`[mcedge] not generated: ${w}`));
     }
     const setup = engineSetup(engine, outDir);
@@ -148,14 +177,21 @@ async function gradle(sender: WebContents, dir: string, engineId: string, mode: 
       : mode === "debug" ? clientTasks(setup, engine.minecraft, { debug: true })
       : serverTasks(setup);
     if (mode === "debug") line(`[mcedge] debug client: attach a Java debugger to localhost:${DEBUG_PORT}`);
+    // RCON on a fresh port, so Reload data can reach this server.
+    if (state) state.rcon = await enableRcon(outDir);
     line(`[mcedge] gradle ${tasks.join(" ")}`);
-    const run = runGradle(setup, tasks, logPath(setup, `mcedge-${mode}.log`), line);
+    const logFile = logPath(setup, `mcedge-${mode}.log`);
+    if (state) state.logFile = logFile;
+    const run = runGradle(setup, tasks, logFile, line);
     runs.set(key, run);
     const code = await run.done;
     runs.delete(key);
+    if (state) state.exitCode = code;
+    active.delete(key);
     send({ type: "done", engineId: key, ok: code === 0, stopped: stopping.delete(key) });
   } catch (error) {
     runs.delete(key);
+    active.delete(key);
     line(`[mcedge] ${error instanceof Error ? error.message : String(error)}`);
     send({ type: "done", engineId: key, ok: false, stopped: stopping.delete(key) });
   }

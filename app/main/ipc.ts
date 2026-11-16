@@ -37,6 +37,7 @@ import { projectAnimations } from "../../src/generator/mob/models.ts";
 import { loadTags, saveTags, validateTags, type ElementTag } from "../../src/tags/tags.ts";
 import { exportFileName } from "../shared/exportName.ts";
 import { changelogSinceExport, LAST_EXPORT, recordExport } from "../../src/vcs/changelog.ts";
+import { gateAndUpload, publishProblems, type Platform, type PublishOptions } from "../../src/build/publish.ts";
 import { isGradleModProject } from "../../src/projects/gradleMod.ts";
 import { listDrafts, readAppState, rememberProject, saveDraft, updateAppState } from "./appState.ts";
 import { codeProjectInfo } from "./codeProject.ts";
@@ -48,6 +49,7 @@ import {
   type Element,
   type EngineInfo,
   type ExportResult,
+  type PublishRun,
   type Localization,
   type ModInfo,
   type Opened,
@@ -283,6 +285,10 @@ export function registerIpc(): void {
   ipcMain.handle("export:run", (event, dir: string, engineIds: string[], folder: string, pattern: string) =>
     exportJars(event.sender, dir, engineIds, folder, pattern),
   );
+  ipcMain.handle("export:publishCheck", (_e, dir: string, platforms: Platform[]) => publishProblems(dir, loadProject(dir).mod, platforms));
+  ipcMain.handle("export:publish", (event, dir: string, engineIds: string[], folder: string, pattern: string, options: PublishOptions) =>
+    publishJars(event.sender, dir, engineIds, folder, pattern, options),
+  );
   ipcMain.handle("shell:open", async (_e, path: string) => {
     if (!existsSync(path)) throw new Error(`not found: ${path}`);
     const error = await shell.openPath(path);
@@ -513,6 +519,22 @@ async function exportJars(sender: WebContents, dir: string, engineIds: string[],
     markOwn([join(dir, LAST_EXPORT)]);
   }
   return results;
+}
+
+/**
+ * Export with publishing (Q238): the checks first (projects, tokens, an untagged version), then the export builds, then
+ * the gate and uploads. Each step runs only when the one before passed for every engine, so a failure uploads nothing.
+ */
+async function publishJars(sender: WebContents, dir: string, engineIds: string[], folder: string, pattern: string, options: PublishOptions): Promise<PublishRun> {
+  const mod = loadProject(dir).mod;
+  const problems = await publishProblems(dir, mod, options.platforms);
+  if (problems.length) return { problems, results: [] };
+  const results = await exportJars(sender, dir, engineIds, folder, pattern);
+  if (!results.length || results.some((r) => !r.ok)) return { problems, results };
+  const engines = listEngines();
+  const built = results.map((r) => ({ engine: engines.find((e) => e.id === r.engineId)!, jar: r.jar!, projectDir: join(dir, "out", r.engineId) }));
+  const line = (engineId: string, text: string) => sender.send("build:event", { type: "line", engineId, line: text } satisfies BuildEvent);
+  return { problems, results, outcome: await gateAndUpload(dir, mod, built, options, line) };
 }
 
 /**

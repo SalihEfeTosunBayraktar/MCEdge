@@ -188,6 +188,7 @@ export function GitView({ dir, onFilesChanged }: Props) {
               ]} />
             </div>
           )}
+          <DiffGrip />
           <pre className="gitdiff" aria-label={t("git.diff")}>
             {diff ? diff.split("\n").map((line, i) => <span key={i} className={diffClass(line)}>{line}{"\n"}</span>) : <span className="dim">{t(tab === "changes" ? "git.pickFile" : "git.pickCommit")}</span>}
           </pre>
@@ -304,3 +305,78 @@ function diffClass(line: string): string {
   if (line.startsWith("-")) return "ddel";
   return "";
 }
+
+const DIFF_SPLIT_KEY = "mcedge.git.tableHeight";
+const TABLE_MIN = 80;
+const DIFF_MIN = 60;
+const KEY_STEP = 24;
+
+/** Height of the table above the diff, kept inside both minimums of its `.gitmain` grid. */
+function setTableHeight(main: HTMLElement, height: number): number {
+  const clamped = Math.round(Math.max(TABLE_MIN, Math.min(main.clientHeight - DIFF_MIN, height)));
+  main.style.setProperty("--git-table-h", `${clamped}px`);
+  return clamped;
+}
+
+function saveTableHeight(height: number | undefined): void {
+  try {
+    if (height === undefined) localStorage.removeItem(DIFF_SPLIT_KEY);
+    else localStorage.setItem(DIFF_SPLIT_KEY, String(height));
+  } catch {
+    // Storage blocked: the size lasts until the view closes.
+  }
+}
+
+/**
+ * Divider between the file/commit table and the diff (Q235): drag it, or use the arrow keys while it has the focus,
+ * to move the line; a double click goes back to the default split. The height is remembered between runs.
+ */
+function DiffGrip() {
+  const grip = useRef<HTMLDivElement>(null);
+  const [dragging, setDragging] = useState(false);
+  const main = () => grip.current?.parentElement ?? undefined;
+  useEffect(() => {
+    let saved = 0;
+    try {
+      saved = Number(localStorage.getItem(DIFF_SPLIT_KEY));
+    } catch {
+      // Storage blocked: the default split stays.
+    }
+    const el = main();
+    if (el && saved > 0) setTableHeight(el, saved);
+  }, []);
+  const down = (e: React.PointerEvent) => {
+    const el = main();
+    if (!el || e.button !== 0) return;
+    e.preventDefault();
+    const startY = e.clientY;
+    const startH = (el.firstElementChild as HTMLElement).getBoundingClientRect().height;
+    let height = startH;
+    setDragging(true);
+    const move = (m: PointerEvent) => (height = setTableHeight(el, startH + m.clientY - startY));
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      setDragging(false);
+      saveTableHeight(height);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+  const key = (e: React.KeyboardEvent) => {
+    const el = main();
+    const step = e.key === "ArrowUp" ? -KEY_STEP : e.key === "ArrowDown" ? KEY_STEP : 0;
+    if (!el || !step) return;
+    e.preventDefault();
+    saveTableHeight(setTableHeight(el, (el.firstElementChild as HTMLElement).getBoundingClientRect().height + step));
+  };
+  const reset = () => {
+    main()?.style.removeProperty("--git-table-h");
+    saveTableHeight(undefined);
+  };
+  return (
+    <div ref={grip} className={`gitgrip ${dragging ? "on" : ""}`} role="separator" aria-orientation="horizontal" tabIndex={0}
+      title={t("git.resizeDiff")} aria-label={t("git.resizeDiff")} onPointerDown={down} onKeyDown={key} onDoubleClick={reset} />
+  );
+}
+

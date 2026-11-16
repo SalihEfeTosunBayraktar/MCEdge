@@ -9,7 +9,7 @@ import { READ_ONLY, targetOf } from "./live.ts";
 type Text = { content: { type: "text"; text: string }[]; isError?: boolean };
 
 /** Calls that run for minutes or touch only build output: logged, but not compared before and after. */
-const NOT_COMPARED = /^(build|export_jar|run_client|run_server|stop_client|stop_server|debug_client|stop_debug_client|gradle_task|server_command|observe_run|git_push|begin_step|ack_note)$/;
+const NOT_COMPARED = /^(build|export_jar|publish_mod|run_client|run_server|stop_client|stop_server|debug_client|stop_debug_client|gradle_task|server_command|observe_run|git_push|begin_step|ack_note)$/;
 /** Timeline tools whose `id` names a note or a task, not a procedure: they have no target. */
 const NO_TARGET = /^(begin_step|read_notes|ack_note|list_tasks|claim_task|update_task|complete_task)$/;
 /** One MCP server run is one agent session; its calls and the tasks it claims carry this id. */

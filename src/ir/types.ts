@@ -38,6 +38,8 @@ export interface ModInfo {
   integrations?: ProjectIntegration[];
   /** Engines the project targets (KUYRUK 126): the engine menu and Build all offer these; all engines when left out. */
   engines?: string[];
+  /** Where File > Export publishes the jars (Q238): Modrinth project slug or id, CurseForge project id. */
+  publish?: { modrinth?: string; curseforge?: string };
 }
 
 export interface ProjectIntegration {

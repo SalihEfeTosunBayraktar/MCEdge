@@ -64,6 +64,8 @@ export interface Commands {
   showAbout: () => void;
   /** Help > Keyboard shortcuts, Check for updates and the developer documentation online (KUYRUK 128). */
   showShortcuts: () => void;
+  /** Ctrl+Shift+A / Window > AI assistant: shows the Agents panel with the AI assistant and its input focused (Q239). */
+  openAiPanel: () => void;
   /** Ctrl+K: search the whole project and open the result (KUYRUK 136). */
   quickOpen: () => void;
   checkUpdates: () => void;

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { Preferences } from "../../../shared/api.ts";
+import type { AiConfig, Preferences } from "../../../shared/api.ts";
 import { api } from "../api.ts";
 import { CODE_FONTS, TEXT_SIZES, UI_FONTS } from "../preferences.ts";
 import { LANGUAGES, t } from "../strings.ts";
@@ -14,16 +14,18 @@ interface Props {
 /** Language and appearance choices of the Preferences dialog. */
 export function PreferencesForm({ preferences, onChange }: Props) {
   const set = (patch: Partial<Preferences>) => onChange({ ...preferences, ...patch });
+  const ai: AiConfig = preferences.ai ?? { provider: "openai", model: "" };
+  const setAi = (patch: Partial<AiConfig>) => set({ ai: { ...ai, ...patch } });
   return (
     <>
-      <FormGroup title={t("prefs.language")}>
+      <FormGroup title={t("prefs.language")} collapsible>
         <FormRow label={t("prefs.languageLabel")}>
           <select value={preferences.language} onChange={(e) => set({ language: e.target.value })}>
             {Object.entries(LANGUAGES).map(([code, { name }]) => <option key={code} value={code}>{name}</option>)}
           </select>
         </FormRow>
       </FormGroup>
-      <FormGroup title={t("prefs.appearance")}>
+      <FormGroup title={t("prefs.appearance")} collapsible>
         <FormRow label={t("prefs.theme")}>
           <select value={preferences.theme} onChange={(e) => set({ theme: e.target.value as Preferences["theme"] })}>
             <option value="dark">{t("top.dark")}</option>
@@ -49,17 +51,50 @@ export function PreferencesForm({ preferences, onChange }: Props) {
           <div className="fval prefpreview"><span>{t("catalog.tool")}</span><code>hellomcedge:ruby_pickaxe</code></div>
         </FormRow>
       </FormGroup>
-      <FormGroup title={t("prefs.tools")}>
+      <FormGroup title={t("prefs.tools")} collapsible>
         <BlockbenchRow path={preferences.blockbenchPath ?? ""} onChange={(blockbenchPath) => set({ blockbenchPath })} />
       </FormGroup>
-      <FormGroup title={t("prefs.modSources")}>
+      <FormGroup title={t("prefs.modSources")} collapsible defaultOpen={false}>
         <FormRow label={t("prefs.curseforgeKey")}>
           <input type="password" value={preferences.curseforgeKey ?? ""} spellCheck={false} autoComplete="off" placeholder={t("prefs.curseforgeKeyNone")}
             onChange={(e) => set({ curseforgeKey: e.target.value.trim() || undefined })} />
         </FormRow>
         <p className="hint">{t("prefs.curseforgeKeyHint")}</p>
       </FormGroup>
-      <FormGroup title={t("prefs.updates")}>
+      <FormGroup title={t("prefs.publishing")} collapsible defaultOpen={false}>
+        <FormRow label={t("prefs.modrinthToken")}>
+          <input type="password" value={preferences.modrinthToken ?? ""} spellCheck={false} autoComplete="off" placeholder={t("prefs.tokenNone")}
+            data-testid="pref-modrinth-token" onChange={(e) => set({ modrinthToken: e.target.value.trim() || undefined })} />
+        </FormRow>
+        <FormRow label={t("prefs.curseforgeToken")}>
+          <input type="password" value={preferences.curseforgeToken ?? ""} spellCheck={false} autoComplete="off" placeholder={t("prefs.tokenNone")}
+            data-testid="pref-curseforge-token" onChange={(e) => set({ curseforgeToken: e.target.value.trim() || undefined })} />
+        </FormRow>
+        <p className="hint">{t("prefs.publishingHint")}</p>
+      </FormGroup>
+      <FormGroup title={t("prefs.ai")} collapsible defaultOpen={false}>
+        <FormRow label={t("prefs.aiProvider")}>
+          <select value={ai.provider} data-testid="pref-ai-provider" onChange={(e) => setAi({ provider: e.target.value as AiConfig["provider"] })}>
+            <option value="openai">{t("prefs.aiOpenai")}</option>
+            <option value="anthropic">{t("prefs.aiAnthropic")}</option>
+          </select>
+        </FormRow>
+        {ai.provider === "openai" && (
+          <FormRow label={t("prefs.aiBaseUrl")}>
+            <input value={ai.baseUrl ?? ""} spellCheck={false} placeholder={t("prefs.aiBaseUrlNone")} data-testid="pref-ai-base-url"
+              onChange={(e) => setAi({ baseUrl: e.target.value.trim() || undefined })} />
+          </FormRow>
+        )}
+        <FormRow label={t("prefs.aiModel")}>
+          <input value={ai.model} spellCheck={false} placeholder={t("prefs.aiModelNone")} data-testid="pref-ai-model" onChange={(e) => setAi({ model: e.target.value.trim() })} />
+        </FormRow>
+        <FormRow label={t("prefs.aiKey")}>
+          <input type="password" value={ai.apiKey ?? ""} spellCheck={false} autoComplete="off" placeholder={t("prefs.aiKeyNone")} data-testid="pref-ai-key"
+            onChange={(e) => setAi({ apiKey: e.target.value.trim() || undefined })} />
+        </FormRow>
+        <p className="hint">{t("prefs.aiHint")}</p>
+      </FormGroup>
+      <FormGroup title={t("prefs.updates")} collapsible>
         <FormRow label={t("prefs.autoUpdate")}>
           <label className="check"><input type="checkbox" checked={preferences.autoUpdate !== false} data-testid="pref-auto-update"
             onChange={(e) => set({ autoUpdate: e.target.checked ? undefined : false })} /></label>

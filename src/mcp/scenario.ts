@@ -3,7 +3,8 @@ import { isAbsolute, join, resolve } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { listEngines } from "../engines/registry.ts";
-import { clearScenario, profileScenario, readResult, scenarioProblems, writeScenario, type ProbeResult, type Scenario } from "../build/scenario.ts";
+import { profileScenario, scenarioProblems, type ProbeResult, type Scenario } from "../build/scenario.ts";
+import { DEFAULT_TIMEOUT_SECONDS, STOP_WAIT_MS, listScenarioFiles, reloadServerData, runProbe, type ProbeHost } from "../build/scenarioRun.ts";
 import type { GradleRun } from "../build/gradle.ts";
 import type { ProbeOptions } from "../generator/typeModule.ts";
 import type { Runs } from "./runs.ts";
@@ -13,47 +14,34 @@ type Guard = (fn: () => Promise<Text> | Text) => Promise<Text>;
 const json = (value: unknown): Text => ({ content: [{ type: "text", text: JSON.stringify(value, null, 2) }] });
 const sleep = (ms: number) => new Promise((done) => setTimeout(done, ms));
 
-/** Longest wait for a run: a first build of an engine downloads and compiles for minutes. */
-const DEFAULT_TIMEOUT_SECONDS = 900;
-/** How long a stopped server may take to end before the tool returns anyway. */
-const STOP_WAIT_MS = 30_000;
-
-/**
- * Runs a scenario on a dedicated server of the project: the engine's project is generated with the test probe (never
- * the exported jar's), the scenario is written where the probe reads it, and the answer is the probe's result file.
- * The server is stopped at the end.
- */
-async function runProbe(runs: Runs, root: string, engine: string, scenario: Scenario, probe: ProbeOptions, timeoutSeconds: number): Promise<ProbeResult & { log?: string }> {
+/** Adapts the MCP server's run to the shared scenario runner (src/build/scenarioRun.ts). */
+function probeHost(runs: Runs, engine: string, probe: ProbeOptions): ProbeHost {
   const server = runs.server;
-  if (server.run) throw new Error("a server is running; stop it first (stop_server)");
-  const engineDir = join(root, "out", engine);
-  writeScenario(engineDir, scenario);
-  try {
-    await runs.start("server", engine, { probe });
-    const deadline = Date.now() + timeoutSeconds * 1000;
-    for (;;) {
-      const result = readResult(engineDir);
-      if (result) return { ...result, log: server.logFile };
-      if (!server.run) throw new Error(`the server ended (exit code ${server.exitCode}) before the scenario finished\n${server.tail(40)}`);
-      if (Date.now() > deadline) throw new Error(`no result after ${timeoutSeconds} s\n${server.tail(30)}`);
-      await sleep(500);
-    }
-  } finally {
-    clearScenario(engineDir);
-    // Read again: the run may have started or ended while we waited.
-    const run = server.run as GradleRun | undefined;
-    if (run) {
-      run.stop();
-      await Promise.race([run.done, sleep(STOP_WAIT_MS)]);
-    }
-  }
+  return {
+    running: () => Boolean(server.run),
+    exitCode: () => server.exitCode,
+    tail: (lines) => server.tail(lines),
+    logFile: () => server.logFile,
+    start: async () => void (await runs.start("server", engine, { probe })),
+    stop: async () => {
+      // Read again: the run may have started or ended while we waited.
+      const run = server.run as GradleRun | undefined;
+      if (run) {
+        run.stop();
+        await Promise.race([run.done, sleep(STOP_WAIT_MS)]);
+      }
+    },
+  };
 }
+
+const runProbeOf = (runs: Runs, root: string, engine: string, scenario: Scenario, probe: ProbeOptions, timeoutSeconds: number) =>
+  runProbe(probeHost(runs, engine, probe), join(root, "out", engine), scenario, timeoutSeconds);
 
 const engineArg = z.string().describe(`Engine id (${listEngines().map((e) => e.id).join(", ")})`);
 const timeoutArg = z.number().int().positive().max(3600).optional().describe(`Seconds to wait for the build, the server start and the scenario; default ${DEFAULT_TIMEOUT_SECONDS}`);
 
-/** run_scenario (Q218) and tick_profile (Q219); docs/MCP.md. MCEdge projects only. */
-export function registerScenarioTools(server: McpServer, root: string, runs: Runs, guard: Guard): void {
+/** run_scenario (Q218), tick_profile (Q219), list_scenarios and reload_data (Q241); docs/MCP.md. MCEdge projects only. */
+export function registerScenarioTools(server: McpServer, root: string, runs: Runs, guard: Guard, setupFor: (engine: string) => Promise<unknown>): void {
   server.registerTool(
     "run_scenario",
     {
@@ -75,7 +63,7 @@ export function registerScenarioTools(server: McpServer, root: string, runs: Run
       if (!body) throw new Error("give a scenario or a file");
       const problems = scenarioProblems(body);
       if (problems.length) throw new Error(`the scenario is not valid:\n${problems.join("\n")}`);
-      const result = await runProbe(runs, root, engine, body, {}, timeoutSeconds ?? DEFAULT_TIMEOUT_SECONDS);
+      const result = await runProbeOf(runs, root, engine, body, {}, timeoutSeconds ?? DEFAULT_TIMEOUT_SECONDS);
       return json({ engine, ok: result.failed === 0 && result.errors === 0, ...result });
     }),
   );
@@ -99,13 +87,40 @@ export function registerScenarioTools(server: McpServer, root: string, runs: Run
     ({ engine, seconds, warmupSeconds, players, top, all, timeoutSeconds }) => guard(async () => {
       if (!listEngines().some((e) => e.id === engine)) throw new Error(`unknown engine ${engine}`);
       const scenario = profileScenario({ players: players ?? 1, warmupSeconds: warmupSeconds ?? 5, seconds: seconds ?? 30, all: all ?? false });
-      const result = await runProbe(runs, root, engine, scenario, { profile: true }, timeoutSeconds ?? DEFAULT_TIMEOUT_SECONDS);
+      const result = await runProbeOf(runs, root, engine, scenario, { profile: true }, timeoutSeconds ?? DEFAULT_TIMEOUT_SECONDS);
       const failed = result.steps.find((s) => s.error);
       const report = result.steps.find((s) => s.op === "profile" && s.value && typeof s.value === "object" && "procedures" in s.value)?.value as
         { ticks: number; seconds: number; players: number; procedures: unknown[] } | undefined;
       if (!report) throw new Error(`the profile run gave no report${failed ? `: ${failed.op}: ${failed.error}` : ""}${result.fatal ? `: ${result.fatal}` : ""}`);
       const listed = report.procedures.slice(0, top ?? 10);
       return json({ engine, ticks: report.ticks, seconds: report.seconds, players: report.players, listed: listed.length, of: report.procedures.length, procedures: listed, log: result.log });
+    }),
+  );
+
+  server.registerTool(
+    "list_scenarios",
+    {
+      description: "List the scenario files of the project (scenarios/*.json, the folder the app's Scenarios panel uses): file, name, number of steps and any problems with the steps. Run one with run_scenario `file`.",
+    },
+    () => guard(() => json(listScenarioFiles(root))),
+  );
+
+  server.registerTool(
+    "reload_data",
+    {
+      description: "Reload without a restart: generate the project again into the engine's folder, copy its data and assets into the running dev server's resources and run /reload on it over RCON "
+        + "(the server started by run_server). Java code (procedures) still needs a restart. A running client's integrated server has no command channel: its data follows with a restart; "
+        + "assets of a client reload with F3+T in the game.",
+      inputSchema: { engine: engineArg },
+    },
+    ({ engine }) => guard(async () => {
+      if (!listEngines().some((e) => e.id === engine)) throw new Error(`unknown engine ${engine}`);
+      const srv = runs.server;
+      if (!srv.run || !srv.rcon) throw new Error("no server started by run_server is running");
+      if (srv.engine !== engine) throw new Error(`the running server is ${srv.engine}, not ${engine}`);
+      await setupFor(engine);
+      const reply = await reloadServerData(join(root, "out", engine), srv.rcon);
+      return json({ engine, reloaded: true, reply, hint: "Client assets: press F3+T in the game. Java code needs a restart." });
     }),
   );
 }

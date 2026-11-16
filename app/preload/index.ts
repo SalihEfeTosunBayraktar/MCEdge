@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
-import type { BuildEvent, FsChange, McedgeApi, UpdateState } from "../shared/api.ts";
+import type { AiEvent, BuildEvent, FsChange, McedgeApi, UpdateState } from "../shared/api.ts";
 
 const api: McedgeApi = {
   openProjectDialog: () => ipcRenderer.invoke("project:openDialog"),
@@ -23,6 +23,25 @@ const api: McedgeApi = {
   codeRun: (dir) => ipcRenderer.invoke("code:run", dir),
   codeStop: () => ipcRenderer.invoke("code:stop"),
   codeExport: (dir) => ipcRenderer.invoke("code:export", dir),
+  javaOpen: (dir, path, text) => ipcRenderer.invoke("java:open", dir, path, text),
+  javaChange: (dir, path, text) => ipcRenderer.invoke("java:change", dir, path, text),
+  javaClose: (dir, path) => ipcRenderer.invoke("java:close", dir, path),
+  javaComplete: (dir, path, position) => ipcRenderer.invoke("java:complete", dir, path, position),
+  javaResolve: (dir, item) => ipcRenderer.invoke("java:resolve", dir, item),
+  javaHover: (dir, path, position) => ipcRenderer.invoke("java:hover", dir, path, position),
+  javaStatus: (dir) => ipcRenderer.invoke("java:status", dir),
+  javaResources: (dir) => ipcRenderer.invoke("java:resources", dir),
+  javaStop: (dir) => ipcRenderer.invoke("java:stop", dir),
+  onJavaStatus: (listener) => {
+    const handler = (_e: IpcRendererEvent, status: Parameters<typeof listener>[0]) => listener(status);
+    ipcRenderer.on("java:status", handler);
+    return () => ipcRenderer.removeListener("java:status", handler);
+  },
+  onJavaDiagnostics: (listener) => {
+    const handler = (_e: IpcRendererEvent, event: Parameters<typeof listener>[0]) => listener(event);
+    ipcRenderer.on("java:diagnostics", handler);
+    return () => ipcRenderer.removeListener("java:diagnostics", handler);
+  },
   gitStatus: (dir) => ipcRenderer.invoke("git:status", dir),
   gitInit: (dir) => ipcRenderer.invoke("git:init", dir),
   gitDiff: (dir, path, staged) => ipcRenderer.invoke("git:diff", dir, path, staged),
@@ -85,6 +104,14 @@ const api: McedgeApi = {
   dependencyJars: (dir, options) => ipcRenderer.invoke("deps:jars", dir, options),
   runClient: (dir, engineId, options) => ipcRenderer.invoke("client:run", dir, engineId, options),
   stopClient: (key) => ipcRenderer.invoke("client:stop", key),
+  listScenarios: (dir) => ipcRenderer.invoke("scenarios:list", dir),
+  readScenario: (dir, name) => ipcRenderer.invoke("scenarios:read", dir, name),
+  writeScenario: (dir, name, text) => ipcRenderer.invoke("scenarios:write", dir, name, text),
+  scenarioTemplate: () => ipcRenderer.invoke("scenarios:template"),
+  scenarioProblems: (text) => ipcRenderer.invoke("scenarios:problems", text),
+  scenarioStatus: (dir, engineId) => ipcRenderer.invoke("scenarios:status", dir, engineId),
+  runScenario: (dir, engineId, name) => ipcRenderer.invoke("scenarios:run", dir, engineId, name),
+  reloadData: (dir, engineId) => ipcRenderer.invoke("scenarios:reload", dir, engineId),
   setTitleBarTheme: (theme) => ipcRenderer.invoke("window:theme", theme),
   exportFolder: (dir) => ipcRenderer.invoke("export:folder", dir),
   exportTranslations: (name, text) => ipcRenderer.invoke("localization:exportFile", name, text),
@@ -102,6 +129,8 @@ const api: McedgeApi = {
   pickProgram: (current) => ipcRenderer.invoke("dialog:program", current),
   exportChangelog: (dir) => ipcRenderer.invoke("export:changelog", dir),
   exportJars: (dir, engineIds, folder, pattern) => ipcRenderer.invoke("export:run", dir, engineIds, folder, pattern),
+  publishCheck: (dir, platforms) => ipcRenderer.invoke("export:publishCheck", dir, platforms),
+  publishJars: (dir, engineIds, folder, pattern, options) => ipcRenderer.invoke("export:publish", dir, engineIds, folder, pattern, options),
   openPath: (path) => ipcRenderer.invoke("shell:open", path),
   importResources: (dir, kind) => ipcRenderer.invoke("resource:import", dir, kind),
   deleteResource: (dir, path) => ipcRenderer.invoke("resource:delete", dir, path),
@@ -131,6 +160,15 @@ const api: McedgeApi = {
     return () => ipcRenderer.removeListener("updates:state", handler);
   },
   installUpdate: () => ipcRenderer.invoke("updates:install"),
+  aiStatus: () => ipcRenderer.invoke("ai:status"),
+  aiSend: (dir, reply, text) => ipcRenderer.invoke("ai:send", dir, reply, text),
+  aiStop: (dir) => ipcRenderer.invoke("ai:stop", dir),
+  aiReset: (dir, close) => ipcRenderer.invoke("ai:reset", dir, close),
+  onAiEvent: (listener) => {
+    const handler = (_e: IpcRendererEvent, message: { dir: string; reply: string; event: AiEvent }) => listener(message);
+    ipcRenderer.on("ai:event", handler);
+    return () => ipcRenderer.removeListener("ai:event", handler);
+  },
   onBuildEvent: (listener) => {
     const handler = (_e: IpcRendererEvent, event: BuildEvent) => listener(event);
     ipcRenderer.on("build:event", handler);

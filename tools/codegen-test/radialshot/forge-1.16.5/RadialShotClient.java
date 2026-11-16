@@ -16,6 +16,6 @@ public final class RadialShotClient {
         if (!(mc.screen instanceof dev.mcedge.wavethree.procedures.client.RadialMenuScreen)) return;
         double scale = mc.getWindow().getGuiScale(), cx = mc.getWindow().getScreenWidth() / 2.0D, cy = mc.getWindow().getScreenHeight() / 2.0D;
         org.lwjgl.glfw.GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), cx + 52 * scale, cy - 30 * scale);
-        if (scrolled != mc.screen && new java.io.File(mc.gameDirectory, "radial-scroll").exists()) (scrolled = mc.screen).mouseScrolled(cx / scale, cy / scale, -1.0D);
+        if (scrolled != mc.screen && new java.io.File(mc.gameDirectory, "radial-scroll").exists()) (scrolled = mc.screen).mouseScrolled(cx / scale, cy / scale, 1.0D);
     }
 }

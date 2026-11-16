@@ -807,6 +807,10 @@ ${keys.map(([id, code], i) => `    private static final ${KM} KEY_${i} = new ${K
     private static final ${KM}[] KEYS = { ${keys.map((_, i) => `KEY_${i}`).join(", ")} };
     /** The menu whose key was pressed and is still held while the server answers, "" none. */
     private static String held = "";
+    /** The key of the menu a slice was last chosen in, and when: a menu without a key that the server opens right after
+     * (a slice that opens another menu) chooses with it too (Q237). */
+    private static ${KM} lastKey;
+    private static long lastAt;
 
 ${keyMappingRegister(env, keys.map((_, i) => `KEY_${i}`))}
 
@@ -820,6 +824,13 @@ ${keyMappingRegister(env, keys.map((_, i) => `KEY_${i}`))}
             }
             if (MENUS[i].equals(held) && !KEYS[i].isDown()) held = "";
         }
+    }
+
+    /** A slice of a menu was chosen; key is the key that menu chose with, null when none. */
+    static void chosen(String menu, ${KM} key) {
+        int i = java.util.Arrays.asList(MENUS).indexOf(menu);
+        lastKey = key != null ? key : i >= 0 ? KEYS[i] : null;
+        lastAt = System.currentTimeMillis();
     }
 
     /** Asks the server to open a menu. */
@@ -838,7 +849,9 @@ ${keyMappingRegister(env, keys.map((_, i) => `KEY_${i}`))}
         int key = java.util.Arrays.asList(MENUS).indexOf(menu);
         // Held: releasing the key chooses; a key let go before the menu came acts like a toggle key.
         boolean hold = "hold".equals(data.mode) && key >= 0 && menu.equals(held);
-        ${setScreen(`new RadialMenuScreen(menu, data, states, hold ? KEYS[key] : null)`)};
+        ${KM} follow = key < 0 && System.currentTimeMillis() - lastAt < 2000L ? lastKey : null;
+        lastKey = null;
+        ${setScreen(`new RadialMenuScreen(menu, data, states, hold ? KEYS[key] : follow, hold)`)};
     }
 }
 `,
@@ -953,12 +966,12 @@ function screenParts(penv: ProcEnv) {
 
     @Override
     public boolean keyPressed(int key, int scan, int modifiers) {
-        return digit(key) || super.keyPressed(key, scan, modifiers);
+        return press(this.key != null && this.key.matches(key, scan)) || digit(key) || super.keyPressed(key, scan, modifiers);
     }
 
     @Override
     public boolean keyReleased(int key, int scan, int modifiers) {
-        if (this.key != null && this.key.matches(key, scan)) return release();
+        if (this.key != null && this.key.matches(key, scan)) return !armed || release();
         return super.keyReleased(key, scan, modifiers);
     }`,
       close: "this.minecraft.setScreen(null);",
@@ -1010,12 +1023,12 @@ function screenParts(penv: ProcEnv) {
 
     @Override
     public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
-        return digit(event.key()) || super.keyPressed(event);
+        return press(this.key != null && this.key.matches(event)) || digit(event.key()) || super.keyPressed(event);
     }
 
     @Override
     public boolean keyReleased(net.minecraft.client.input.KeyEvent event) {
-        if (this.key != null && this.key.matches(event)) return release();
+        if (this.key != null && this.key.matches(event)) return !armed || release();
         return super.keyReleased(event);
     }`
       : `    @Override
@@ -1030,12 +1043,12 @@ function screenParts(penv: ProcEnv) {
 
     @Override
     public boolean keyPressed(int key, int scan, int modifiers) {
-        return digit(key) || super.keyPressed(key, scan, modifiers);
+        return press(this.key != null && this.key.matches(key, scan)) || digit(key) || super.keyPressed(key, scan, modifiers);
     }
 
     @Override
     public boolean keyReleased(int key, int scan, int modifiers) {
-        if (this.key != null && this.key.matches(key, scan)) return release();
+        if (this.key != null && this.key.matches(key, scan)) return !armed || release();
         return super.keyReleased(key, scan, modifiers);
     }`,
     close: v26 ? "this.minecraft.gui.setScreen(null);" : "this.minecraft.setScreen(null);",
@@ -1091,18 +1104,22 @@ public final class RadialMenuScreen extends ${Screen} {
 
     private final String id;
     private final ${M}.Menu menu;
-    /** The key held to open it, null when it opens as a toggle (a click chooses). */
+    /** The key that chooses on release: the menu's own key when it was held to open it, or the key of the menu it was
+     * opened from (Q237); null when only a click chooses. */
     private final ${KM} key;
+    /** The key went down while the menu was open, or was held to open it: letting it go chooses. */
+    private boolean armed;
     private final java.util.List<Page> pages = new java.util.ArrayList<>();
     private int page;
     private int ticks;
     private double mouseX, mouseY;
 
-    public RadialMenuScreen(String id, ${M}.Menu menu, String states, ${KM} key) {
+    public RadialMenuScreen(String id, ${M}.Menu menu, String states, ${KM} key, boolean held) {
         super(${P.title});
         this.id = id;
         this.menu = menu;
         this.key = key;
+        this.armed = held;
         java.util.Map<String, Integer> hidden = new java.util.HashMap<>();
         for (String part : states.split(";")) {
             int eq = part.lastIndexOf('=');
@@ -1173,9 +1190,16 @@ ${P.input}
         return true;
     }
 
+    /** The menu's key went down: letting it go now chooses the slice under the mouse, or closes over none. */
+    private boolean press(boolean matches) {
+        if (matches) armed = true;
+        return matches;
+    }
+
     private boolean scroll(double amount) {
         if (amount == 0 || pages.size() < 2) return false;
-        page = Math.floorMod(page + (amount < 0 ? 1 : -1), pages.size());
+        // Wheel up (amount > 0) goes to the next tab, down to the previous one (Q232).
+        page = Math.floorMod(page + (amount > 0 ? 1 : -1), pages.size());
         return true;
     }
 
@@ -1194,6 +1218,7 @@ ${P.input}
             Entry entry = pages.get(page).entries.get(slice);
             if (entry.state == ${M}.DISABLED) return;
             ${penv.pkg}.procedures.client.${penv.modClass}NetworkClient.toServer(new ${net}.RadialAction("choose", id, pages.get(page).tab, entry.id));
+            RadialMenusClient.chosen(id, key);
         }
         ${P.close}
     }

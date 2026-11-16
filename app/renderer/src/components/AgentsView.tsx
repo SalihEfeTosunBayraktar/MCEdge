@@ -4,6 +4,7 @@ import { agentFolders, type DateRange } from "../live/agents.ts";
 import { groupTimeline, type Session } from "../live/timeline.ts";
 import { language, t } from "../strings.ts";
 import { AgentTasks, taskStatus } from "./AgentTasks.tsx";
+import { AiPanel } from "./AiPanel.tsx";
 import { AgentTimeline } from "./AgentTimeline.tsx";
 import { AgentMark, Icon } from "./Icon.tsx";
 
@@ -21,9 +22,11 @@ interface Props {
   tasks: Omit<React.ComponentProps<typeof AgentTasks>, "show">;
   /** Opens Help > Connect an AI agent (Q201). */
   onConnect: () => void;
+  /** The in-app AI assistant (Q239): one more node of the tree, next to the outside agents. */
+  ai?: Omit<React.ComponentProps<typeof AiPanel>, "dir" | "live">;
 }
 
-type Node = { kind: "tasks" } | { kind: "session"; id: string };
+type Node = { kind: "tasks" } | { kind: "ai" } | { kind: "session"; id: string };
 
 /** A session counts as working now while the agent's heartbeat is fresh, like the status bar's. */
 const ACTIVE_MS = 60_000;
@@ -33,7 +36,7 @@ const ACTIVE_MS = 60_000;
  * (how it introduced itself over MCP: Claude, Codex, Gemini, ...) with its sessions in date ranges; on the right, the
  * selected session's timeline with its tasks, or the task list. Folders stay open or closed per project.
  */
-export function AgentsView({ dir, live, now, panel, onRouted, onOpenTarget, show, tasks, onConnect }: Props) {
+export function AgentsView({ dir, live, now, panel, onRouted, onOpenTarget, show, tasks, onConnect, ai }: Props) {
   const { sessions, undone } = useMemo(() => groupTimeline(live.entries), [live.entries]);
   const folders = useMemo(() => agentFolders(sessions, now), [sessions, now]);
   const [node, setNode] = useState<Node>();
@@ -48,6 +51,10 @@ export function AgentsView({ dir, live, now, panel, onRouted, onOpenTarget, show
     // Runs when an old panel name arrives.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [panel]);
+  // Ctrl+Shift+A selects the AI assistant (the chat itself focuses its input box).
+  useEffect(() => {
+    if (ai?.focusRequest) setNode({ kind: "ai" });
+  }, [ai?.focusRequest]);
   useEffect(() => {
     if (show) setNode({ kind: "session", id: show.session });
   }, [show]);
@@ -69,6 +76,14 @@ export function AgentsView({ dir, live, now, panel, onRouted, onOpenTarget, show
           {toReview > 0 && <span className="pcount" title={t("tasks.status.done")}>{toReview}</span>}
           <span className="agcount">{tasks.tasks.length}</span>
         </button>
+        {ai && (
+          <button role="treeitem" aria-selected={shown.kind === "ai"} className={`agnode agtasks ${shown.kind === "ai" ? "on" : ""}`} data-testid="agent-ai-node"
+            onClick={() => setNode({ kind: "ai" })}>
+            <Icon name="gem" size={14} />
+            <span className="agname">{t("ai.title")}</span>
+            {ai.chat.running && <i className="liveled" />}
+          </button>
+        )}
         {folders.length === 0 && <p className="dim agempty">{t("live.noActivity")}</p>}
         {folders.map((folder) => {
           const id = folder.provider;
@@ -116,7 +131,9 @@ export function AgentsView({ dir, live, now, panel, onRouted, onOpenTarget, show
           <span className="agname">{t("agents.connect")}</span>
         </button>
       </nav>
-      {shown.kind === "tasks" ? (
+      {shown.kind === "ai" && ai ? (
+        <AiPanel dir={dir} live={live} {...ai} />
+      ) : shown.kind === "tasks" ? (
         <AgentTasks {...tasks} show={showTask} />
       ) : (
         <AgentTimeline key={session?.id} dir={dir} live={live} now={now} session={session} undone={undone} latest={!!session && session === latest}

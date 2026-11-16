@@ -225,7 +225,7 @@ export async function serveMcp(projectDir: string): Promise<void> {
   }
   else registerGradleModTools(server, () => setupFor(), guard);
   const runs = registerRunTools(server, setupFor, guard);
-  if (kind === "mcedge") registerScenarioTools(server, root, runs, guard);
+  if (kind === "mcedge") registerScenarioTools(server, root, runs, guard, (engine) => setupFor(engine));
   registerObserveTools(server, root, kind, runs);
   registerGitTools(server, root, guard);
   if (kind === "mcedge") registerGeneratorTools(server, root, guard);

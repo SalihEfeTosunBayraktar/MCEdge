@@ -13,6 +13,7 @@ JSON plus the engine templates that use it.
 | `folder` | Folder under `elements/` holding one JSON file per element (`blocks`). |
 | `name`, `description` | Shown in the type picker and on tiles. Our own wording. |
 | `icon`, `shortcut` | Icon id and the single letter used in the New element popup. |
+| (folder) | The New element popup groups types in folders (`CATALOG_GROUPS`, `group` in `app/renderer/src/catalog.ts`); a new type not listed there shows in the Other folder until it is added. |
 | `langKey` | Lang key prefix for the element's display name (`block`, `item`, `entity`, ...) or `null`. |
 | `mcreator` | Name of the matching MCreator element type, for importing workspaces. |
 | `pages` | Ordered editor pages: `{ id, title, groups: [{ title, fields: [...] }] }`. |

@@ -336,14 +336,28 @@ input[type="number"]::-webkit-inner-spin-button { opacity: .5; }
 .empty-note { margin: 24px 0; color: var(--fg-3); }
 
 /* new element popup: inventory panel anchored to New */
-.addpop { position: absolute; left: 10px; top: 4px; width: 480px; z-index: 20; padding: 8px;
+.addpop { position: absolute; left: 10px; top: 4px; width: 520px; z-index: 20; padding: 8px;
   background: var(--pop); box-shadow: var(--bevel), 0 0 0 2px var(--lo), 6px 6px 0 var(--shadow); }
 .pophead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 2px 4px 8px; }
 .pophead > span:first-child { font-weight: bold; font-size: 14px; color: var(--fg); }
 .pophint { color: var(--fg-3); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .popsearch { width: 100%; margin-bottom: 6px; }
-.popcols { display: grid; grid-template-columns: 1fr 1fr; grid-auto-flow: column; column-gap: 6px; outline: 0; }
-.ptype { display: flex; align-items: center; gap: 8px; height: 23px; padding: 0 6px 0 3px; white-space: nowrap; text-align: left; color: var(--fg); }
+.addpop { --ptype-h: 23px; }
+.popcols { outline: 0; }
+.popcols .ptypes { display: grid; grid-template-columns: 1fr 1fr; grid-auto-flow: column; column-gap: 6px; }
+/* Q233: folders on the left, the pointed folder's types on the right */
+.popfolders { display: grid; grid-template-columns: 222px 1fr; column-gap: 6px; outline: 0; }
+.pgroups { display: flex; flex-direction: column; }
+.popfolders .ptypes { display: flex; flex-direction: column; padding-left: 6px; box-shadow: inset 2px 0 0 var(--lo); }
+.pfolder { display: flex; align-items: center; gap: 8px; height: var(--ptype-h); padding: 0 6px 0 3px; white-space: nowrap; text-align: left; color: var(--fg); font-weight: bold; }
+.pfolder .pslot { color: var(--accent); }
+.pfolder.open { background: var(--plank-2); }
+.pfolder:hover, .pfolder:focus-visible { background: var(--accent); color: var(--accent-fg); outline: 0; }
+.pfolder:hover .pslot, .pfolder:focus-visible .pslot { color: var(--fg); }
+.pfolder .pfcount { margin-left: auto; font-size: 10.5px; color: var(--fg-3); }
+.pfolder:hover .pfcount, .pfolder:focus-visible .pfcount { color: inherit; }
+.ptype[hidden] { display: none; }
+.ptype { display: flex; align-items: center; gap: 8px; height: var(--ptype-h); padding: 0 6px 0 3px; white-space: nowrap; text-align: left; color: var(--fg); }
 .ptype:hover:not(:disabled), .ptype:focus-visible { background: var(--accent); color: var(--accent-fg); outline: 0; }
 .ptype:disabled { opacity: .5; }
 .pslot { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; flex: none; background: var(--slot); box-shadow: inset 1px 1px 0 var(--lo), inset -1px -1px 0 var(--hi); }
@@ -474,6 +488,14 @@ table.grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .backdrop { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; background: rgba(0, 0, 0, .45); }
 .dialog { width: 440px; padding: 4px 12px 12px; background: var(--pop); box-shadow: var(--bevel), 0 0 0 2px var(--lo), 8px 8px 0 var(--shadow); }
 .dialog .fgroup legend { background: var(--pop); }
+/* Preferences never grows past the window: the sections scroll, the title and Close stay (Q242). */
+.prefsdialog { display: flex; flex-direction: column; max-height: calc(100vh - 48px); }
+.prefsdialog > .form { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: 4px; }
+/* A collapsible group: the title is the toggle; a closed group keeps only its title. */
+.fgroup.collapsible.closed { padding-bottom: 0; }
+.fgtoggle { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-transform: inherit; letter-spacing: inherit; cursor: pointer; }
+.fgtoggle:focus-visible { outline: 1px dotted var(--accent); }
+.fgroup.closed .fgtoggle .ico { transform: rotate(-90deg); }
 .addpop .fgroup legend { background: var(--pop); }
 
 /* ---------- welcome ---------- */
@@ -638,6 +660,8 @@ button.sitem:hover { color: var(--fg); }
 .clbar { display: flex; align-items: center; gap: 8px; }
 .exportlist { max-height: none; }
 .exportlist .check { gap: 8px; }
+.check-row { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; }
+.check-row .check { gap: 6px; }
 .estate { margin-left: auto; font-size: 11px; color: var(--fg-3); }
 .estate.running, .estate.waiting { color: var(--warn); }
 .estate.ok { color: var(--ok); }
@@ -874,12 +898,24 @@ input[type="range"] { flex: 1; min-width: 0; accent-color: var(--accent); }
 .codeeditor { position: relative; flex: 1; min-height: 0; background: var(--slot); }
 .monacohost { position: absolute; inset: 0; }
 .codeempty { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; }
+.codestatus { flex: none; display: flex; align-items: center; gap: 10px; min-height: 22px; padding: 0 8px; border-top: 1px solid var(--line); font-size: 11px; color: var(--fg-2); }
+.codestatus:empty { display: none; }
+.sidebadge { padding: 1px 6px; font-weight: bold; text-transform: uppercase; letter-spacing: .04em; border: 1px solid currentColor; }
+.sidebadge.client { color: var(--accent); }
+.sidebadge.server { color: var(--ok); }
+.sidebadge.common { color: var(--fg-2); }
+.javastatus { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.javastatus.ready { color: var(--ok); }
+.javastatus.failed { color: var(--danger); }
 
 
 /* ---------- git panel ---------- */
 .codehost { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .codehost.hidden { display: none; }
-.gitmain { min-width: 0; min-height: 0; display: grid; grid-template-rows: minmax(120px, 38%) minmax(0, 1fr); }
+.gitmain { min-width: 0; min-height: 0; display: grid; grid-template-rows: minmax(80px, var(--git-table-h, 38%)) 6px minmax(60px, 1fr); }
+/* Q235: divider between the table and the diff */
+.gitgrip { cursor: row-resize; background: var(--line); outline: 0; }
+.gitgrip:hover, .gitgrip:focus-visible, .gitgrip.on { background: var(--accent); }
 .gitmain .tablewrap { border-bottom: 2px solid var(--line); }
 .gitdiff { margin: 0; padding: 8px 12px; overflow: auto; font: 12px/1.45 var(--mono); white-space: pre; color: var(--fg-2); background: var(--slot); box-shadow: var(--well); user-select: text; }
 .gitdiff .dadd { color: var(--ok); background: rgba(120, 200, 80, .08); }
@@ -1282,3 +1318,59 @@ input[type="range"] { flex: 1; min-width: 0; accent-color: var(--accent); }
 .textctl .btn.small:disabled { color: var(--fg-3); }
 .problems .pfix { margin-left: auto; min-height: 22px; padding: 0 8px; }
 .problems .pfix + .pact { margin-left: 0; }
+
+/* ---------- AI assistant (Q239): a node of the Agents panel ---------- */
+.aipanel { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; background: var(--plank); }
+.aihdr { display: flex; align-items: center; gap: 8px; height: 38px; flex: none; padding: 0 8px 0 12px; border-bottom: 2px solid var(--line); }
+.aihdr b { margin-right: auto; color: var(--accent); }
+.ailog { flex: 1; min-height: 0; overflow: auto; padding: 8px 12px; display: flex; flex-direction: column; gap: 12px; }
+.aiempty, .ainone p { margin: 8px 0; }
+.ainone { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px; }
+.aiturn { display: flex; flex-direction: column; gap: 6px; }
+.aiuser, .aireply { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.aiuser { padding: 6px 8px; background: var(--slot); box-shadow: var(--well); }
+.aihead { margin: 0; font-size: 10.5px; font-weight: bold; letter-spacing: .06em; text-transform: uppercase; color: var(--fg-3); }
+.aitext { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.aitool { width: 100%; background: var(--plank-2); box-shadow: var(--bevel); }
+.aitoolhead { display: flex; align-items: center; gap: 6px; width: 100%; min-width: 0; padding: 4px 6px; text-align: left; }
+.aitoolname { color: var(--accent); }
+.aitooltarget { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-2); }
+.aitoolstatus { margin-left: auto; flex: none; font-size: 11px; color: var(--fg-3); }
+.aitool.ok .aitoolstatus { color: var(--ok); }
+.aitool.error .aitoolstatus { color: var(--danger); }
+.aitoolbody { padding: 0 8px 8px; }
+.aitoolbody pre { margin: 2px 0 6px; max-height: 180px; overflow: auto; padding: 6px; font: 11.5px/1.35 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; background: var(--slot); box-shadow: var(--well); }
+.aierror { margin: 0; color: var(--danger); overflow-wrap: anywhere; }
+.aiconflicts ul { margin: 4px 0 0; padding-left: 16px; font-size: 12px; overflow-wrap: anywhere; }
+.aiinput { display: flex; flex-direction: column; align-items: stretch; gap: 6px; flex: none; padding: 8px 12px 12px; border-top: 2px solid var(--line); }
+.aiinput textarea { resize: none; }
+.aiinput .abtn { align-self: flex-end; }
+
+/* ---------- Scenarios (Q241) ---------- */
+.scn-view { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 0; }
+.scn-files { display: flex; flex-direction: column; min-height: 0; padding: 6px; border-right: 2px solid var(--line); overflow: auto; }
+.scn-files h4 { margin: 2px 6px 6px; font-size: 11px; text-transform: uppercase; color: var(--dim); }
+.scn-files ul { margin: 0; padding: 0; list-style: none; flex: 1; }
+.scn-files li.dim { padding: 4px 6px; }
+.scn-files li button { display: flex; align-items: center; gap: 8px; width: 100%; height: 26px; padding: 0 6px; text-align: left; color: var(--fg); }
+.scn-files li button.on { background: var(--sel); box-shadow: inset 3px 0 0 var(--accent); }
+.scn-files .dim { margin-left: auto; font-size: 11px; }
+.scn-new { display: flex; gap: 4px; padding-top: 6px; }
+.scn-new input { flex: 1; min-width: 0; height: 24px; font-family: var(--mono); }
+.scn-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.scn-bar { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-bottom: 2px solid var(--line); }
+.scn-bar label { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.scn-bar select { height: 24px; }
+.scn-hint { padding: 10px 14px; margin: 0; }
+.scn-work { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); flex: 1; min-height: 0; }
+.scn-editor { display: flex; flex-direction: column; min-height: 0; border-right: 2px solid var(--line); }
+.scn-editor textarea { flex: 1; min-height: 0; resize: none; padding: 6px 8px; font-family: var(--mono); font-size: 12px; tab-size: 2; white-space: pre; }
+.scn-problems { margin: 0; padding: 4px 8px; max-height: 70px; overflow: auto; font-size: 11px; white-space: pre-wrap; }
+.scn-valid { margin: 0; padding: 4px 8px; font-size: 11px; }
+.scn-result { padding: 6px 10px; overflow: auto; min-height: 0; }
+.scn-result p { margin: 4px 0; }
+.scn-ok { color: var(--ok); }
+.scn-steps { margin: 6px 0 0; padding: 0; list-style: none; }
+.scn-steps li { display: flex; align-items: baseline; gap: 8px; padding: 2px 0; font-size: 12px; }
+.scn-steps li.fail { background: color-mix(in srgb, var(--danger) 14%, transparent); }
+.scn-steps code { font-family: var(--mono); overflow-wrap: anywhere; }

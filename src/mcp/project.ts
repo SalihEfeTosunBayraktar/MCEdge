@@ -23,6 +23,7 @@ import { VARIABLE_SCOPES, VARIABLE_TYPES, type ModInfo } from "../ir/types.ts";
 import { validateProject } from "../ir/validate.ts";
 import { loadTags, validateTags } from "../tags/tags.ts";
 import { changelogSinceExport, recordExport } from "../vcs/changelog.ts";
+import { gateAndUpload, problemText, publishProblems, smokeTestServer } from "../build/publish.ts";
 
 type Text = { content: { type: "text"; text: string }[]; isError?: boolean };
 type Guard = (fn: () => Promise<Text> | Text) => Promise<Text>;
@@ -79,6 +80,8 @@ export function registerProjectTools(server: McpServer, root: string, guard: Gua
         credits: z.string().optional(), logo: z.string().optional().describe("Project PNG path or empty"),
         dependencies: z.array(dependency).optional().describe("Replaces the whole dependency list"),
         engines: z.array(z.string()).min(1).optional().describe("Engines the project targets (the app's engine menu and Build all); all when never set"),
+        publish: z.object({ modrinth: z.string().optional(), curseforge: z.string().optional() }).optional()
+          .describe("Where publish_mod uploads: Modrinth project slug or id, CurseForge project id (Q238)"),
       },
     },
     ({ id, package: pkg, ...change }) => guard(() => {
@@ -396,6 +399,34 @@ export function registerProjectTools(server: McpServer, root: string, guard: Gua
   );
 
   // ---- export ----
+  /** File > Export for agents: each engine builds and its jar is copied; the export is remembered when all built. */
+  async function exportEngines(engines: string[], folder: string, pattern?: string) {
+    if (!isAbsolute(folder)) throw new Error("folder must be an absolute path");
+    mkdirSync(folder, { recursive: true });
+    const project = loadProject(root);
+    const results = [];
+    for (const engineId of engines) {
+      const engine = listEngines().find((e) => e.id === engineId);
+      if (!engine) throw new Error(`unknown engine ${engineId}; one of ${listEngines().map((e) => e.id).join(", ")}`);
+      await ensureToolchains(toolchainNeeds(engine));
+      await resolveModDependencies(project.mod.dependencies, engine);
+      const outDir = join(root, "out", engine.id);
+      const { skipped, warnings } = generateTarget(project, root, engine, outDir);
+      const lines: string[] = [];
+      const result = await buildTarget(engine, outDir, (line) => lines.push(line));
+      let jar: string | undefined;
+      if (result.ok && result.jar) {
+        jar = join(folder, exportFileName(pattern ?? DEFAULT_EXPORT_PATTERN, {
+          modid: project.mod.id, modversion: project.mod.version, loader: engine.loader, mc: engine.minecraft, engine: engine.id,
+        }));
+        copyFileSync(result.jar, jar);
+      }
+      results.push({ engine: engine.id, ok: !!jar, jar, log: result.logFile, skipped, warnings,
+        errors: jar ? [] : lines.filter((l) => /error:|FAILED|What went wrong/.test(l)).slice(0, 40) });
+    }
+    if (results.every((r) => r.ok)) await recordExport(root, project.mod.version);
+    return { project, results };
+  }
   server.registerTool(
     "export_jar",
     {
@@ -404,32 +435,38 @@ export function registerProjectTools(server: McpServer, root: string, guard: Gua
         + "When every engine builds, the export is remembered and `changelog` starts again from here.",
       inputSchema: { engines: z.array(z.string()).min(1), folder: z.string(), pattern: z.string().optional() },
     },
-    ({ engines, folder, pattern }) => guard(async () => {
-      if (!isAbsolute(folder)) throw new Error("folder must be an absolute path");
-      mkdirSync(folder, { recursive: true });
-      const project = loadProject(root);
-      const results = [];
-      for (const engineId of engines) {
-        const engine = listEngines().find((e) => e.id === engineId);
-        if (!engine) throw new Error(`unknown engine ${engineId}; one of ${listEngines().map((e) => e.id).join(", ")}`);
-        await ensureToolchains(toolchainNeeds(engine));
-        await resolveModDependencies(project.mod.dependencies, engine);
-        const outDir = join(root, "out", engine.id);
-        const { skipped, warnings } = generateTarget(project, root, engine, outDir);
-        const lines: string[] = [];
-        const result = await buildTarget(engine, outDir, (line) => lines.push(line));
-        let jar: string | undefined;
-        if (result.ok && result.jar) {
-          jar = join(folder, exportFileName(pattern ?? DEFAULT_EXPORT_PATTERN, {
-            modid: project.mod.id, modversion: project.mod.version, loader: engine.loader, mc: engine.minecraft, engine: engine.id,
-          }));
-          copyFileSync(result.jar, jar);
-        }
-        results.push({ engine: engine.id, ok: !!jar, jar, log: result.logFile, skipped, warnings,
-          errors: jar ? [] : lines.filter((l) => /error:|FAILED|What went wrong/.test(l)).slice(0, 40) });
+    ({ engines, folder, pattern }) => guard(async () => json((await exportEngines(engines, folder, pattern)).results)),
+  );
+  server.registerTool(
+    "publish_mod",
+    {
+      description: "File > Export with publishing (Q238): checks the mod's Modrinth/CurseForge projects (mod.publish), this computer's tokens "
+        + "and that the version is not tagged yet; builds and exports every engine (as export_jar); then the gate: each engine's dedicated "
+        + "server must start with the mod; then tags the version v<version> (own git repo only) and uploads each jar as its own version "
+        + "(number <version>+<loader>-<mc>) with its game version and loader. A failed step uploads nothing. `changelog` defaults to the "
+        + "changelog tool's draft. dry_run: everything but the tag and the uploads.",
+      inputSchema: {
+        engines: z.array(z.string()).min(1), folder: z.string(), pattern: z.string().optional(),
+        platforms: z.array(z.enum(["modrinth", "curseforge"])).min(1),
+        release_type: z.enum(["release", "beta", "alpha"]).default("release"),
+        changelog: z.string().optional(), dry_run: z.boolean().default(false),
+      },
+    },
+    ({ engines, folder, pattern, platforms, release_type, changelog, dry_run }) => guard(async () => {
+      const mod = loadProject(root).mod;
+      const problems = dry_run ? [] : await publishProblems(root, mod, platforms);
+      if (problems.length) return json({ uploaded: false, problems: problems.map(problemText) });
+      const { results } = await exportEngines(engines, folder, pattern);
+      if (results.some((r) => !r.ok)) return json({ uploaded: false, stopped: "a build failed", results });
+      const built = results.map((r) => ({ engine: listEngines().find((e) => e.id === r.engine)!, jar: r.jar!, projectDir: join(root, "out", r.engine) }));
+      const notes = changelog ?? (await changelogSinceExport(root, mod.version)).text;
+      if (dry_run) {
+        const smoke = [];
+        for (const b of built) smoke.push({ engine: b.engine.id, ...(await smokeTestServer(b.engine, b.projectDir)) });
+        return json({ uploaded: false, dryRun: true, results, smoke, changelog: notes });
       }
-      if (results.every((r) => r.ok)) await recordExport(root, project.mod.version);
-      return json(results);
+      const outcome = await gateAndUpload(root, mod, built, { platforms, releaseType: release_type, changelog: notes }, () => {});
+      return json({ uploaded: !outcome.stopped && outcome.uploads.every((u) => u.ok), results, ...outcome });
     }),
   );
   server.registerTool(

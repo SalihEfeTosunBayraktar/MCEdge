@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { DEFAULT_EXPORT_PATTERN, exportFileName } from "../../../shared/exportName.ts";
-import type { EngineInfo, ExportResult, ProjectSnapshot } from "../../../shared/api.ts";
+import type { EngineInfo, ExportResult, Platform, ProjectSnapshot, PublishRun, ReleaseType } from "../../../shared/api.ts";
 import type { Changelog } from "../../../../src/vcs/changelog.ts";
 import { api } from "../api.ts";
 import type { EngineBuild } from "../model.ts";
@@ -20,6 +20,9 @@ interface Props {
 
 /** Engine name without its version: "Fabric 1.21.5" -> "Fabric". */
 const loaderName = (engine: EngineInfo) => engine.name.replace(engine.minecraft, "").trim() || engine.loader;
+const PLATFORM_NAMES: Record<Platform, string> = { modrinth: "Modrinth", curseforge: "CurseForge" };
+const RELEASE_TYPES: ReleaseType[] = ["release", "beta", "alpha"];
+
 const byVersion = (a: EngineInfo, b: EngineInfo) =>
   a.minecraft.localeCompare(b.minecraft, undefined, { numeric: true }) || loaderName(a).localeCompare(loaderName(b));
 
@@ -56,6 +59,10 @@ export function ExportDialog({ snapshot, engines, engineId, builds, onStart, onC
   const [changelog, setChangelog] = useState<Changelog>();
   const [notes, setNotes] = useState("");
   const [copied, setCopied] = useState(false);
+  // Publishing (Q238): with a platform ticked, Export becomes export, server test, tag and upload.
+  const [platforms, setPlatforms] = useState<Platform[]>([]);
+  const [releaseType, setReleaseType] = useState<ReleaseType>("release");
+  const [published, setPublished] = useState<PublishRun>();
   const { mod } = snapshot.project;
 
   useEffect(() => void api.exportFolder(snapshot.dir).then(setFolder), [snapshot.dir]);
@@ -76,9 +83,17 @@ export function ExportDialog({ snapshot, engines, engineId, builds, onStart, onC
     const ids = sorted.filter((e) => selected.includes(e.id)).map((e) => e.id);
     setRunning(true);
     setResults(undefined);
-    onStart(ids);
+    setPublished(undefined);
     try {
-      setResults(await api.exportJars(snapshot.dir, ids, folder.trim(), pattern.trim()));
+      // The checks come before the shared build state marks any engine, so a refused publish leaves no build pending.
+      const problems = platforms.length ? await api.publishCheck(snapshot.dir, platforms) : [];
+      if (problems.length) return setPublished({ problems, results: [] });
+      onStart(ids);
+      if (platforms.length) {
+        const run = await api.publishJars(snapshot.dir, ids, folder.trim(), pattern.trim(), { platforms, releaseType, changelog: notes });
+        setPublished(run);
+        setResults(run.results.length ? run.results : undefined);
+      } else setResults(await api.exportJars(snapshot.dir, ids, folder.trim(), pattern.trim()));
     } finally {
       setRunning(false);
     }
@@ -138,6 +153,30 @@ export function ExportDialog({ snapshot, engines, engineId, builds, onStart, onC
             </div>
           </div>
         </FormGroup>
+        <FormGroup title={t("export.publish")}>
+          <FormRow label={t("export.publishTo")}>
+            <div className="check-row">
+              {(Object.keys(PLATFORM_NAMES) as Platform[]).map((p) => (
+                <label key={p} className="check">
+                  <input type="checkbox" data-testid={`publish-${p}`} checked={platforms.includes(p)} disabled={running}
+                    onChange={(e) => setPlatforms(e.target.checked ? [...platforms, p] : platforms.filter((x) => x !== p))} />
+                  <span>{PLATFORM_NAMES[p]}</span>
+                </label>
+              ))}
+            </div>
+          </FormRow>
+          {platforms.length > 0 && (
+            <>
+              <FormRow label={t("export.releaseType")}>
+                <select value={releaseType} disabled={running} onChange={(e) => setReleaseType(e.target.value as ReleaseType)}>
+                  {RELEASE_TYPES.map((r) => <option key={r} value={r}>{t(`export.release.${r}`)}</option>)}
+                </select>
+              </FormRow>
+              <p className="hint">{t("export.publishHint", { version: mod.version })}</p>
+            </>
+          )}
+          {published && <PublishReport run={published} engines={engines} />}
+        </FormGroup>
         {results && (
           <FormGroup title={t("export.result")}>
             <ul className="exportres">
@@ -164,7 +203,7 @@ export function ExportDialog({ snapshot, engines, engineId, builds, onStart, onC
           </FormGroup>
         )}
         <div className="dlg-buttons">
-          <button type="submit" className="abtn primary" disabled={!canExport}><Icon name="import" /><span>{running ? t("export.running") : t("export.run")}</span></button>
+          <button type="submit" className="abtn primary" disabled={!canExport}><Icon name="import" /><span>{running ? t(platforms.length ? "export.publishing" : "export.running") : t(platforms.length ? "export.runPublish" : "export.run")}</span></button>
           {results?.some((r) => r.ok) && (
             <button type="button" className="abtn" onClick={() => api.openPath(folder.trim())}><Icon name="folder" /><span>{t("export.openFolder")}</span></button>
           )}
@@ -172,5 +211,38 @@ export function ExportDialog({ snapshot, engines, engineId, builds, onStart, onC
         </div>
       </form>
     </div>
+  );
+}
+
+/** What a publish did: the checks that stopped it, the server test per engine, the tag, and each upload with its page. */
+function PublishReport({ run, engines }: { run: PublishRun; engines: EngineInfo[] }) {
+  const label = (id: string) => {
+    const engine = engines.find((e) => e.id === id);
+    return engine ? t("export.engineLabel", { mc: engine.minecraft, loader: loaderName(engine) }) : id;
+  };
+  const { outcome } = run;
+  return (
+    <ul className="exportres" data-testid="publish-report">
+      {run.problems.map((p) => (
+        <li key={JSON.stringify(p)}><div className="eres failed"><Icon name="warn" size={12} />
+          <span>{p.kind === "tagExists" ? t("export.problem.tagExists", { tag: p.tag }) : t(`export.problem.${p.kind}`, { platform: PLATFORM_NAMES[p.platform] })}</span>
+        </div></li>
+      ))}
+      {!run.problems.length && !outcome && <li><div className="eres failed"><Icon name="warn" size={12} /><span>{t("export.gateBuildFailed")}</span></div></li>}
+      {outcome?.smoke.map((s) => (
+        <li key={`smoke-${s.engineId}`}><div className={`eres ${s.ok ? "ok" : "failed"}`}><Icon name={s.ok ? "check" : "warn"} size={12} />
+          <b>{label(s.engineId)}</b><span>{t("export.gate")}: {s.ok ? t("export.gateOk") : s.reason}</span>
+          {!s.ok && <button type="button" className="linkbtn" onClick={() => api.openPath(s.logFile)}>{t("export.openLog")}</button>}
+        </div></li>
+      ))}
+      {outcome?.stopped && <li><div className="eres failed"><Icon name="warn" size={12} /><span>{t("export.gateFailed", { reason: outcome.stopped })}</span></div></li>}
+      {outcome?.tag && <li><div className="eres ok"><Icon name="check" size={12} /><span>{t("export.tagged", { tag: outcome.tag })}</span></div></li>}
+      {outcome?.uploads.map((u) => (
+        <li key={`${u.platform}-${u.engineId}`}><div className={`eres ${u.ok ? "ok" : "failed"}`}><Icon name={u.ok ? "check" : "warn"} size={12} />
+          <b>{PLATFORM_NAMES[u.platform]} · {label(u.engineId)}</b><span>{u.ok ? t("export.uploaded") : t("export.uploadFailed", { error: u.error ?? "" })}</span>
+          {u.url && <button type="button" className="linkbtn" onClick={() => api.openExternal(u.url!)}>{t("export.openPage")}</button>}
+        </div></li>
+      ))}
+    </ul>
   );
 }

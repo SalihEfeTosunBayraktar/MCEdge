@@ -130,6 +130,7 @@ export const globalShortcuts = (): Shortcut[] => [
   ["Ctrl+B", t("top.build")],
   ["Ctrl+Shift+B", t("top.buildAll")],
   ["Ctrl+E", t("export.title")],
+  ["Ctrl+Shift+A", t("keys.aiPanel")],
   ["F5", t("top.run")],
   ["Shift+F5", t("top.stop")],
   ["?", t("keys.editorKeys")],

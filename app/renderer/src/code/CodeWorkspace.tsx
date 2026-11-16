@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { JavaStatus } from "../../../../src/java/jdtls.ts";
+import type { Side } from "../../../../src/java/sideCheck.ts";
 import type { CodeFile, CodeProjectInfo } from "../../../shared/api.ts";
 import { api } from "../api.ts";
 import { Icon } from "../components/Icon.tsx";
 import { ActionBar, ActionButton, Dialog, FindBar, FormGroup, FormRow, Separator } from "../components/ui.tsx";
 import { beginSave } from "../saveStatus.ts";
-import { t } from "../strings.ts";
+import { t, type StringKey } from "../strings.ts";
+import { JavaLanguage } from "./javaLanguage.ts";
 import { languageOf, monaco } from "./monaco.ts";
 
 interface OpenFile {
@@ -52,6 +55,9 @@ export function CodeWorkspace({ project, theme, building, running, onBuild, onRu
   openRef.current = open;
   const activeRef = useRef(active);
   activeRef.current = active;
+  const java = useRef<JavaLanguage>(undefined);
+  const [javaStatus, setJavaStatus] = useState<JavaStatus>();
+  const [sides, setSides] = useState<Record<string, Side>>({});
 
   const patch = (path: string, change: Partial<OpenFile>) => setOpen((list) => list.map((f) => (f.path === path ? { ...f, ...change } : f)));
 
@@ -65,7 +71,10 @@ export function CodeWorkspace({ project, theme, building, running, onBuild, onRu
       mouseWheelZoom: true,
     });
     editor.current.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => void save(activeRef.current));
+    java.current = new JavaLanguage(dir, setJavaStatus, (path, side) => setSides((all) => (all[path] === side ? all : { ...all, [path]: side })));
     return () => {
+      // Stops the project's jdtls too: closing the workspace closes the project.
+      java.current?.dispose();
       editor.current?.dispose();
       openRef.current.forEach((f) => f.model?.dispose());
     };
@@ -97,6 +106,7 @@ export function CodeWorkspace({ project, theme, building, running, onBuild, onRu
       if (!(model as { mcedgeLoading?: boolean }).mcedgeLoading) patch(path, { dirty: true, reloaded: false });
     });
     setOpen((list) => [...list, { path, model, binary, dirty: false, diskChanged: false, reloaded: false }]);
+    if (model) java.current?.track(path, model);
     switchTo(path);
   };
   const switchTo = (path: string) => {
@@ -106,6 +116,7 @@ export function CodeWorkspace({ project, theme, building, running, onBuild, onRu
   };
   const close = (path: string) => {
     const file = openRef.current.find((f) => f.path === path);
+    if (file?.model) java.current?.untrack(file.model);
     file?.model?.dispose();
     const rest = openRef.current.filter((f) => f.path !== path);
     setOpen(rest);
@@ -142,6 +153,7 @@ export function CodeWorkspace({ project, theme, building, running, onBuild, onRu
   useEffect(() => api.onFsChange(async (change) => {
     if (change.dir !== dir) return;
     void refreshTree();
+    if (change.paths.some((p) => p.startsWith("src/main/resources/"))) java.current?.invalidateResources();
     for (const path of change.paths) {
       const file = openRef.current.find((f) => f.path === path);
       if (!file?.model) continue;
@@ -176,6 +188,7 @@ export function CodeWorkspace({ project, theme, building, running, onBuild, onRu
   const selectedFile = files.find((f) => f.path === selected);
   const baseFolder = selectedFile ? (selectedFile.folder ? selectedFile.path : selectedFile.path.split("/").slice(0, -1).join("/")) : "";
   const current = open.find((f) => f.path === active);
+  const side = current && sides[current.path];
 
   return (
     <section className="view codeview">
@@ -229,6 +242,10 @@ export function CodeWorkspace({ project, theme, building, running, onBuild, onRu
             {!current && <p className="empty-note codeempty">{t("code.openHint")}</p>}
             {current?.binary && <p className="empty-note codeempty">{t("code.binary")}</p>}
           </div>
+          <div className="codestatus" role="status">
+            {side && <span className={`sidebadge ${side}`} title={t("java.side.title", { side: t(`java.side.${side}`) })}>{t(`java.side.${side}`)}</span>}
+            {javaStatus && <span className={`javastatus ${javaStatus.state}`} title={javaStatus.detail}>{javaStatusText(javaStatus)}</span>}
+          </div>
         </div>
       </div>
       {creating && (
@@ -252,6 +269,16 @@ export function CodeWorkspace({ project, theme, building, running, onBuild, onRu
       )}
     </section>
   );
+}
+
+function javaStatusText(status: JavaStatus): string {
+  if (status.state === "downloading") {
+    const [what, mb] = (status.detail ?? "").split(" ");
+    return t("java.status.downloading", { what: what === "jdtls" ? t("java.server") : `JDK`, mb: mb ?? 0 });
+  }
+  if (status.state === "stopped" && status.detail === "idle") return t("java.status.idle");
+  if (status.state === "failed") return t("java.status.failed", { reason: status.detail ?? "" });
+  return t(`java.status.${status.state}` as StringKey);
 }
 
 function NewEntryDialog({ folder, kind, onCancel, onCreate }: { folder: string; kind: "file" | "folder"; onCancel: () => void; onCreate: (path: string) => void }) {

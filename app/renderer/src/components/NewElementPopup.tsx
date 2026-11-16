@@ -4,9 +4,9 @@ import { pascal } from "../../../../src/generator/java.ts";
 import { customStub } from "../../../../src/generator/types/custom_element.ts";
 import type { Coverage, ProjectSnapshot } from "../../../shared/api.ts";
 import { api } from "../api.ts";
-import { catalog, type CatalogEntry } from "../catalog.ts";
+import { catalog, CATALOG_GROUPS, type CatalogEntry, type CatalogGroup } from "../catalog.ts";
 import { elementsOf, idTaken, toRegistryId, type ElementRef } from "../model.ts";
-import { language, t } from "../strings.ts";
+import { language, t, type StringKey } from "../strings.ts";
 import { typeGenerated, typeOf } from "../types.ts";
 import { Icon } from "./Icon.tsx";
 import { Sprite } from "./Sprite.tsx";
@@ -55,19 +55,45 @@ export function NewElementPopup({ snapshot, coverage, engineName, onCreated, onC
   const [filter, setFilter] = useState("");
   const [chosen, setChosen] = useState<ElementType>();
   const list = useRef<HTMLDivElement>(null);
-  useEffect(() => list.current?.focus(), []);
+  const root = useRef<HTMLDivElement>(null);
+  // The list takes the focus when the popup opens and again after Back from the name step, so Escape and letters work.
+  useEffect(() => { if (!chosen) list.current?.focus(); }, [chosen]);
+  // A click anywhere outside the popup closes it (Q231). Bubble phase, after React's handlers: the New button's own
+  // toggle runs first, so a click on it closes the popup instead of reopening it. The click that opened the popup
+  // happened before it mounted and is skipped.
+  const opened = useRef(performance.now());
+  useEffect(() => {
+    const close = (e: MouseEvent) => {
+      // The path is the one at dispatch: a clicked type button is gone by now (the name step replaced the list).
+      if (e.timeStamp > opened.current && root.current && !e.composedPath().includes(root.current)) onCancel();
+    };
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [onCancel]);
 
   const all = catalog().sort((a, b) => entryLabel(a).localeCompare(entryLabel(b)));
   const letters = useMemo(() => typeLetters(all), [all.map((e) => e.typeId).join()]); // eslint-disable-line react-hooks/exhaustive-deps
   const q = filter.trim().toLowerCase();
   const entries = all.filter((e) => !q || entryLabel(e).toLowerCase().includes(q));
+  const groups = CATALOG_GROUPS.map((group) => ({ group, entries: all.filter((e) => e.group === group) })).filter((g) => g.entries.length > 0);
+  // The folder whose types show on the right (Q233): pointing at a folder previews it after a short pause, so moving
+  // the mouse across other folders on the way to the types does not switch it.
+  const [open, setOpen] = useState<CatalogGroup>(groups[0].group);
+  const hover = useRef<number>(undefined);
+  const point = (group: CatalogGroup) => {
+    window.clearTimeout(hover.current);
+    hover.current = window.setTimeout(() => setOpen(group), 120);
+  };
+  useEffect(() => () => window.clearTimeout(hover.current), []);
   const choose = (entry: CatalogEntry) => {
     const type = typeOf(entry.typeId);
     if (type) setChosen(type);
   };
+  // Every type stays rendered, the other folders' types hidden, so switching folders does not rebuild the list.
+  const shown = q ? entries : groups.flatMap((g) => g.entries);
 
   return (
-    <div className="addpop" role="dialog" aria-label={t("new.title")}
+    <div ref={root} className="addpop" role="dialog" aria-label={t("new.title")}
       onKeyDown={(e) => e.key === "Escape" && (chosen ? setChosen(undefined) : onCancel())}>
       {chosen ? (
         <NameStep snapshot={snapshot} type={chosen} onBack={() => setChosen(undefined)} onCreated={onCreated}
@@ -82,25 +108,45 @@ export function NewElementPopup({ snapshot, coverage, engineName, onCreated, onC
             <Icon name="search" />
             <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={t("new.filter", { count: all.length })} />
           </label>
-          <div ref={list} className="popcols" tabIndex={-1} style={{ gridTemplateRows: `repeat(${Math.ceil(entries.length / 2)}, auto)` }}
+          <div ref={list} className={q ? "popcols" : "popfolders"} tabIndex={-1}
             onKeyDown={(e) => {
               const entry = all.find((c) => typeOf(c.typeId) && letters.get(c.typeId) === e.key.toLocaleLowerCase(language()));
               if (entry && !e.ctrlKey && !e.altKey) (e.preventDefault(), choose(entry));
             }}>
-            {entries.map((entry) => {
-              const type = typeOf(entry.typeId);
-              const noCode = type && typeGenerated(coverage, type.id) === "no";
-              return (
-                <button key={entry.typeId} className="ptype" disabled={!type} onClick={() => choose(entry)}
-                  title={!type ? t("new.soon") : noCode ? t("editor.typeNotGenerated", { engine: engineName, type: type.name }) : type.description}>
-                  <span className="pslot"><Sprite name={entry.sprite} size={16} /></span>
-                  <span className="pname">{entryLabel(entry)}</span>
-                  {!type && <span className="psoon">{t("new.soonShort")}</span>}
-                  {noCode && <span className="psoon nocode">{t("new.noCode")}</span>}
-                  {letters.has(entry.typeId) && <kbd className="pkey">{letters.get(entry.typeId)!.toLocaleUpperCase(language())}</kbd>}
-                </button>
-              );
-            })}
+            {!q && (
+              <div className="pgroups" role="tablist" aria-orientation="vertical">
+                {groups.map(({ group, entries: inGroup }) => (
+                  <button key={group} type="button" role="tab" aria-selected={group === open} data-group={group}
+                    className={`pfolder ${group === open ? "open" : ""}`}
+                    onMouseEnter={() => point(group)} onMouseLeave={() => window.clearTimeout(hover.current)}
+                    onFocus={() => setOpen(group)} onClick={() => setOpen(group)}>
+                    <span className="pslot"><Icon name="folder" /></span>
+                    <span className="pname">{t(`new.group.${group}` as StringKey)}</span>
+                    <span className="pfcount">{inGroup.length}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {/* Search lists every match in two columns; a folder's types take the height of the largest folder, so the
+                popup does not jump while the pointer moves over the folders. */}
+            <div className="ptypes" role={q ? undefined : "tabpanel"}
+              style={q ? { gridTemplateRows: `repeat(${Math.ceil(shown.length / 2)}, auto)` }
+                : { minHeight: `calc(${Math.max(...groups.map((g) => g.entries.length))} * var(--ptype-h))` }}>
+              {shown.map((entry) => {
+                const type = typeOf(entry.typeId);
+                const noCode = type && typeGenerated(coverage, type.id) === "no";
+                return (
+                  <button key={entry.typeId} className="ptype" data-type={entry.typeId} disabled={!type} onClick={() => choose(entry)} hidden={!q && entry.group !== open}
+                    title={!type ? t("new.soon") : noCode ? t("editor.typeNotGenerated", { engine: engineName, type: type.name }) : type.description}>
+                    <span className="pslot"><Sprite name={entry.sprite} size={16} /></span>
+                    <span className="pname">{entryLabel(entry)}</span>
+                    {!type && <span className="psoon">{t("new.soonShort")}</span>}
+                    {noCode && <span className="psoon nocode">{t("new.noCode")}</span>}
+                    {letters.has(entry.typeId) && <kbd className="pkey">{letters.get(entry.typeId)!.toLocaleUpperCase(language())}</kbd>}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </>
       )}

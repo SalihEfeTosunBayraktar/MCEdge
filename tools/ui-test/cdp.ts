@@ -310,6 +310,7 @@ export async function launchApp(options: LaunchOptions = {}): Promise<App> {
         Backspace: { code: "Backspace", keyCode: 8 }, ArrowLeft: { code: "ArrowLeft", keyCode: 37 }, ArrowUp: { code: "ArrowUp", keyCode: 38 },
         ArrowRight: { code: "ArrowRight", keyCode: 39 }, ArrowDown: { code: "ArrowDown", keyCode: 40 }, Tab: { code: "Tab", keyCode: 9 },
         F2: { code: "F2", keyCode: 113 }, F5: { code: "F5", keyCode: 116 }, Home: { code: "Home", keyCode: 36 }, End: { code: "End", keyCode: 35 },
+        " ": { code: "Space", keyCode: 32 },
       };
       const info = named[key] ?? { code: `Key${key.toUpperCase()}`, keyCode: key.toUpperCase().charCodeAt(0) };
       const base = { key, code: info.code, windowsVirtualKeyCode: info.keyCode, modifiers };

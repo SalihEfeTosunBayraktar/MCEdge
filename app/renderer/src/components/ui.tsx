@@ -84,11 +84,31 @@ export function FindSelect<V extends string>({ icon, label, value, options, onCh
  * Titled group of aligned form rows. `titleLang` marks a title in another language than the UI (English
  * type.json titles in a Turkish UI), so the uppercase legend uses that language's casing (i -> I, not İ).
  */
-export function FormGroup({ title, titleLang, children }: { title: string; titleLang?: string; children: React.ReactNode }) {
+/**
+ * A titled group of form rows. `collapsible` turns the title into a toggle (Q242); `defaultOpen` false starts it closed,
+ * for long sections the user rarely needs.
+ */
+export function FormGroup({ title, titleLang, collapsible, defaultOpen = true, children }: {
+  title: string; titleLang?: string; collapsible?: boolean; defaultOpen?: boolean; children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  if (!collapsible) {
+    return (
+      <fieldset className="fgroup">
+        <legend lang={titleLang}>{title}</legend>
+        {children}
+      </fieldset>
+    );
+  }
   return (
-    <fieldset className="fgroup">
-      <legend lang={titleLang}>{title}</legend>
-      {children}
+    <fieldset className={`fgroup collapsible ${open ? "open" : "closed"}`}>
+      <legend lang={titleLang}>
+        <button type="button" className="fgtoggle" aria-expanded={open} onClick={() => setOpen(!open)}>
+          <Icon name="chev" size={10} />
+          <span>{title}</span>
+        </button>
+      </legend>
+      {open && children}
     </fieldset>
   );
 }

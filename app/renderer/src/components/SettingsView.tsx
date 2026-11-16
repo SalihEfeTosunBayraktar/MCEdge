@@ -33,6 +33,12 @@ interface Props {
  * Workspace settings in three tabs (KUYRUK 121): the mod form, the dependency table and the integrations table. Each tab
  * has its own find bar and toolbar in the section frame; the tabs sit under the toolbar (KUYRUK 120).
  */
+/** Where the jars are published (Q238); empty fields leave the key out, so an unpublished mod keeps no publish entry. */
+function publishTarget(current: ModInfo["publish"], change: ModInfo["publish"]): ModInfo["publish"] {
+  const next = Object.fromEntries(Object.entries({ ...current, ...change }).filter(([, v]) => v));
+  return Object.keys(next).length ? next : undefined;
+}
+
 export function SettingsView({ snapshot, onSaved }: Props) {
   const [mod, setMod, , replaceMod] = useAutosave<ModInfo>(snapshot.project.mod, async (next) => onSaved(await api.saveModInfo(snapshot.dir, next)));
   const [tab, setTab] = useState<Tab>("mod");
@@ -87,6 +93,10 @@ function ModTab({ snapshot, mod, set, tabs, onSaved }: TabProps) {
     row(t("settings.website"), <input value={mod.website} onChange={(e) => set({ website: e.target.value })} />),
     row(t("settings.credits"), <input value={mod.credits} onChange={(e) => set({ credits: e.target.value })} />),
     row(t("settings.logo"), <TexturePicker dir={snapshot.dir} textures={snapshot.textures} value={mod.logo} allowNone onChange={(logo) => set({ logo })} />),
+    row(t("settings.publishModrinth"), <input className="mono" value={mod.publish?.modrinth ?? ""} spellCheck={false} placeholder={t("settings.publishNone")}
+      data-testid="publish-modrinth" onChange={(e) => set({ publish: publishTarget(mod.publish, { modrinth: e.target.value.trim() }) })} />),
+    row(t("settings.publishCurseforge"), <input className="mono" value={mod.publish?.curseforge ?? ""} spellCheck={false} placeholder={t("settings.publishNone")}
+      data-testid="publish-curseforge" onChange={(e) => set({ publish: publishTarget(mod.publish, { curseforge: e.target.value.trim() }) })} />),
   ].filter(Boolean);
   const issues = snapshot.issues.filter((issue) => issue.path.startsWith("mod.") && !issue.path.startsWith("mod.dependencies"));
   return (

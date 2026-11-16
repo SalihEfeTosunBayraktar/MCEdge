@@ -114,6 +114,7 @@ export function MenuBar({ cmd, projectName, engines, engineId, onEngineChange }:
         sep,
         { label: t("panel.build"), onClick: when(p, () => cmd.showPanel("build")) },
         { label: t("panel.problems"), onClick: when(p, () => cmd.showPanel("problems")) },
+        { label: t("menu.aiPanel"), shortcut: "Ctrl+Shift+A", onClick: when(p, cmd.openAiPanel) },
       ],
     },
     {

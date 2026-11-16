@@ -6,11 +6,12 @@ import { t, type StringKey } from "../strings.ts";
 import type { AgentTasks } from "./AgentTasks.tsx";
 import { AgentsView } from "./AgentsView.tsx";
 import { ProblemsPanel } from "./ProblemsPanel.tsx";
+import { ScenariosView } from "./ScenariosView.tsx";
 import { ContextMenu } from "./ui.tsx";
 import { Icon } from "./Icon.tsx";
 
 /** "activity" and "tasks" (the panels before KUYRUK 195) open the Agents panel at the latest session or at the tasks. */
-export type PanelId = "problems" | "build" | "gradle" | "agents" | "activity" | "tasks";
+export type PanelId = "problems" | "build" | "gradle" | "scenarios" | "agents" | "activity" | "tasks";
 
 const isAgents = (panel: PanelId): panel is "agents" | "activity" | "tasks" => panel === "agents" || panel === "activity" || panel === "tasks";
 
@@ -40,7 +41,9 @@ interface Props {
   /** The Gradle console tab (MCEdge projects; code projects build with their own wrapper). */
   console: boolean;
   /** The agent timeline of the open MCEdge project (KUYRUK 144); `show` selects a step in it. Shown in the Agents panel (KUYRUK 195). */
-  agent?: { dir: string; live: LiveState; now: number; onOpenTarget: (target: string) => boolean; show?: { session: string; step: number }; onConnect: () => void };
+  agent?: { dir: string; live: LiveState; now: number; onOpenTarget: (target: string) => boolean; show?: { session: string; step: number }; onConnect: () => void; ai?: React.ComponentProps<typeof AgentsView>["ai"] };
+  /** Project folder of an MCEdge project: shows the Scenarios tab (Q241). */
+  scenariosDir?: string;
   /** Tasks for the agent (KUYRUK 146). */
   tasks?: React.ComponentProps<typeof AgentTasks>;
   /** Right-click on a problem or a build output line: a task for the agent made from it. */
@@ -59,7 +62,7 @@ interface Props {
 }
 
 /** Problems list, streaming build/run log and the Gradle console under the content area. */
-export function BottomPanel({ panel, issues, ignoredIssues = [], onProblemAction, onProblemFix, console: hasConsole, agent, tasks, onNewTask, builds, engineId, onGradle, onStopGradle, onStopRun, onSelect, onClose, onReport }: Props) {
+export function BottomPanel({ panel, issues, ignoredIssues = [], onProblemAction, onProblemFix, console: hasConsole, scenariosDir, agent, tasks, onNewTask, builds, engineId, onGradle, onStopGradle, onStopRun, onSelect, onClose, onReport }: Props) {
   const engineIds = Object.keys(builds).filter((id) => !id.endsWith(" gradle"));
   const [shown, setShown] = useState<string | undefined>();
   const [menu, setMenu] = useState<{ x: number; y: number; source: TaskSource }>();
@@ -73,7 +76,7 @@ export function BottomPanel({ panel, issues, ignoredIssues = [], onProblemAction
   }, [lines.length, panel]);
 
   return (
-    <section className={`bottom-panel ${isAgents(panel) ? "tall" : ""}`}>
+    <section className={`bottom-panel ${isAgents(panel) || panel === "scenarios" ? "tall" : ""}`}>
       <nav className="panel-tabs" role="tablist">
         <button role="tab" className={`ptab ${panel === "problems" ? "on" : ""}`} onClick={() => onSelect("problems")}>
           <Icon name="warn" />{t("panel.problems")}
@@ -84,6 +87,11 @@ export function BottomPanel({ panel, issues, ignoredIssues = [], onProblemAction
         {hasConsole && (
           <button role="tab" className={`ptab ${panel === "gradle" ? "on" : ""}`} onClick={() => onSelect("gradle")}>
             <Icon name="code" />{t("panel.gradle")}
+          </button>
+        )}
+        {scenariosDir && (
+          <button role="tab" className={`ptab ${panel === "scenarios" ? "on" : ""}`} data-testid="tab-scenarios" onClick={() => onSelect("scenarios")}>
+            <Icon name="play" />{t("panel.scenarios")}
           </button>
         )}
         <button role="tab" className={`ptab ${isAgents(panel) ? "on" : ""}`} onClick={() => onSelect("agents")}>
@@ -98,6 +106,8 @@ export function BottomPanel({ panel, issues, ignoredIssues = [], onProblemAction
       ) : isAgents(panel) ? (
         agent && tasks ? <AgentsView {...agent} panel={panel} onRouted={() => onSelect("agents")} tasks={tasks} />
           : <p className="problems dim">{t("live.noActivity")}</p>
+      ) : panel === "scenarios" && scenariosDir ? (
+        <ScenariosView dir={scenariosDir} engineId={engineId} />
       ) : panel === "gradle" && hasConsole ? (
         <GradleConsole lines={lines} log={log} engineId={engineId} running={["running", "waiting"].includes(builds[consoleKey]?.status ?? "")}
           onRun={onGradle} onStop={onStopGradle} />

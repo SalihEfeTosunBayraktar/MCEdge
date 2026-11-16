@@ -8,6 +8,10 @@ import "monaco-editor/languages/definitions/markdown/register.js";
 import "monaco-editor/languages/definitions/shell/register.js";
 import "monaco-editor/languages/definitions/bat/register.js";
 import "monaco-editor/languages/features/json/register.js";
+// editor.api has no editor contributions; Java completion (Q240) needs the suggest widget, snippet insertion and hover.
+import "monaco-editor/editor/contrib/suggest/browser/suggestController.js";
+import "monaco-editor/editor/contrib/snippet/browser/snippetController2.js";
+import "monaco-editor/editor/contrib/hover/browser/hoverContribution.js";
 import EditorWorker from "monaco-editor/editor/editor.worker.js?worker";
 import JsonWorker from "monaco-editor/languages/features/json/json.worker.js?worker";
 

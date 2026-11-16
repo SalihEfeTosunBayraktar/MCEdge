@@ -4,13 +4,17 @@ import { join } from "node:path";
 import { app, BrowserWindow, ipcMain, Menu } from "electron";
 import { readAppState } from "./appState.ts";
 import { setCurseforgeKeyReader } from "../../src/build/modDependencies.ts";
+import { setPublishTokenReader } from "../../src/build/publish.ts";
 import { registerIpc } from "./ipc.ts";
 import { registerCodeProject } from "./codeProject.ts";
+import { registerJavaServer } from "./javaServer.ts";
 import { registerGit } from "./git.ts";
 import { registerBlockbench } from "./blockbench.ts";
+import { registerAiPanel } from "./aiPanel.ts";
 import { registerLive } from "./live.ts";
 import { registerGradleNotes } from "./gradleNotes.ts";
 import { registerTools } from "./tools.ts";
+import { registerScenarios } from "./scenarios.ts";
 import { startUpdater } from "./updater.ts";
 
 /** Height of the app's own menu bar; the native window buttons are drawn over its right end. */
@@ -60,6 +64,8 @@ app.setAppUserModelId("dev.mcedge.app");
 
 // Dependency jars from CurseForge use the key in this computer's Preferences (KUYRUK 173), read when they resolve.
 setCurseforgeKeyReader(() => readAppState().preferences?.curseforgeKey);
+// Publishing (Q238) uses the tokens in the same Preferences.
+setPublishTokenReader(() => readAppState().preferences);
 
 app.whenReady().then(() => {
   // The menu bar is drawn by the app; the hidden native menu keeps only editing and view keys. Electron's default
@@ -68,10 +74,13 @@ app.whenReady().then(() => {
   registerIpc();
   registerGradleNotes();
   registerTools();
+  registerScenarios();
   registerCodeProject();
+  registerJavaServer();
   registerGit();
   registerBlockbench();
   registerLive();
+  registerAiPanel();
   ipcMain.handle("window:theme", (event, theme: keyof typeof TITLE_BAR_THEMES) => {
     const window = BrowserWindow.fromWebContents(event.sender);
     window?.setTitleBarOverlay({ ...TITLE_BAR_THEMES[theme], height: TITLE_BAR_HEIGHT });

@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
-import { createWriteStream, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { createWriteStream, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable } from "node:stream";
@@ -7,16 +8,21 @@ import { pipeline } from "node:stream/promises";
 import { ROOT } from "../paths.ts";
 
 /**
- * JDKs and Gradle distributions MCEdge builds with. They are not shipped with the app: each one is
- * downloaded once, on first need, into the toolchains folder ($MCEDGE_TOOLCHAINS, else <root>/.toolchains).
+ * JDKs and Gradle distributions MCEdge builds with, and the Java language server of the code editor. They are not
+ * shipped with the app: each one is downloaded once, on first need, into the toolchains folder ($MCEDGE_TOOLCHAINS,
+ * else <root>/.toolchains).
  */
-export type ToolchainKind = "jdk" | "gradle";
+export type ToolchainKind = "jdk" | "gradle" | "jdtls";
 
 interface ToolchainEntry {
   /** Extracted folder name; a trailing "*" matches the single folder with that prefix. */
   folder: string;
   /** Archive URL; {os} and {arch} are filled with Adoptium's platform names. */
   download: string;
+  /** Expected SHA-256 of the archive; a mismatch fails the download. */
+  sha256?: string;
+  /** The archive has no top folder: it is extracted into `folder`. */
+  flat?: boolean;
 }
 
 export type ProgressListener = (message: { kind: ToolchainKind; version: string; received: number; total?: number }) => void;
@@ -52,7 +58,8 @@ export async function ensureToolchain(kind: ToolchainKind, version: string | num
   const existing = findToolchain(kind, version);
   if (existing) return existing;
 
-  const url = entryFor(kind, version).download.replace("{os}", adoptiumOs()).replace("{arch}", adoptiumArch());
+  const entry = entryFor(kind, version);
+  const url = entry.download.replace("{os}", adoptiumOs()).replace("{arch}", adoptiumArch());
   const response = await fetch(url, { redirect: "follow" });
   if (!response.ok || !response.body) throw new Error(`download failed (${response.status}): ${url}`);
 
@@ -61,14 +68,23 @@ export async function ensureToolchain(kind: ToolchainKind, version: string | num
   const archive = join(work, process.platform === "win32" ? "archive.zip" : "archive.tar.gz");
   try {
     let received = 0;
+    const hash = createHash("sha256");
     const counted = Readable.fromWeb(response.body as never).on("data", (chunk: Buffer) => {
       received += chunk.length;
+      hash.update(chunk);
       onProgress?.({ kind, version: String(version), received, total });
     });
     await pipeline(counted, createWriteStream(archive));
+    const digest = hash.digest("hex");
+    if (entry.sha256 && digest !== entry.sha256) throw new Error(`${kind} ${version}: checksum mismatch (got ${digest}): ${url}`);
     mkdirSync(toolchainsDir(), { recursive: true });
-    const result = spawnSync(tarCommand(), ["-xf", archive, "-C", toolchainsDir()], { encoding: "utf8" });
+    // A flat archive goes to a side folder first and is renamed in whole, so a failed extraction leaves no half folder.
+    const target = entry.flat ? join(toolchainsDir(), `${entry.folder}.partial`) : toolchainsDir();
+    if (entry.flat) rmSync(target, { recursive: true, force: true });
+    mkdirSync(target, { recursive: true });
+    const result = spawnSync(tarCommand(), ["-xf", archive, "-C", target], { encoding: "utf8" });
     if (result.status !== 0) throw new Error(`extracting ${kind} ${version} failed: ${result.stderr}`);
+    if (entry.flat) renameSync(target, join(toolchainsDir(), entry.folder));
   } finally {
     rmSync(work, { recursive: true, force: true });
   }

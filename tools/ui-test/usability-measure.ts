@@ -134,6 +134,7 @@ try {
     note("no New next to the procedure list: leave the item, create the procedure, come back");
     await c.click(".abtn", "Back to elements");
     await c.click(".view .actions .abtn.primary");
+    await c.click(".pfolder", "Logic and code");
     await c.click(".ptype", "Procedure");
     await c.type("ruby_gem_right_clicked");
     await app.setValue(".popform input", "ruby_gem_right_clicked");
