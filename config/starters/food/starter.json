@@ -1,0 +1,53 @@
+{
+  "id": "food",
+  "params": {
+    "name": "ruby"
+  },
+  "elements": [
+    {
+      "type": "item",
+      "id": "{{name}}_fruit",
+      "values": {
+        "texture": "textures/{{name}}_fruit.png",
+        "name": "{{Name Words}} Fruit",
+        "creativeTabs": [
+          "FOOD"
+        ],
+        "isFood": true,
+        "nutritionalValue": 6,
+        "saturation": 0.8,
+        "useDuration": 32,
+        "animation": "eat",
+        "stackSize": 64
+      }
+    }
+  ],
+  "textures": [
+    {
+      "from": "food.png",
+      "to": "{{name}}_fruit.png"
+    }
+  ],
+  "scenario": [
+    {
+      "op": "player",
+      "name": "Eater",
+      "pos": [
+        0.5,
+        101,
+        0.5
+      ]
+    },
+    {
+      "label": "the fruit can be given",
+      "op": "give",
+      "item": "{{mod}}:{{name}}_fruit",
+      "count": 4,
+      "expect": 4
+    },
+    {
+      "op": "removePlayer",
+      "name": "Eater"
+    }
+  ]
+}

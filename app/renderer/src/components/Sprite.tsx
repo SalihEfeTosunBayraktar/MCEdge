@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { pixelRects } from "./pixel.tsx";
 
 /** Fixed art colors for element-type sprites; theme independent. */
@@ -46,10 +47,15 @@ const SPRITES = {
 
 export type SpriteName = keyof typeof SPRITES;
 
-export function Sprite({ name, size }: { name: SpriteName; size: number }) {
+const spriteRects = new Map<SpriteName, React.ReactNode[]>();
+
+/** Memoised like Icon (Q280): the rects of each sprite are built once. */
+export const Sprite = memo(function Sprite({ name, size }: { name: SpriteName; size: number }) {
+  let rects = spriteRects.get(name);
+  if (!rects) spriteRects.set(name, (rects = pixelRects(SPRITES[name], (c) => PALETTE[c])));
   return (
     <svg className="spr" width={size} height={size} viewBox="0 0 8 8" shapeRendering="crispEdges" aria-hidden="true">
-      {pixelRects(SPRITES[name], (c) => PALETTE[c])}
+      {rects}
     </svg>
   );
-}
+});

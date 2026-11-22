@@ -7,13 +7,13 @@
 import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { assert, REPO, run, type App } from "./cdp.ts";
+import { assert, REPO, run, type App, evidence } from "./cdp.ts";
 
 const lang = (process.argv[2] ?? "en") as "en" | "tr";
 const theme = (process.argv[3] ?? "dark") as "dark" | "light";
 const s = JSON.parse(readFileSync(join(REPO, "config", "ui-strings", `${lang}.json`), "utf8")) as Record<string, string>;
 const parent = mkdtempSync(join(tmpdir(), "mcedge-new-ui-"));
-const shot = (app: App, name: string) => app.shot(`design/126/${name}-${lang}-${theme}.png`);
+const shot = (app: App, name: string) => app.shot(evidence(`design/126/${name}-${lang}-${theme}.png`));
 const value = (app: App, name: string) => app.eval<string>(`document.querySelector('[data-testid="new-project"] input[name="${name}"]').value`);
 const fill = async (app: App, name: string) => {
   await app.setValue('[data-testid="new-project"] input[name="name"]', name);

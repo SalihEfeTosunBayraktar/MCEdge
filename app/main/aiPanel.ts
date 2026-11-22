@@ -3,6 +3,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { providerFor, runReply, type AiConfig, type Msg, type ToolDef } from "../../src/ai/providers.ts";
 import { readActivity, readPresence } from "../../src/live/activity.ts";
+import { levelHint } from "../../src/live/experience.ts";
 import { readAppState } from "./appState.ts";
 import { mcpCommand } from "./tools.ts";
 
@@ -72,9 +73,11 @@ async function close(dir: string): Promise<void> {
 function editorContext(dir: string): string {
   const open = readPresence(dir, "app")?.open;
   const edits = readActivity(dir, 200).filter((e) => e.actor === "user").slice(-5);
+  const hint = levelHint(readAppState().preferences?.level);
   return [
     "[Editor context]",
     `Open in the editor: ${open || "nothing"}`,
+    ...(hint ? [`About the user: ${hint}`] : []),
     ...(edits.length ? ["The user's latest changes:", ...edits.map((e) => `- ${e.tool}${e.target ? ` ${e.target}` : ""}`)] : []),
     "[User message]",
   ].join("\n");

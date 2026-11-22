@@ -195,5 +195,6 @@ export function findBlockbench(configured?: string): string | undefined {
 
 /** Starts Blockbench on the model, on its own (it outlives MCEdge). */
 export function launchBlockbench(exe: string, file: string): void {
+  // visible-on-purpose: Blockbench is a GUI app the user asked to open, so its window must show.
   spawn(exe, [file], { detached: true, stdio: "ignore", windowsHide: false }).unref();
 }

@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import type { ProjectSnapshot, ResourceKind } from "../../../shared/api.ts";
 import { api } from "../api.ts";
 import { t } from "../strings.ts";
-import { ActionBar, ActionButton, DataTable, FindBar, FormGroup, FormRow, PanelEmpty, Separator, SidePanel } from "./ui.tsx";
+import { ActionButton, DataTable, FindBar, FormGroup, FormRow } from "./ui.tsx";
+import { InspectorToggle, TabsRow, ViewShell, type DockSection } from "../dock/Dock.tsx";
 
 interface Props {
   snapshot: ProjectSnapshot;
@@ -40,26 +41,7 @@ export function AnimationsPane({ snapshot, onChanged, onImport, tabs }: Props) {
     }
   };
   const short = (name: string) => name.split(".").pop()!;
-  return (
-    <>
-      <FindBar query={query} onQuery={setQuery} placeholder={t("animations.search")} meta={t("animations.count", { count: all.length })} />
-      <ActionBar>
-        <ActionButton icon="import" label={t("animations.import")} tone="primary" onClick={() => onImport("model")} />
-        <Separator />
-        <ActionButton icon="trash" label={t("resources.delete")} title={t("animations.deleteFileHint")} tone="danger" disabled={!current} onClick={() => void remove()} />
-      </ActionBar>
-      {tabs}
-      <div className="split">
-        <div className="scrollarea">
-          <DataTable rows={rows} rowKey={(r) => r.key} selected={current?.key} onSelect={(key) => (setSelected(key), setError(undefined))}
-            empty={all.length ? t("list.noMatch") : t("animations.empty")} columns={[
-              { label: t("animations.col.name"), width: "30%", cell: (r) => <b>{short(r.name)}</b> },
-              { label: t("animations.col.file"), cell: (r) => <code>{r.path}</code> },
-              { label: t("animations.col.length"), width: "14%", cell: (r) => t("animations.seconds", { seconds: r.length.toFixed(2) }) },
-              { label: t("animations.col.mode"), width: "14%", cell: (r) => t(`animations.mode.${r.mode}` as "animations.mode.loop") },
-            ]} />
-        </div>
-        <SidePanel title={t("animations.details")}>
+  const inspector: DockSection[] = [{ id: "animations.details", icon: "info", title: t("animations.details"), body: <>
           {current ? (
             <FormGroup title={t("animations.animation")}>
               <FormRow label={t("animations.col.name")}><input value={current.name} readOnly /></FormRow>
@@ -71,9 +53,25 @@ export function AnimationsPane({ snapshot, onChanged, onImport, tabs }: Props) {
               {current.warnings.map((w, i) => <p key={i} className="ferr">{w}</p>)}
               {error && <p className="ferr">{error}</p>}
             </FormGroup>
-          ) : <PanelEmpty text={t("animations.selectHint")} />}
-        </SidePanel>
-      </div>
+          ) : <p className="hint">{t("animations.selectHint")}</p>}
+  </> }];
+
+  return (
+    <>
+      <FindBar query={query} onQuery={setQuery} placeholder={t("animations.search")} meta={t("animations.count", { count: all.length })}
+        actions={<><ActionButton icon="import" label={t("animations.import")} tone="primary" onClick={() => onImport("model")} /><InspectorToggle /></>} />
+      <TabsRow tabs={tabs} actions={current && <ActionButton icon="trash" label={t("resources.delete")} title={t("animations.deleteFileHint")} tone="danger" onClick={() => void remove()} />} />
+      <ViewShell sections={inspector} inspectorLabel={t("dock.inspector")} inspectorClass="resinsp">
+        <div className="scrollarea">
+          <DataTable rows={rows} rowKey={(r) => r.key} selected={current?.key} onSelect={(key) => (setSelected(key), setError(undefined))}
+            empty={all.length ? t("list.noMatch") : t("animations.empty")} columns={[
+              { label: t("animations.col.name"), width: "30%", cell: (r) => <b>{short(r.name)}</b> },
+              { label: t("animations.col.file"), cell: (r) => <code>{r.path}</code> },
+              { label: t("animations.col.length"), width: "14%", cell: (r) => t("animations.seconds", { seconds: r.length.toFixed(2) }) },
+              { label: t("animations.col.mode"), width: "14%", cell: (r) => t(`animations.mode.${r.mode}` as "animations.mode.loop") },
+            ]} />
+        </div>
+      </ViewShell>
     </>
   );
 }

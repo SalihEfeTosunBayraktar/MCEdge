@@ -6,12 +6,12 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, REPO, run, type App } from "./cdp.ts";
+import { assert, exampleProject, REPO, run, type App, evidence } from "./cdp.ts";
 
 const lang = (process.argv[2] ?? "en") as "en" | "tr";
 const theme = (process.argv[3] ?? "dark") as "dark" | "light";
 const s = JSON.parse(readFileSync(join(REPO, "config", "ui-strings", `${lang}.json`), "utf8")) as Record<string, string>;
-const shot = (app: App, name: string) => app.shot(`design/233/${name}-${lang}-${theme}.png`);
+const shot = (app: App, name: string) => app.shot(evidence(`design/233/${name}-${lang}-${theme}.png`));
 const openFolder = (app: App) => app.eval<string>(`document.querySelector(".pfolder.open").dataset.group`);
 const visible = (app: App) => app.eval<string[]>(`[...document.querySelectorAll(".addpop .ptype:not([hidden])")].map((b) => b.dataset.type)`);
 const pointAt = async (app: App, group: string) => {

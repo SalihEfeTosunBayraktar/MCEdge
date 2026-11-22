@@ -2,9 +2,9 @@
  * KUYRUK #68: the theme button is a sun/moon icon without text. It shows the current theme and switches on click.
  * Screenshots go to design/theme-toggle/.
  */
-import { assert, exampleProject, run } from "./cdp.ts";
+import { assert, exampleProject, run, evidence } from "./cdp.ts";
 
-const OUT = "design/theme-toggle";
+const OUT = evidence("design/theme-toggle");
 const state = `(() => { const b = document.querySelector(".themebtn"); return { text: b.textContent.trim(), icon: !!b.querySelector("svg.ico"), rects: b.querySelectorAll("svg rect").length, theme: document.documentElement.dataset.theme, title: b.title }; })()`;
 
 await run(async (app) => {

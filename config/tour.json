@@ -1,0 +1,17 @@
+{
+  "$comment": "First-mod tour (Q245). subjectType: the element type the tour makes. steps: id (strings tour.<id>.title and tour.<id>.text), check (element: the user made a new element of subjectType; texture: its texture is set, exists and is not the one it started with; scenario: the test scenario below passed on a dedicated server), point: CSS selectors of the UI the step points at, the first visible one is outlined. scenario: written to scenarios/<file>.json and run by the Scenarios runner; {id} is the element id and {ref} its registry name (mod id:id).",
+  "subjectType": "block",
+  "steps": [
+    { "id": "block", "check": "element", "point": [".addpop .ptype[data-type=block]", ".addpop", ".content .abtn.primary", ".rail [data-section=elements]"] },
+    { "id": "texture", "check": "texture", "point": ["[data-field=texture]", ".rail [data-section=resources]"] },
+    { "id": "test", "check": "scenario", "point": [] }
+  ],
+  "scenario": {
+    "file": "tour-{id}",
+    "steps": [
+      { "op": "player", "name": "Tourist", "pos": [0.5, 101, 0.5] },
+      { "label": "place {id}", "op": "setblock", "pos": [2, 100, 2], "block": "{ref}", "expect": "{ref}" },
+      { "label": "{id} stays", "op": "read", "what": "block", "pos": [2, 100, 2], "expect": "{ref}" }
+    ]
+  }
+}

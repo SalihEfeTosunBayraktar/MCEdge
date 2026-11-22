@@ -8,9 +8,9 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect } from "../mcp-test/client.ts";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/178";
+const OUT = evidence("design/178");
 type Folders = { folders: string[]; colors?: Record<string, string>; icons?: Record<string, string> };
 const tile = (path: string) => `.foldertile[data-folder="${path}"]`;
 const until = async (app: App, check: () => boolean, message: string) => {

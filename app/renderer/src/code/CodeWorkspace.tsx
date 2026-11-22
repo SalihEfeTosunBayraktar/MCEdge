@@ -4,7 +4,7 @@ import type { Side } from "../../../../src/java/sideCheck.ts";
 import type { CodeFile, CodeProjectInfo } from "../../../shared/api.ts";
 import { api } from "../api.ts";
 import { Icon } from "../components/Icon.tsx";
-import { ActionBar, ActionButton, Dialog, FindBar, FormGroup, FormRow, Separator } from "../components/ui.tsx";
+import { ActionBar, ActionButton, Dialog, FindBar, FormGroup, FormRow, Separator, TabList } from "../components/ui.tsx";
 import { beginSave } from "../saveStatus.ts";
 import { t, type StringKey } from "../strings.ts";
 import { JavaLanguage } from "./javaLanguage.ts";
@@ -225,17 +225,18 @@ export function CodeWorkspace({ project, theme, building, running, onBuild, onRu
           })}
         </nav>
         <div className="codemain">
-          <div className="codetabs" role="tablist">
+          <TabList className="codetabs" label={t("code.tabs")} manual>
             {open.map((f) => (
               <div key={f.path} role="tab" aria-selected={f.path === active} className={`ctab ${f.path === active ? "on" : ""} ${f.diskChanged ? "conflict" : ""}`}
-                title={f.diskChanged ? t("code.changedOnDisk") : f.path} onClick={() => switchTo(f.path)}>
+                title={f.diskChanged ? t("code.changedOnDisk") : f.path} onClick={() => switchTo(f.path)}
+                onKeyDown={(e) => (e.key === "Enter" || e.key === " " ? (e.preventDefault(), switchTo(f.path)) : e.key === "Delete" && (e.preventDefault(), close(f.path)))}>
                 <span>{f.path.slice(f.path.lastIndexOf("/") + 1)}</span>
                 {f.dirty && <i className="cdirty" aria-label={t("code.unsaved")} />}
                 {f.reloaded && !f.dirty && <span className="creload">{t("code.reloaded")}</span>}
-                <button type="button" className="cclose" title={t("code.close")} onClick={(e) => (e.stopPropagation(), close(f.path))}><Icon name="close" size={10} /></button>
+                <button type="button" className="cclose" tabIndex={-1} title={t("code.close")} onClick={(e) => (e.stopPropagation(), close(f.path))}><Icon name="close" size={10} /></button>
               </div>
             ))}
-          </div>
+          </TabList>
           {current?.diskChanged && <p className="notice codenotice">{t("code.conflict")}</p>}
           <div className="codeeditor">
             <div ref={host} className="monacohost" style={{ visibility: current?.model ? "visible" : "hidden" }} />

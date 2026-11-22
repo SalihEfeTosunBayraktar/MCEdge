@@ -32,7 +32,7 @@ export function captureWindow(target: WindowTarget, file: string): string | unde
     "[U.W]::PrintWindow($p.MainWindowHandle, $dc, 3) | Out-Null; $g.ReleaseHdc($dc)",
     `$i.Save(${quote(file)}); $g.Dispose(); $i.Dispose(); Write-Output $p.MainWindowTitle`,
   ].join("; ");
-  const result = spawnSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8", timeout: 60_000 });
+  const result = spawnSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8", timeout: 60_000, windowsHide: true });
   const out = (result.stdout ?? "").trim();
   if (out.includes("NOWINDOW")) return `no window titled "${target.title}" found`;
   if (out.includes("MINIMIZED")) return "the window is minimized; restore it first";

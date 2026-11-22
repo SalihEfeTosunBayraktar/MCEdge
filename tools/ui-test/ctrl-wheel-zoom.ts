@@ -3,7 +3,7 @@
  * the Text size preference). GUI and overlay editor canvas, texture editor, 3D model preview, procedure blocks and
  * the code editor; over anything else Ctrl + wheel does nothing. Args: theme. Screenshots in design/179/.
  */
-import { assert, copyProject, run, type App } from "./cdp.ts";
+import { assert, copyProject, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
 const theme = (process.argv[2] ?? "dark") as "dark" | "light";
@@ -40,10 +40,11 @@ await run(async (app) => {
   let after = await width(app, ".guistage");
   assert(after > before, `GUI canvas zooms in (${before} -> ${after})`);
   await ctrlWheel(app, ".guiarea", 100);
-  assert(await width(app, ".guistage") === before, "and back out");
+  // The stage starts fitted (not on a zoom step), so one step in and one out need not land on the start value (Q278).
+  assert(await width(app, ".guistage") < after, "and back out");
   assert(await windowZoom(app) === zoom0, "the window zoom stays");
   await ctrlWheel(app, ".guiarea", -100);
-  await app.shot(`design/179/gui-${theme}.png`);
+  await app.shot(evidence(`design/179/gui-${theme}.png`));
   await app.key("w", CTRL);
 
   // Texture editor.
@@ -55,7 +56,7 @@ await run(async (app) => {
   await ctrlWheel(app, ".paintarea", -100);
   after = await width(app, ".paintarea canvas");
   assert(after > before && await windowZoom(app) === zoom0, `texture editor zooms in (${before} -> ${after}), window zoom stays`);
-  await app.shot(`design/179/texture-${theme}.png`);
+  await app.shot(evidence(`design/179/texture-${theme}.png`));
   await app.key("w", CTRL);
 
   // 3D model preview (block form): the camera moves closer, the window stays.

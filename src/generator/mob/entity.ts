@@ -1,7 +1,7 @@
 import type { Element } from "../../elements/model.ts";
 import { entityTypeValue } from "../entities.ts";
 import { derivedConstant, idExpr, itemExpr, jfloat, jstr, list, literal, pascal, qualify, str } from "../java.ts";
-import { buildWarning, procedureCall, procedureCallById } from "../procedures.ts";
+import { buildWarning, procedureCall, procedureCallById, procedureReturnType } from "../procedures.ts";
 import type { GenEnv, JavaSourceFile } from "../typeModule.ts";
 import { openGuiCall } from "../types/gui.ts";
 import { compileGoals, goalBlocks, type MobTraits } from "./ai.ts";
@@ -298,7 +298,9 @@ export function entityClass(env: GenEnv, e: Element, cls: string, constant: stri
   const immune = immunities(env, e).filter(Boolean);
   const hurt = call("whenMobIsHurt", { ...at, sourceentity: "source.getEntity()", immediatesourceentity: "source.getDirectEntity()", damagesource: "source", amount: "amount" });
   if (immune.length || hurt) {
-    const body = `${immune.length ? `        if (${immune.join(" || ")}) return false;\n` : ""}${hurt ? `        ${hurt};\n` : ""}`;
+    // A logic procedure decides: false cancels the damage before vanilla handles it; any other return type only runs.
+    const hurtLine = hurt ? (procedureReturnType(env, e.whenMobIsHurt) === "logic" ? `        if (!${hurt}) return false;\n` : `        ${hurt};\n`) : "";
+    const body = `${immune.length ? `        if (${immune.join(" || ")}) return false;\n` : ""}${hurtLine}`;
     members.push(legacy
       ? `    @Override\n    public boolean hurt(${n.source} source, float amount) {\n${body}        return super.hurt(source, amount);\n    }`
       : `    @Override\n    public boolean hurtServer(${n.server} world, ${n.source} source, float amount) {\n${body}        return super.hurtServer(world, source, amount);\n    }`);

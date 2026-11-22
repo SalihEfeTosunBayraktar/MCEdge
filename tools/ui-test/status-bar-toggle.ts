@@ -1,16 +1,16 @@
 /**
- * Q209: a double click on the empty part of the status bar shows the bottom panel (the last viewed tab, Problems the
- * first time) and a second one hides it. Double clicks on status bar items keep their own behaviour and never toggle.
+ * Q209/Q259: a single click on the empty part of the status bar shows the bottom panel (the last viewed tab, Problems the
+ * first time) and a second one hides it; a double click there toggles once, not twice. Double clicks on status bar items keep their own behaviour and never toggle.
  * Hovering the empty part lifts an arrow and lights the strip, and shows the tooltip. English and Turkish, dark and
- * light; screenshots go to design/209/.
+ * light; screenshots go to design/259/.
  */
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import en from "../../config/ui-strings/en.json" with { type: "json" };
 import tr from "../../config/ui-strings/tr.json" with { type: "json" };
-import { assert, exampleProject, launchApp, REPO } from "./cdp.ts";
+import { assert, exampleProject, launchApp, REPO, evidence } from "./cdp.ts";
 
-const OUT = "design/209";
+const OUT = evidence("design/259");
 mkdirSync(join(REPO, OUT), { recursive: true });
 const project = exampleProject();
 const EMPTY = ".status .sgrow.toggle";
@@ -24,6 +24,7 @@ for (const language of ["en", "tr"] as const) {
     const tab = () => app.eval<string>(`document.querySelector(".ptab.on")?.textContent ?? ""`);
     const arrow = () => app.eval<string>(`getComputedStyle(document.querySelector("${EMPTY} .ico")).opacity`);
     const dbl = (selector: string, text?: string) => app.click(selector, text, { double: true });
+    const one = (selector: string) => app.click(selector);
     const hover = async () => {
       const [x, y] = await app.center(EMPTY);
       await app.mouse("mouseMoved", x, y);
@@ -40,12 +41,12 @@ for (const language of ["en", "tr"] as const) {
     assert(await app.eval<string>(`getComputedStyle(document.querySelector("${EMPTY}")).backgroundColor`) !== unlit, `${language}: the strip is lit on hover`);
     await app.shot(`${OUT}/status-hover-${language}-dark.png`);
 
-    await dbl(EMPTY);
+    await one(EMPTY);
     await app.waitFor(`document.querySelector(".bottom-panel")`);
-    assert(await tab() === s["panel.problems"], `${language}: first double click opens Problems (got ${await tab()})`);
+    assert(await tab() === s["panel.problems"], `${language}: first click opens Problems (got ${await tab()})`);
     await app.shot(`${OUT}/status-open-${language}-dark.png`);
 
-    await dbl(EMPTY);
+    await one(EMPTY);
     await app.waitFor(`!document.querySelector(".bottom-panel")`);
 
     // A double click on an item opens its panel and does not toggle it away; a plain item does nothing.
@@ -57,24 +58,32 @@ for (const language of ["en", "tr"] as const) {
     await dbl(".status button.sitem.gradle");
     await app.sleep(300);
     assert(await panel(), `${language}: a second double click on the item does not close the panel`);
-    await dbl(EMPTY);
+    await one(EMPTY);
     await app.waitFor(`!document.querySelector(".bottom-panel")`);
-    await dbl(".status span.sitem");
+    await dbl(".status .smsg");
     await app.sleep(300);
-    assert(!(await panel()), `${language}: double click on the engine name does not open the panel`);
+    assert(!(await panel()), `${language}: double click on the save message does not open the panel`);
 
-    // The last viewed tab comes back.
+    // A double click on the strip toggles once: the panel opens and stays open.
     await dbl(EMPTY);
     await app.waitFor(`document.querySelector(".bottom-panel")`);
+    await app.sleep(300);
+    assert(await panel(), `${language}: a double click on the strip toggles once (panel stays open)`);
+    await one(EMPTY);
+    await app.waitFor(`!document.querySelector(".bottom-panel")`);
+
+    // The last viewed tab comes back.
+    await one(EMPTY);
+    await app.waitFor(`document.querySelector(".bottom-panel")`);
     assert(await tab() === s["panel.build"], `${language}: the last viewed tab comes back (${await tab()})`);
-    await dbl(EMPTY);
+    await one(EMPTY);
     await app.waitFor(`!document.querySelector(".bottom-panel")`);
 
     if (language === "en") {
       await app.setTheme("light");
       await hover();
       await app.shot(`${OUT}/status-hover-en-light.png`);
-      await dbl(EMPTY);
+      await one(EMPTY);
       await app.waitFor(`document.querySelector(".bottom-panel")`);
       await app.shot(`${OUT}/status-open-en-light.png`);
     }

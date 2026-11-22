@@ -6,10 +6,10 @@
 import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { connect } from "../mcp-test/client.ts";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const project = exampleProject();
-const OUT = "design/live-coediting";
+const OUT = evidence("design/live-coediting");
 const file = (folder: string, id: string) => join(project, "elements", folder, `${id}.json`);
 const openTile = async (app: App, name: string, type = "") => {
   await app.click(".rtab", "Mod elements");

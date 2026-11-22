@@ -1,0 +1,15 @@
+@wait 5
+forceload add 0 0
+@wait 1
+fill -3 99 -3 25 99 25 minecraft:stone
+fill -3 100 -3 25 112 25 minecraft:air
+setblock 15 99 15 minecraft:gold_block
+place template minecraft:igloo/top 4 100 12
+@wait 8
+execute if blocks 4 100 0 12 108 9 4 100 12 all
+fill -3 100 -3 25 112 25 minecraft:air
+setblock 15 99 15 minecraft:stone
+@wait 2
+stop
+@wait 15
+@kill

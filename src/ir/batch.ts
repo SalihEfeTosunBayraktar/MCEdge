@@ -213,7 +213,7 @@ const cap = (w: string) => w.charAt(0).toUpperCase() + w.slice(1);
  * The spellings of a parameter in a template: "{{name}}" (ruby_gem), "{{Name}}" (RubyGem), "{{Name Words}}"
  * (Ruby Gem) and "{{NAME}}" (RUBY_GEM), each paired with the value written that way.
  */
-function spellings(param: string, value: string): { placeholder: string; text: string }[] {
+function spellings(param: string, value: string, distinct = true): { placeholder: string; text: string }[] {
   const w = words(value.toLowerCase());
   const all = [
     { placeholder: `{{${param}}}`, text: w.join("_") },
@@ -221,8 +221,12 @@ function spellings(param: string, value: string): { placeholder: string; text: s
     { placeholder: `{{${cap(param)} Words}}`, text: w.map(cap).join(" ") },
     { placeholder: `{{${param.toUpperCase()}}}`, text: w.join("_").toUpperCase() },
   ];
-  return all.filter((s, i) => all.findIndex((o) => o.text === s.text) === i);
+  // Saving keeps the first placeholder of spellings that read the same; filling replaces every placeholder, so a one-word value (ruby) still fills {{Name Words}}.
+  return distinct ? all.filter((s, i) => all.findIndex((o) => o.text === s.text) === i) : all;
 }
+
+/** The replacements that fill a template's placeholders with parameter values (every spelling). */
+export const fillPairs = (params: Record<string, string>) => Object.entries(params).flatMap(([p, v]) => spellings(p, v, false).map((s) => ({ from: s.placeholder, to: s.text })));
 
 export function listTemplates(dir: string): { name: string; description?: string; params: Record<string, string>; elements: string[] }[] {
   const folder = join(dir, "templates");
@@ -254,9 +258,13 @@ export function saveTemplate(dir: string, template: { name: string; description?
 export function templateOps(dir: string, name: string, params: Record<string, string>, folder?: string): BatchOp[] {
   const file = templateFile(dir, name);
   if (!existsSync(file)) throw new Error(`no template "${name}"; see list_templates`);
-  const template = JSON.parse(readFileSync(file, "utf8")) as ElementTemplate;
+  return templateToOps(JSON.parse(readFileSync(file, "utf8")) as ElementTemplate, params, folder);
+}
+
+/** Create ops for an element template with its parameters filled in (also used by the starter gallery, Q252). */
+export function templateToOps(template: Pick<ElementTemplate, "params" | "elements">, params: Record<string, string>, folder?: string): BatchOp[] {
   const missing = Object.keys(template.params).filter((p) => !params[p]);
   if (missing.length) throw new Error(`missing parameters: ${missing.join(", ")}`);
-  const pairs = Object.entries(params).flatMap(([p, v]) => spellings(p, v).map((s) => ({ from: s.placeholder, to: s.text })));
+  const pairs = fillPairs(params);
   return template.elements.map((e) => ({ op: "create" as const, type: e.type, id: replaceText(e.id, pairs), values: replaceText(e.values, pairs), ...(folder ? { folder } : {}) }));
 }

@@ -14,9 +14,9 @@ import { typeRegistry } from "../../src/elements/registry.ts";
 import { showInApp } from "../../src/live/show.ts";
 import { animationSchedule, frameAt, HOLD_TICKS, vanillaMcmeta } from "../../src/resources/textureAnimation.ts";
 import { widgetSchedule } from "../../src/resources/widgetAnimation.ts";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/229";
+const OUT = evidence("design/229");
 
 // ---- the model
 const meta = (mode?: string) => JSON.stringify({ animation: { frametime: 2 }, ...(mode ? { mcedge: { playback: mode } } : {}) });

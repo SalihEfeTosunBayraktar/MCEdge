@@ -70,6 +70,32 @@ export function resizeCanvas(image: Image, width: number, height: number, anchor
   return pasteRegion(make(width, height), image, x, y);
 }
 
+/** Smallest rectangle holding every visible pixel of all `images` (one size, e.g. the frames of a strip); undefined when all are empty. */
+export function contentBounds(images: Image[]): Rect | undefined {
+  let x1 = Infinity, y1 = Infinity, x2 = -1, y2 = -1;
+  for (const image of images) {
+    for (let y = 0; y < image.height; y++) for (let x = 0; x < image.width; x++) {
+      if (image.data[(y * image.width + x) * 4 + 3] === 0) continue;
+      x1 = Math.min(x1, x); y1 = Math.min(y1, y); x2 = Math.max(x2, x); y2 = Math.max(y2, y);
+    }
+  }
+  return x2 < 0 ? undefined : { x: x1, y: y1, w: x2 - x1 + 1, h: y2 - y1 + 1 };
+}
+
+/**
+ * Q274: the box "trim to the drawing" cuts every frame to: the content bounds of all frames, so frames stay aligned.
+ * `square` (frames of an animated strip, which must stay square) grows it to a square around the drawing, kept inside
+ * the canvas. Undefined when the images are empty.
+ */
+export function trimBox(images: Image[], square = false): Rect | undefined {
+  const b = contentBounds(images);
+  if (!b || !square) return b;
+  const { width, height } = images[0];
+  const side = Math.min(Math.max(b.w, b.h), width, height);
+  const place = (start: number, size: number, limit: number) => Math.max(0, Math.min(limit - side, start - Math.floor((side - size) / 2)));
+  return { x: place(b.x, b.w, width), y: place(b.y, b.h, height), w: side, h: side };
+}
+
 function anchorParts(anchor: Anchor): ["left" | "center" | "right", "top" | "center" | "bottom"] {
   const h = anchor.includes("left") ? "left" : anchor.includes("right") ? "right" : "center";
   const v = anchor.startsWith("top") ? "top" : anchor.startsWith("bottom") ? "bottom" : "center";

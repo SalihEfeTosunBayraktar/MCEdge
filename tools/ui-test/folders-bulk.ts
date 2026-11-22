@@ -6,10 +6,10 @@
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { connect } from "../mcp-test/client.ts";
-import { assert, copyProject, REPO, run, type App } from "./cdp.ts";
+import { assert, copyProject, REPO, run, type App, evidence } from "./cdp.ts";
 
 const project = copyProject(resolve(REPO, "..", "ETREconomy-MCEdge"), "etr");
-const OUT = "design/folders";
+const OUT = evidence("design/folders");
 const folders = () => JSON.parse(readFileSync(join(project, "folders.json"), "utf8")) as { folders: string[]; placement: Record<string, string> };
 const selectedCount = (app: App) => app.eval<number>(`document.querySelectorAll(".tile.sel:not(.foldertile)").length`);
 /** A click the way the browser sends it: press with the modifier, focus, click. */

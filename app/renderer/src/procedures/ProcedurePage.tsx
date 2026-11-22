@@ -6,7 +6,7 @@ import { procedureLookup, PROGRAM_FIELD } from "../../../../src/procedures/proje
 import type { Element, EngineInfo, ProjectSnapshot } from "../../../shared/api.ts";
 import { FieldList, type FormContext } from "../components/ElementFields.tsx";
 import { Icon } from "../components/Icon.tsx";
-import { ActionButton, FormGroup, PanelGrip, Separator, ShortcutsButton } from "../components/ui.tsx";
+import { ActionButton, FormGroup, PanelGrip, Separator, ShortcutsButton, TabList } from "../components/ui.tsx";
 import { elementName } from "../model.ts";
 import { t } from "../strings.ts";
 import { callersOf, compileFor, procEnvOf, procedureWarnings, projectChoices, providedFor } from "./checks.ts";
@@ -73,7 +73,7 @@ export function ProcedurePage({ snapshot, draft, engine, ctx, settings, all, onC
         <Separator />
         <label className="search procsearch">
           <Icon name="search" />
-          <input ref={searchRef} value={query} placeholder={t("proc.searchBlocks")} title="Ctrl+F" spellCheck={false}
+          <input ref={searchRef} value={query} placeholder={t("proc.searchBlocks")} aria-label={t("proc.searchBlocks")} aria-keyshortcuts="Control+F" title="Ctrl+F" spellCheck={false}
             onChange={(e) => (setQuery(e.target.value), api.current?.search(e.target.value))}
             onKeyDown={(e) => {
               if (e.key === "Escape") (setQuery(""), api.current?.search(""));
@@ -84,6 +84,8 @@ export function ProcedurePage({ snapshot, draft, engine, ctx, settings, all, onC
         <ShortcutsButton shortcuts={[
           ["Ctrl+F", t("keys.proc.search")], ["Esc", t("keys.proc.clear")], ["Delete / Backspace", t("keys.proc.remove")],
           ["Ctrl+C / Ctrl+V", t("keys.proc.copy")], ["Ctrl+Z", t("keys.undo")], ["Ctrl+Y / Ctrl+Shift+Z", t("keys.redo")],
+          ["Tab", t("keys.proc.tab")], ["T / W", t("keys.proc.focus")], [t("keys.k.arrows"), t("keys.proc.arrows")], ["Enter / Space", t("keys.proc.enter")],
+          ["M", t("keys.proc.move")], ["X", t("keys.proc.disconnect")], ["I", t("keys.proc.info")], ["Shift+F10", t("keys.proc.menu")],
           [t("keys.k.wheel"), t("keys.proc.wheel")], [t("keys.k.rightClick"), t("keys.proc.menu")], ["?", t("keys.list")],
         ]} />
       </div>
@@ -92,12 +94,12 @@ export function ProcedurePage({ snapshot, draft, engine, ctx, settings, all, onC
           onOpenProcedure={ctx.openElement && ((id) => ctx.openElement?.("procedure", id))} />
         <aside className="panel procpanel">
           <PanelGrip />
-          <div className="langtabs pagetabs" role="tablist">
+          <TabList className="langtabs pagetabs" label={t("proc.panelTabs")}>
             <button role="tab" aria-selected={tab === "details"} className={`ltab ${tab === "details" ? "on" : ""}`} onClick={() => setTab("details")}>{t("proc.details")}</button>
             <button role="tab" aria-selected={tab === "java"} className={`ltab ${tab === "java" ? "on" : ""}`} onClick={() => setTab("java")}>
               <Icon name="code" size={12} />{t("proc.java")}
             </button>
-          </div>
+          </TabList>
           {tab === "details"
             ? <Details snapshot={snapshot} draft={draft} ir={ir} ctx={ctx} settings={settings} all={all} onChange={onChange} api={api} onIr={setIr} />
             : <JavaView snapshot={snapshot} draft={draft} ir={ir} engine={engine} />}

@@ -8,11 +8,11 @@
  */
 import { copyFileSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, launchApp, type App } from "./cdp.ts";
+import { assert, exampleProject, launchApp, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/227";
-const OUT_228 = "design/228";
+const OUT = evidence("design/227");
+const OUT_228 = evidence("design/228");
 mkdirSync(OUT, { recursive: true });
 mkdirSync(OUT_228, { recursive: true });
 const trTypes = JSON.parse(readFileSync("config/element-types/tr.json", "utf8")).radial_menu as { name: string; fields: Record<string, { label: string }> };

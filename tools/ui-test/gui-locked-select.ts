@@ -5,10 +5,10 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence, textOf } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/gui-editor";
+const OUT = evidence("design/gui-editor");
 const project = exampleProject();
 addElement(project, "gui", "lockgui", {
   type: 1, width: 176, height: 166,
@@ -26,13 +26,13 @@ const waitSaved = async (app: App) => {
   await app.sleep(500);
   await app.waitFor(`!document.querySelector(".smsg.saving")`);
 };
-const selectedKinds = (app: App) => app.eval<string[]>(`[...document.querySelectorAll(".gwidget.sel")].map((e) => e.textContent.trim() || e.className.match(/k-(\\w+)/)[1])`);
+const selectedKinds = (app: App) => app.eval<string[]>(`[...document.querySelectorAll(".gwidget.sel")].map((e) => ${textOf("e")} || e.className.match(/k-(\\w+)/)[1])`);
 
 await run(async (app) => {
   await app.waitFor(`document.querySelector(".tile")`);
   await app.click(".tile", "lockgui", { double: true });
   await app.waitFor(`document.querySelectorAll(".guistage .gwidget").length === 3`);
-  assert(!(await app.eval<boolean>(`[...document.querySelectorAll(".gwidget")].some((e) => e.textContent.includes("Hidden"))`)), "the hidden layer is not drawn");
+  assert(!(await app.eval<boolean>(`[...document.querySelectorAll(".gwidget")].some((e) => ${textOf("e")}.includes("Hidden"))`)), "the hidden layer is not drawn");
 
   // Widget lock: click selects, drag does not move, no resize handle, arrows do nothing.
   const before = saved();
@@ -61,7 +61,7 @@ await run(async (app) => {
   const freeBox = await app.rect(".gwidget.k-button", "Free");
   const fc: [number, number] = [freeBox.x + freeBox.width / 2, freeBox.y + freeBox.height / 2];
   await app.click(".gwidget.k-button", "Free");
-  await app.eval(`(() => { const e = [...document.querySelectorAll(".gwidget")].find((x) => x.textContent.includes("Pinned")); const r = e.getBoundingClientRect();
+  await app.eval(`(() => { const e = [...document.querySelectorAll(".gwidget")].find((x) => ${textOf("x")}.includes("Pinned")); const r = e.getBoundingClientRect();
     e.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0, shiftKey: true, clientX: r.x + 4, clientY: r.y + 4, pointerId: 1 })); })()`);
   await app.sleep(100);
   assert((await selectedKinds(app)).length === 2, `free and locked selected: ${await selectedKinds(app)}`);

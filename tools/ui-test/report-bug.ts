@@ -11,9 +11,9 @@ import { join } from "node:path";
 import en from "../../config/ui-strings/en.json" with { type: "json" };
 import tr from "../../config/ui-strings/tr.json" with { type: "json" };
 import { assert } from "../mcp-test/client.ts";
-import { exampleProject, launchApp, REPO } from "./cdp.ts";
+import { exampleProject, launchApp, REPO, evidence } from "./cdp.ts";
 
-const OUT = "design/208";
+const OUT = evidence("design/208");
 mkdirSync(join(REPO, OUT), { recursive: true });
 const project = exampleProject();
 const version = JSON.parse(readFileSync(join(REPO, "package.json"), "utf8")).version as string;

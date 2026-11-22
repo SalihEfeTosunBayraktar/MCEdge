@@ -17,6 +17,8 @@ import type { IdentityChange, IdentityResult } from "../../src/ir/modIdentity.ts
 import type { RenameResult } from "../../src/ir/rename.ts";
 import { DEFAULT_PLAYER } from "../../src/build/players.ts";
 import type { AiConfig, AiEvent } from "../../src/ai/providers.ts";
+import type { GradleFailure } from "../../src/build/explain.ts";
+import type { MappedDiagnostic } from "../../src/mcp/buildErrors.ts";
 
 export type { AiConfig, AiEvent };
 export type { Coverage, Element, PickerKind, VanillaCatalog, ElementType, IdentityChange, IdentityResult, ModInfo, Reference, ReferenceReport, RenameResult, UnusedReport, ValidationIssue, Variable };
@@ -122,7 +124,8 @@ import type { AgentNote } from "../../src/live/notes.ts";
 import type { AgentTask, TaskSource } from "../../src/live/tasks.ts";
 import type { UndoConflict, UndoResult } from "../../src/live/timeline.ts";
 import type { ShowRequest } from "../../src/live/show.ts";
-export type { ActivityEntry, AgentNote, AgentTask, FileChange, Presence, TaskSource, UndoConflict, UndoResult };
+import type { ApprovalChoice, ApprovalRequest } from "../../src/live/approval.ts";
+export type { ApprovalChoice, ApprovalRequest, ActivityEntry, AgentNote, AgentTask, FileChange, Presence, TaskSource, UndoConflict, UndoResult };
 
 /** What the app shows of an AI agent working on the project (.mcedge/live). */
 export interface LiveState {
@@ -215,7 +218,39 @@ export interface Preferences {
   ai?: AiConfig;
   /** Check for updates on start and every few hours (Q207); unset means on. Help > Check for updates always works. */
   autoUpdate?: boolean;
+  /** The user's answer in the first-run setup (Q244); unset until it was answered, then the setup does not come back. */
+  level?: ExperienceLevel;
+  /** Simple hides what config/experience.json lists; unset is advanced. */
+  mode?: UiMode;
+  /** The first-mod tour (Q245): unset until it was offered; its progress is checked against the project, only the bookkeeping lives here. */
+  tour?: TourState;
+  /** Visual accessibility (Q247), set as data attributes on the root: high contrast works on both themes, colour-blind-safe swaps red/green for orange/blue. */
+  highContrast?: boolean;
+  colorBlind?: boolean;
+  /** No transitions or animations; unset or "system" follows the OS setting. */
+  reducedMotion?: "system" | "on" | "off";
+  /** Light mode for weak computers (Q250): previews, 3D and the memory limits of Gradle and jdtls; unset keeps everything on. */
+  performance?: import("../../src/performance.ts").PerformancePrefs;
+  /** Q255: heavy agent runs over MCP (build, run_client, ...) ask in a dialog each time (unset or "ask") or go ahead ("allow"). */
+  agentRuns?: "ask" | "allow";
 }
+
+/** Where the guided tour stands: active shows its panel, paused (closed) waits for Help > Guided tour, skipped and done stay away. */
+export interface TourState {
+  status: "active" | "paused" | "skipped" | "done";
+  /** The project the tour follows, the element ids of its type when it started, and the element it made. */
+  dir?: string;
+  baseline?: string[];
+  subject?: string;
+  /** The subject's texture when it was created (the default the texture step must leave). */
+  initial?: string;
+  /** The subject whose test scenario passed. */
+  tested?: string;
+}
+
+/** Modding experience asked on the first start (Q244): new to modding, some experience, Java modder. */
+export type ExperienceLevel = "new" | "some" | "java";
+export type UiMode = "simple" | "advanced";
 
 /** Result of Edit in Blockbench: started on the work copy, or not found where it was looked for. */
 export type BlockbenchOpen =
@@ -274,10 +309,27 @@ export interface ExportResult {
   warnings: string[];
 }
 
+/** A failed build explained (Q246): compile errors, mapped to their element when the project has a source map, and Gradle failures. */
+export interface BuildExplained {
+  diagnostics: (Omit<MappedDiagnostic, "file" | "line"> & { file: string; line: number })[];
+  failures: GradleFailure[];
+}
+
 export type BuildEvent =
   | { type: "start"; engineId: string }
   | { type: "line"; engineId: string; line: string }
   | { type: "done"; engineId: string; ok: boolean; jar?: string; stopped?: boolean };
+
+/** A starter of the template gallery (Q252); its name and description are the strings starter.<id>.name and .desc. */
+export interface StarterCard {
+  id: string;
+  /** Element type whose sprite the card shows. */
+  type: string;
+  /** Parameter -> example value. */
+  params: Record<string, string>;
+  /** "type/id" of the elements it makes, with the example value. */
+  elements: string[];
+}
 
 /** API the preload script exposes to the renderer as window.mcedge. */
 export interface McedgeApi {
@@ -290,6 +342,10 @@ export interface McedgeApi {
   pickZip(): Promise<string | null>;
   /** Makes a new project (KUYRUK 126) and opens it; fails with the reason (bad id, folder not empty...). */
   createProject(options: NewProject): Promise<Opened>;
+  /** The template gallery (Q252): starters that built and passed the server smoke test on every target. */
+  starters(): Promise<StarterCard[]>;
+  /** Adds a starter to the open project (its elements and textures, one atomic change); fails with the reason. `first` is the element to open. */
+  addStarter(dir: string, id: string, params: Record<string, string>): Promise<{ snapshot: ProjectSnapshot; first: { typeId: string; id: string } }>;
   /** Opens a folder and starts watching it for outside changes (fs:changed). */
   openProject(dir: string): Promise<Opened>;
   /** File > Open project folder: shows the folder in the OS file manager; refuses any folder but the open project's. */
@@ -349,6 +405,11 @@ export interface McedgeApi {
   liveState(dir: string): Promise<LiveState>;
   /** Tells an agent (collaborators tool) what the user has open. */
   livePresence(dir: string, open: string, shown?: { id: string; error?: string }): Promise<void>;
+  /** Agent runs (build, run_client, ...) waiting for the user's answer (Q255). */
+  liveApprovals(dir: string): Promise<ApprovalRequest[]>;
+  liveAnswerApproval(dir: string, id: string, answer: ApprovalChoice): Promise<void>;
+  /** Flashes the window's taskbar button. */
+  liveFlash(): Promise<void>;
   /** Takes agent calls back (a step or a session); refused with conflicts when the user changed the same fields since. */
   liveUndo(dir: string, calls: string[]): Promise<UndoResult>;
   /** Leaves a note for the agent (read_notes over MCP); returns all notes. */
@@ -418,6 +479,8 @@ export interface McedgeApi {
   exportTexture(dir: string, path: string): Promise<string | undefined>;
   listEngines(): Promise<EngineInfo[]>;
   build(dir: string, engineIds: string[]): Promise<void>;
+  /** The errors of a build log in plain words and where they came from (Q246); `engineId` is missing for a code project. */
+  explainBuild(dir: string, engineId: string | undefined, lines: string[]): Promise<BuildExplained>;
   /** Locks an element's generated code (its own files are kept in locked-code/ and used by every generation). */
   lockCode(dir: string, typeId: string, id: string): Promise<ProjectSnapshot>;
   /** Unlocks; with edited locked files and no `force` it stays locked and returns what would be lost. */
@@ -481,6 +544,8 @@ export interface McedgeApi {
   editInBlockbench(dir: string, model: string, overrides?: Record<string, string>): Promise<BlockbenchOpen>;
   /** The Blockbench program Edit in Blockbench would start (the given path or the usual install places), or null. */
   findBlockbench(configured?: string): Promise<string | null>;
+  /** RAM and CPU cores of this computer, for the light mode suggestion (Q250). */
+  systemInfo(): Promise<import("../../src/performance.ts").MachineInfo & { suggestLight: boolean }>;
   /** Program picker; null when cancelled. */
   pickProgram(current: string): Promise<string | null>;
   /** Builds the engines one after another and copies each jar to the folder under the file name pattern; when all build, the changelog starts again from here. */

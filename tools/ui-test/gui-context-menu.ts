@@ -5,10 +5,10 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence, textOf } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/gui-editor";
+const OUT = evidence("design/gui-editor");
 const project = exampleProject();
 addElement(project, "gui", "menugui", {
   type: 0, width: 176, height: 166, snapOnGrid: false, gridSx: 18, gridSy: 18,
@@ -41,7 +41,7 @@ const choose = async (app: App, label: string) => {
   assert(ok, `menu item ${label} is there and enabled`);
   await app.sleep(150);
 };
-const selectedTexts = (app: App) => app.eval<string[]>(`[...document.querySelectorAll(".gwidget.sel")].map((e) => e.textContent.trim()).sort()`);
+const selectedTexts = (app: App) => app.eval<string[]>(`[...document.querySelectorAll(".gwidget.sel")].map((e) => ${textOf("e")}).sort()`);
 const CTRL = 2;
 
 await run(async (app) => {
@@ -102,7 +102,7 @@ await run(async (app) => {
 
   // Group One and Two (Shift+right click keeps both), then ungroup.
   await app.click(".gwidget", "One");
-  await app.eval(`(() => { const e = [...document.querySelectorAll(".gwidget")].find((x) => x.textContent.trim() === "Two"); const r = e.getBoundingClientRect();
+  await app.eval(`(() => { const e = [...document.querySelectorAll(".gwidget")].find((x) => ${textOf("x")} === "Two"); const r = e.getBoundingClientRect();
     e.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0, shiftKey: true, clientX: r.x + 3, clientY: r.y + 3, pointerId: 1 })); })()`);
   await rightClick(app, "Two");
   assert((await selectedTexts(app)).join() === "One,Two", "right click on a selected widget keeps the selection");

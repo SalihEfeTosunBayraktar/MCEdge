@@ -1,0 +1,71 @@
+{
+  "intro": "Pixel art guide for agents drawing textures with the MCEdge texture tools (Q271). Read 'workflow' first, then the topic you are working on. Every rule here is a default: break it on purpose, never by accident.",
+  "topics": {
+    "workflow": [
+      "1. Decide the size first: 16x16 for blocks and items (Minecraft's grid), 32x32 or 64x64 for entities and GUI art; never draw big and scale down, it blurs into noise.",
+      "2. Pick the palette before drawing: one ramp of 4-6 colours per material with color_ramp (hueShift 15-30), plus one outline shade. Most 16x16 textures use 8-16 colours in total.",
+      "3. Block in the silhouette with draw_texture_shapes in a single mid colour; check it with preview_texture. A silhouette that reads in one colour reads in all colours.",
+      "4. Shade with the ramp from one light direction (Minecraft: top left). Use fill_texture for big flat areas and gradient_texture (mask opaque, dither) for smooth falloff on a drawn shape.",
+      "5. Outline: outline_texture mode outer for items, without a colour for a selective outline (each edge takes a darker shade of the colour it touches).",
+      "6. Clean up: check_pixel_art, fix what it reports (stray pixels, doubled corners, pillow shading, too many colours), then preview_texture again. Repeat until the check is clean or every remaining issue is intended.",
+      "7. Snap to the palette at the end (snap_texture_to_palette) if edits added in-between shades."
+    ],
+    "palette": [
+      "Fewer colours read better: a ramp of 3-5 shades per material is enough at 16x16.",
+      "Hue-shift the ramp: shadows move towards blue or purple, highlights towards yellow; only darkening a colour makes it muddy. color_ramp does this.",
+      "Keep neighbouring shades clearly apart (check_pixel_art reports colours too close to tell apart) and avoid pure black and pure white except for tiny accents.",
+      "Shadows slightly more saturated, the brightest highlight slightly less.",
+      "Reuse ramps between materials (a shared dark for wood and leather) to keep a texture set coherent; texture_palette lists what a texture already uses."
+    ],
+    "shading": [
+      "One light source, the same in every texture of a set. Minecraft lights from the top left: bright edges top and left, dark edges bottom and right.",
+      "Pillow shading (bright centre, dark all around the outline) flattens the form; check_pixel_art reports it. Shade by form: what faces the light is bright, what turns away is dark.",
+      "Put the darkest shade in the contact and crease areas, not everywhere along the outline.",
+      "Highlights are small: 1-3 pixels of the lightest shade on the top-left edges of round or shiny parts.",
+      "Contrast: the brightness range across the texture should be wide enough to read at 1x; check_pixel_art reports low contrast."
+    ],
+    "lines": [
+      "Lines are 1 pixel wide without doubled corners (an L of three pixels where a diagonal step is meant); check_pixel_art reports them as doubled corners.",
+      "Keep slopes regular: steps of 1:1, 1:2, 1:3 (equal segment lengths) look clean; mixed lengths (2,1,3,1) look jagged.",
+      "Curves change segment length gradually (3,2,1,1,2,3), never jump back and forth."
+    ],
+    "clusters": [
+      "Group colour into clusters of several pixels; single pixels of a colour no neighbour shares read as noise (check_pixel_art: stray pixels).",
+      "Material texture (stone grain, wood grain, ore specks) comes from small clusters of 2-4 pixels in two or three ramp shades, spaced irregularly but evenly.",
+      "Avoid banding: parallel stripes of shades that follow the outline at the same width make the shape look like a contour map."
+    ],
+    "outlines": [
+      "Items have a 1 pixel outline so they read on any background; a selective outline (outline_texture without a colour) uses a darker shade of the colour it borders instead of black.",
+      "Blocks have no outline: they tile, so their edges must continue into the next block (preview_texture tile: true, check_pixel_art tileable: true).",
+      "Inner lines that separate parts use the darkest shade of the part, not the outline colour."
+    ],
+    "anti_aliasing": [
+      "Anti-alias by hand and sparingly: one in-between shade on the inside of a long jagged step softens it.",
+      "Never anti-alias against transparency in Minecraft: items and cutout blocks show a pixel either fully or not at all, so half-transparent edge pixels look wrong in game (check_pixel_art: half transparent).",
+      "Do not anti-alias small details; at 16x16 every pixel is a shape."
+    ],
+    "dithering": [
+      "Dither only for texture or a deliberate retro look; gradient_texture with dither true uses an ordered pattern.",
+      "Dither between two neighbouring ramp shades, never between colours far apart, and keep dithered areas small at 16x16."
+    ],
+    "minecraft": [
+      "Blocks: 16x16, opaque, tileable on all four sides; read them at 1x and tiled 3x3 (preview_texture tile: true) before calling them done.",
+      "Items: 16x16 on transparency, a clear silhouette, a 1 pixel outline, light from the top left; the item fills most of the canvas, about 1 pixel of margin.",
+      "Only translucent blocks (glass, water-like) may use half-transparent pixels.",
+      "Vanilla-like textures use moderate saturation and about 8-16 colours; neon colours and smooth gradients look foreign next to vanilla blocks.",
+      "Variants (ores, planks of other woods) keep the base texture's shapes and only swap the ramp: copy_texture, then snap_texture_to_palette with the new ramp."
+    ],
+    "animation": [
+      "An animated texture is a vertical strip of square frames (frame 0 on top) with an .mcmeta; set_texture_animation sets the frame time in ticks (20 per second).",
+      "Build the strip with edit_texture_frames (duplicate the last frame, then change it) and draw on one frame at a time with the frame argument of write_texture_pixels, draw_texture_shapes, fill_texture and the other drawing tools.",
+      "Loops: 2-8 frames are enough for glows, flames and liquids; the last frame must lead back into the first. preview_texture shows all frames side by side.",
+      "Timing: 2-4 ticks per frame for fast motion (fire), 5-10 for slow pulses; interpolate blends frames for smooth glows but smears sharp motion.",
+      "Move few pixels per frame and keep the palette the same in every frame; for motion, exaggerate the start and end positions and keep in-betweens close to them."
+    ],
+    "atlas": [
+      "pack_texture_atlas packs textures into one sheet and returns each one's rectangle; slice_texture_atlas cuts a sheet back into textures by a grid or by rectangles.",
+      "Use a fixed cell size (16 or 32) for sprite sheets, so pieces can be addressed by grid position; leave 1-2 pixels of padding when the sheet is filtered or mipmapped.",
+      "Keep one palette across the sheet; texture_palette on the sheet shows whether pieces drifted apart."
+    ]
+  }
+}

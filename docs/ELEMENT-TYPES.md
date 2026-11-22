@@ -77,11 +77,20 @@ widget's lang key `gui.<modid>.<gui>.<name>`.
 | `checkbox` | `text`, `checked` |
 | `image` | `image` (project PNG), `width`, `height` (default: the image size, one frame of an animation), `condition`, `z`. A vertical strip with a `.mcmeta` animation (or `animated`, with `frameTime` ticks per frame and `frameCount` frames) plays one frame at a time, in the game and on the editor canvas |
 | `state_image` | KUYRUK 186: `width`, `height` (default 16), `states` (one or more `{ image, frame, condition }`: each state its own picture, a `.mcmeta` animation playing; `frame` shows only that square frame of a vertical strip, still), `stateProcedure` (number, read on the client: the state's index from 0, kept inside the list; with `stateValue` `percent` 0-100 spread evenly over the states), without it the first state whose `condition` (logic) holds, a state without one always qualifies, none: nothing drawn; `updateTicks` (read once every N ticks, default 0: every frame), `restartAnimation` (an animated state starts from its first frame when it becomes the shown one), `condition`, `z`; overlays too. The editor lists the states with their previews, shows the chosen one (`previewState`, editor only) on the canvas and splits a strip into one state per frame |
-| `slot` | `id` (inventory slot), `output` (no placing), `limit` (only this item), `locked` (no placing or taking), `lockCondition` (logic procedure: locked while it is true); x, y is the 18x18 frame |
+| `slot` | `id` (inventory slot), `output` (no placing), `limit` (only this item), `allowed` (place filter: rows `{ "item": "etreco:ticket" }` or `{ "item": "#forge:battery" }`, an item id or an item tag, `#forge:` tags become `#c:` from 1.21; any row matches, with `limit` too; none: anything; it adds to `locked`/`lockCondition`: a locked slot takes nothing, and shift click only moves a stack into a slot that accepts it), `locked` (no placing or taking), `lockCondition` (logic procedure: locked while it is true); x, y is the 18x18 frame |
 
 `z` (image, state_image, label; integer -99 to 99, default 0) is the drawing order: higher draws on top, list order among equal
 ones. Above 0 draws over slots, items and buttons; 0 and below keeps the normal place (images under buttons and items,
 labels under items). Overlays (HUD) draw in z order too; a `state_image` takes part like an image.
+`opacity` (0-100, default 100), `tint` (`#rrggbb`, `""` none) and `tintStrength` (0-100, default 100) on `image`,
+`image_button`, `toggle_button` and `state_image` (Q273) fade or colour the picture: opacity scales the alpha of its
+visible pixels, the tint is multiplied into their colour (shading kept, white changes nothing). Fully transparent
+pixels stay empty. The filter is baked into the generated texture; 1.16.5 turns blending on for a see-through image.
+Q275: on 1.21.5 and 26.3 an `image_button` looks hovered only under the mouse or with keyboard focus (vanilla also
+lit it after a click, which leaves the button focused). `pressedImage` (`image_button`, `toggle_button` off) and
+`onPressedImage` (`toggle_button` on, default `pressedImage`) show for 120 ms after a click; 1.16.5 ignores them. The
+Problems panel warns when an image is drawn at a size that is not 1:1 or a whole multiple of one frame
+(`guiImageScale`) and when a GUI image is larger than the GUI (`guiImageTooBig`).
 Animated textures (Q229) play in the playback mode set in the texture editor (or `set_texture_animation mode`), stored
 in the `.mcmeta`'s own `"mcedge": { "playback": ... }` section: `loop` (default), `hold_last`, `hold_first`,
 `ping_pong`. A GUI `image` starts its animation as `animationStart` says: `open` (default, when the screen opens),
@@ -280,7 +289,7 @@ draw the entity's model or another project model with their own texture. Animati
 animation of the model by its full name (`RubyBeastAnimation.WALK`, `animation.beast.walk`) or its last part
 (`walk`); Blockbench animation exports in any `models/*.java` file count. MCEdge plays them with its own keyframe
 sampler (`<Mod>Animator`), also on 1.16.5. AI goals (`aixml`) are the `ai_*` blocks (category "ai") under the start
-block, highest priority first; an empty program keeps the default goals. MCP: `entity_models`, `write_ai_goals`.
+block, highest priority first; an empty program keeps the default goals. `ai_work` is a job written as procedures: a start condition (`condition`), a `procedure` run every tick while the goal is active, and a keep-going condition (`continueCondition`, the start condition when empty). MCP: `entity_models`, `write_ai_goals`.
 
 ### Project block and item models
 

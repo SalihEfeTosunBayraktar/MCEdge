@@ -1,0 +1,70 @@
+{
+  "id": "mob",
+  "params": {
+    "name": "slime"
+  },
+  "elements": [
+    {
+      "type": "living_entity",
+      "id": "{{name}}_mob",
+      "values": {
+        "mobName": "{{Name Words}}",
+        "mobModelName": "Biped",
+        "mobModelTexture": "textures/{{name}}_mob.png",
+        "mobBehaviourType": "Mob",
+        "mobSpawningType": "monster",
+        "health": 14,
+        "attackStrength": 3,
+        "movementSpeed": 0.3,
+        "mobDrop": "minecraft:slime_ball",
+        "hasSpawnEgg": true,
+        "spawnEggBaseColor": "#58a060",
+        "spawnEggDotColor": "#141414",
+        "spawnThisMob": true,
+        "restrictionBiomes": [
+          {
+            "biome": "#minecraft:is_overworld"
+          }
+        ]
+      }
+    }
+  ],
+  "textures": [
+    {
+      "from": "mob.png",
+      "to": "{{name}}_mob.png"
+    }
+  ],
+  "scenario": [
+    {
+      "op": "player",
+      "name": "Hunter",
+      "pos": [
+        0.5,
+        101,
+        0.5
+      ]
+    },
+    {
+      "label": "summon the mob",
+      "op": "command",
+      "command": "summon {{mod}}:{{name}}_mob 4 101 4"
+    },
+    {
+      "op": "wait",
+      "ticks": 20
+    },
+    {
+      "label": "the mob is alive",
+      "op": "command",
+      "command": "execute if entity @e[type={{mod}}:{{name}}_mob]",
+      "expect": {
+        "not": 0
+      }
+    },
+    {
+      "op": "removePlayer",
+      "name": "Hunter"
+    }
+  ]
+}

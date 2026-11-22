@@ -6,7 +6,7 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run } from "./cdp.ts";
+import { assert, exampleProject, run, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
 const project = exampleProject();
@@ -19,7 +19,7 @@ addElement(project, "gui", "lamp", {
       onImage: "textures/ruby_block.png", onHoverImage: "", stateProcedure: "", procedure: "flip_lamp" },
   ],
 });
-const OUT = "design/gui-editor";
+const OUT = evidence("design/gui-editor");
 const saved = () => JSON.parse(readFileSync(join(project, "elements", "guis", "lamp.json"), "utf8")).components as Record<string, unknown>[];
 /** Texture file each state preview shows, in state order. */
 const previews = `[...document.querySelectorAll(".togglestate")].map((f) => f.dataset.state + "=" + f.dataset.texture.split("/").pop())`;

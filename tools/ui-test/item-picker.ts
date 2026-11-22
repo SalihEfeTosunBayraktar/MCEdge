@@ -8,7 +8,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { vanillaCatalog } from "../../src/resources/vanillaAssets.ts";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const theme = (process.argv[2] ?? "dark") as "dark" | "light";
 const lang = process.argv[3] ?? "en";
@@ -16,7 +16,7 @@ const project = exampleProject();
 const read = (path: string) => JSON.parse(readFileSync(join(project, "elements", path), "utf8"));
 const catalog = vanillaCatalog("item", "1.21.5", lang === "tr" ? "tr_tr" : "en_us");
 const withJar = !!catalog.jar;
-const shot = (app: App, name: string) => app.shot(`design/127/${name}-${theme}-${lang}-after.png`);
+const shot = (app: App, name: string) => app.shot(evidence(`design/127/${name}-${theme}-${lang}-after.png`));
 
 const openTile = async (app: App, id: string) => {
   await app.key("Escape");

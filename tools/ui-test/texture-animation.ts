@@ -9,10 +9,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { readPng } from "../../src/generator/png.ts";
 import { connect } from "../mcp-test/client.ts";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const project = exampleProject();
-const OUT = "design/texture-editor";
+const OUT = evidence("design/texture-editor");
 const PATH = "textures/block/glow.png";
 
 async function cell(app: App, x: number, y: number): Promise<[number, number]> {

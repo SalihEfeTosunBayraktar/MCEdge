@@ -31,6 +31,18 @@ if (id != null) RULE_IDS.put(rule, id);
 return id;
 }`;
 
+/** Entity store on Fabric: a persistent attachment whose id is built from the generated package; loadEntityStore makes the mod load it at startup. */
+const fabricEntityStore = (j: Record<string, string>, id: string) => `private static final net.fabricmc.fabric.api.attachment.v1.AttachmentType<${j.CompoundTag}> ENTITY_STORE = net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry.create(${id}.parse(ProcedureHelpers.class.getName().substring(0, ProcedureHelpers.class.getName().lastIndexOf('.')).toLowerCase(java.util.Locale.ROOT) + ":entity_values"), builder -> builder.persistent(${j.CompoundTag}.CODEC).initializer(${j.CompoundTag}::new));
+/** Called when the mod loads: the attachment type must exist before any entity is read from disk. */
+static void loadEntityStore() {
+}
+static ${j.CompoundTag} entityStore(${j.Entity} entity) {
+return entity.getAttachedOrCreate(ENTITY_STORE).copy();
+}
+static void saveEntityStore(${j.Entity} entity, ${j.CompoundTag} tag) {
+entity.setAttached(ENTITY_STORE, tag);
+}`;
+
 /** Types of block data (values procedures keep at a block position): Java type, NBT accessor name, value without data. */
 const BLOCK_DATA = {
   number: { name: "Number", java: "double", api: "Double", missing: "-1.0", empty: "0.0" },
@@ -76,6 +88,53 @@ ${load}
 }
 }
 }
+}`;
+
+const STRUCTURE_TEMPLATE = "net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate";
+
+/** structureTemplate (Q265): `lookup` is the manager call for the resource location `name`; it may throw for a bad id (caught). */
+const structureTemplateCode = (j: Record<string, string>, template: string, lookup: string) => `static ${template} structureTemplate(${j.LevelAccessor} world, String ns, String id) {
+${j.ServerLevel} level = serverLevel(world);
+if (level == null || id == null || id.isEmpty()) return null;
+String name = id.indexOf(':') < 0 ? ns + ":" + id : id;
+try {
+return ${lookup};
+} catch (RuntimeException e) {
+return null;
+}
+}`;
+
+const structureSizeCode = (j: Record<string, string>, template: string) => `static double structureSize(${j.LevelAccessor} world, String ns, String id, int axis) {
+${template} template = structureTemplate(world, ns, id);
+if (template == null) return 0;
+return axis == 1 ? template.getSize().getY() : axis == 2 ? template.getSize().getZ() : template.getSize().getX();
+}`;
+
+/**
+ * structureEntries (Q265): the template's blocks, one filterBlocks call per registered block (the template's palette is private), kept
+ * as (position, state) entries. `info` is the block info class, `pos` and `state` read one (variable i).
+ */
+const structureEntriesCode = (j: Record<string, string>, template: string, settings: string, blocks: string, info: string, pos: string, state: string) => `private static final java.util.Map<Object, java.util.List<java.util.Map.Entry<${j.BlockPos}, ${j.BlockState}>>> STRUCTURE_ENTRIES = java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+private static final java.util.Map<Object, java.util.List<java.util.Map.Entry<${j.BlockPos}, ${j.BlockState}>>> STRUCTURE_ENTRIES_AIR = java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+static java.util.List<java.util.Map.Entry<${j.BlockPos}, ${j.BlockState}>> structureEntries(${j.LevelAccessor} world, String ns, String id, boolean air) {
+${template} template = structureTemplate(world, ns, id);
+if (template == null) return java.util.Collections.emptyList();
+java.util.Map<Object, java.util.List<java.util.Map.Entry<${j.BlockPos}, ${j.BlockState}>>> cache = air ? STRUCTURE_ENTRIES_AIR : STRUCTURE_ENTRIES;
+java.util.List<java.util.Map.Entry<${j.BlockPos}, ${j.BlockState}>> entries = cache.get(template);
+if (entries == null) {
+entries = new java.util.ArrayList<>();
+try {
+for (${j.Block} block : ${blocks}) {
+if (block == ${j.Blocks}.STRUCTURE_VOID || (!air && block.defaultBlockState().isAir())) continue;
+for (${info} i : template.filterBlocks(${j.BlockPos}.ZERO, new ${settings}(), block, false)) entries.add(new java.util.AbstractMap.SimpleImmutableEntry<>(${pos}, ${state}));
+}
+} catch (RuntimeException e) {
+entries.clear();
+}
+entries.sort(java.util.Comparator.<java.util.Map.Entry<${j.BlockPos}, ${j.BlockState}>>comparingInt((e) -> e.getKey().getY()).thenComparingInt((e) -> e.getKey().getX()).thenComparingInt((e) -> e.getKey().getZ()));
+cache.put(template, entries);
+}
+return entries;
 }`;
 
 export const HELPERS: Record<string, HelperDef> = {
@@ -232,6 +291,62 @@ return String.valueOf(state.getBlock().getRegistryName());
       (j) => `static String blockId(${j.BlockState} state) {
 return ${j.BuiltInRegistries}.BLOCK.getKey(state.getBlock()).toString();
 }`),
+  },
+  // ---- structure templates (Q265) ----
+  // The loaded template of a structure id (without a namespace: this mod's); null when there is no server side, the id is invalid or unknown.
+  // The template manager keeps loaded templates itself, so this is a map lookup after the first call.
+  structureTemplate: {
+    uses: ["serverLevel", "rl"],
+    code: legacyModern(
+      (j) => structureTemplateCode(j, "net.minecraft.world.gen.feature.template.Template", "level.getStructureManager().get(rl(name))"),
+      (j) => structureTemplateCode(j, "net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate", "level.getServer().getStructureManager().get(rl(name)).orElse(null)"),
+      (j) => structureTemplateCode(j, "net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate", "level.getServer().getStructureTemplateManager().get(rl(name)).orElse(null)")),
+  },
+  // The blocks of a template as (position, state) entries sorted by y, x, z (layer by layer from the bottom). structure_void is never listed
+  // (it keeps what is there); air only when asked. Built once per template instance (a data reload loads a new one) and cached weakly.
+  structureEntries: {
+    uses: ["structureTemplate"],
+    code: legacyModern(
+      (j) => structureEntriesCode(j, "net.minecraft.world.gen.feature.template.Template", "net.minecraft.world.gen.feature.template.PlacementSettings",
+        "net.minecraftforge.registries.ForgeRegistries.BLOCKS.getValues()", "net.minecraft.world.gen.feature.template.Template.BlockInfo", "i.pos", "i.state"),
+      (j) => structureEntriesCode(j, "net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate", "net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings",
+        `${j.BuiltInRegistries}.BLOCK`, "net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo", "i.pos()", "i.state()")),
+  },
+  structureBlockCount: {
+    uses: ["structureEntries"],
+    code: all((j) => `static double structureBlockCount(${j.LevelAccessor} world, String ns, String id, boolean air) {
+return structureEntries(world, ns, id, air).size();
+}`),
+  },
+  structureBlockId: {
+    uses: ["structureEntries", "blockId"],
+    code: all((j) => `static String structureBlockId(${j.LevelAccessor} world, String ns, String id, boolean air, double index) {
+java.util.List<java.util.Map.Entry<${j.BlockPos}, ${j.BlockState}>> list = structureEntries(world, ns, id, air);
+return index < 0 || index >= list.size() ? "" : blockId(list.get((int) index).getValue());
+}`),
+  },
+  structureBlockState: {
+    uses: ["structureEntries"],
+    code: all((j) => `static ${j.BlockState} structureBlockState(${j.LevelAccessor} world, String ns, String id, boolean air, double index) {
+java.util.List<java.util.Map.Entry<${j.BlockPos}, ${j.BlockState}>> list = structureEntries(world, ns, id, air);
+return index < 0 || index >= list.size() ? ${j.Blocks}.AIR.defaultBlockState() : list.get((int) index).getValue();
+}`),
+  },
+  // Relative position of block `index` along an axis (0 x, 1 y, 2 z); 0 when out of range.
+  structureBlockPos: {
+    uses: ["structureEntries"],
+    code: all((j) => `static double structureBlockPos(${j.LevelAccessor} world, String ns, String id, boolean air, double index, int axis) {
+java.util.List<java.util.Map.Entry<${j.BlockPos}, ${j.BlockState}>> list = structureEntries(world, ns, id, air);
+if (index < 0 || index >= list.size()) return 0;
+${j.BlockPos} pos = list.get((int) index).getKey();
+return axis == 1 ? pos.getY() : axis == 2 ? pos.getZ() : pos.getX();
+}`),
+  },
+  structureSize: {
+    uses: ["structureTemplate"],
+    code: legacyModern(
+      (j) => structureSizeCode(j, "net.minecraft.world.gen.feature.template.Template"),
+      (j) => structureSizeCode(j, STRUCTURE_TEMPLATE)),
   },
   entityId: {
     code: legacyModern(
@@ -1093,6 +1208,16 @@ return entity instanceof ${j.Mob} ? ((${j.Mob}) entity).getTarget() : null;
 if (entity instanceof ${j.Mob}) ((${j.Mob}) entity).setTarget(target instanceof ${j.LivingEntity} ? (${j.LivingEntity}) target : null);
 }`),
   },
+  navigateTo: {
+    code: all((j) => `static void navigateTo(${j.Entity} entity, double x, double y, double z, double speed) {
+if (entity instanceof ${j.Mob}) ((${j.Mob}) entity).getNavigation().moveTo(x, y, z, speed);
+}`),
+  },
+  navigationDone: {
+    code: all((j) => `static boolean navigationDone(${j.Entity} entity) {
+return !(entity instanceof ${j.Mob}) || ((${j.Mob}) entity).getNavigation().isDone();
+}`),
+  },
   isBaby: {
     code: all((j) => `static boolean isBaby(${j.Entity} entity) {
 return entity instanceof ${j.LivingEntity} && ((${j.LivingEntity}) entity).isBaby();
@@ -1268,6 +1393,20 @@ return main ? ((${j.LivingEntity}) entity).getMainHandItem() : ((${j.LivingEntit
   setHandItem: {
     code: all((j) => `static void setHandItem(${j.Entity} entity, boolean main, ${j.ItemStack} stack) {
 if (entity instanceof ${j.LivingEntity}) ((${j.LivingEntity}) entity).setItemInHand(main ? ${j.InteractionHand}.MAIN_HAND : ${j.InteractionHand}.OFF_HAND, stack.copy());
+}`),
+  },
+  // Plays the swing animation of a living entity's arm for everyone tracking it (and for the entity itself when it is a player).
+  swingArm: {
+    code: legacyModern(
+      (j) => `static void swingArm(${j.Entity} entity, boolean main) {
+if (entity instanceof ${j.LivingEntity}) ((${j.LivingEntity}) entity).swing(main ? ${j.InteractionHand}.MAIN_HAND : ${j.InteractionHand}.OFF_HAND, true);
+}`,
+      (j) => `static void swingArm(${j.Entity} entity, boolean main) {
+if (entity instanceof ${j.LivingEntity}) ((${j.LivingEntity}) entity).swing(main ? ${j.InteractionHand}.MAIN_HAND : ${j.InteractionHand}.OFF_HAND, true);
+}`,
+      // 26.3 takes the swing animation (the default one is the plain arm swing).
+      (j) => `static void swingArm(${j.Entity} entity, boolean main) {
+if (entity instanceof ${j.LivingEntity}) ((${j.LivingEntity}) entity).swing(main ? ${j.InteractionHand}.MAIN_HAND : ${j.InteractionHand}.OFF_HAND, net.minecraft.world.item.component.SwingAnimation.DEFAULT, true);
 }`),
   },
   slotItem: {
@@ -1644,12 +1783,29 @@ if (level != null && sound != null) level.playLocalSound(x, y, z, sound, ${j.Sou
 }`),
   },
   cancelEvent: {
+    // Scoped per event dispatch (Q281): an event fired inside a handler gets its own flag, and a procedure called
+    // outside any event (a command, an element field) cancels nothing.
     code: all(() => `private static boolean cancelled;
+private static int dispatching;
 /** Cancel event block: the trigger that runs the procedure cancels its event afterwards. */
 static void cancelEvent() {
-cancelled = true;
+if (dispatching > 0) cancelled = true;
 }
-/** Read and reset by generated triggers. */
+/** Called by a generated trigger before its procedure; returns the enclosing dispatch's flag for endEvent. */
+public static boolean beginEvent() {
+dispatching++;
+boolean outer = cancelled;
+cancelled = false;
+return outer;
+}
+/** Called by a generated trigger after its procedure; returns whether it cancelled and restores the enclosing flag. */
+public static boolean endEvent(boolean outer) {
+dispatching--;
+boolean result = cancelled;
+cancelled = outer;
+return result;
+}
+/** Reads and clears the current dispatch's flag; kept for java_code written against the old shared flag. */
 public static boolean takeCancel() {
 boolean result = cancelled;
 cancelled = false;
@@ -1804,6 +1960,54 @@ holder.blockData().put${d.api}(key, value);
 ((${j.BlockEntity}) holder).setChanged();
 }
 if (world instanceof ${j.Level} level) level.sendBlockUpdated(pos, state, state, 3);
+}`),
+    }],
+  ])),
+  // ---- saved entity values ----
+  // Values a procedure keeps on any entity by a key (entity_saved_*), written with the entity so they survive unloading
+  // and restarts. Server side only: a client reads the default. The store is one compound under a key named after the
+  // generated helper class, so two generated mods never share it. Forge and NeoForge keep it in the entity's persistent
+  // data; Fabric has none, so it is a persistent data attachment (registered when the mod loads: see loadEntityStore).
+  entityStore: {
+    code: {
+      forge: (j) => `private static final String ENTITY_STORE = ProcedureHelpers.class.getName();
+static ${j.CompoundTag} entityStore(${j.Entity} entity) {
+return entity.getPersistentData().getCompound(ENTITY_STORE);
+}
+static void saveEntityStore(${j.Entity} entity, ${j.CompoundTag} tag) {
+entity.getPersistentData().put(ENTITY_STORE, tag);
+}`,
+      neoforge: (j) => `private static final String ENTITY_STORE = ProcedureHelpers.class.getName();
+static ${j.CompoundTag} entityStore(${j.Entity} entity) {
+return entity.getPersistentData().getCompoundOrEmpty(ENTITY_STORE);
+}
+static void saveEntityStore(${j.Entity} entity, ${j.CompoundTag} tag) {
+entity.getPersistentData().put(ENTITY_STORE, tag);
+}`,
+      fabric: (j) => fabricEntityStore(j, "net.minecraft.resources.ResourceLocation"),
+      "fabric-26.3": (j) => fabricEntityStore(j, "net.minecraft.resources.Identifier"),
+    },
+  },
+  ...Object.fromEntries(Object.entries(BLOCK_DATA).flatMap(([type, d]) => [
+    [`entitySaved${d.name}`, {
+      uses: ["entityStore", "entityLevel"],
+      code: legacyModern(
+        (j) => `static ${d.java} entitySaved${d.name}(${j.Entity} entity, String key) {
+if (entity == null || entityLevel(entity).isClientSide()) return ${d.empty};
+return entityStore(entity).get${d.api}(key);
+}`,
+        (j) => `static ${d.java} entitySaved${d.name}(${j.Entity} entity, String key) {
+if (entity == null || entityLevel(entity).isClientSide()) return ${d.empty};
+return entityStore(entity).get${d.api}Or(key, ${d.empty});
+}`),
+    }],
+    [`setEntitySaved${d.name}`, {
+      uses: ["entityStore", "entityLevel"],
+      code: all((j) => `static void setEntitySaved${d.name}(${j.Entity} entity, String key, ${d.java} value) {
+if (entity == null || entityLevel(entity).isClientSide()) return;
+${j.CompoundTag} tag = entityStore(entity);
+tag.put${d.api}(key, value);
+saveEntityStore(entity, tag);
 }`),
     }],
   ])),

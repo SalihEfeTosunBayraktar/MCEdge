@@ -6,13 +6,13 @@
  */
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, REPO, run, type App } from "./cdp.ts";
+import { assert, exampleProject, REPO, run, type App, evidence } from "./cdp.ts";
 
 const lang = (process.argv[2] ?? "en") as "en" | "tr";
 const theme = (process.argv[3] ?? "dark") as "dark" | "light";
 const s = JSON.parse(readFileSync(join(REPO, "config", "ui-strings", `${lang}.json`), "utf8")) as Record<string, string>;
 const project = exampleProject();
-const shot = (app: App, name: string) => app.shot(`design/131/${name}-${lang}-${theme}.png`);
+const shot = (app: App, name: string) => app.shot(evidence(`design/131/${name}-${lang}-${theme}.png`));
 const rubyTile = `[...document.querySelectorAll(".tile")].find((t) => t.querySelector(".tname")?.textContent === "Ruby" || t.textContent.includes("ruby") && t.querySelector("code")?.textContent === "ruby")`;
 const walk = (dir: string): string[] => readdirSync(dir).flatMap((n) => (statSync(join(dir, n)).isDirectory() ? walk(join(dir, n)) : [join(dir, n)]));
 const lockedTile = `!!(${rubyTile})?.querySelector('[data-testid="tile-locked"]')`;

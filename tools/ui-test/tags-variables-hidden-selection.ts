@@ -8,10 +8,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect } from "../mcp-test/client.ts";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const project = exampleProject();
-const OUT = "design/147";
+const OUT = evidence("design/147");
 const suffix = process.argv[2] ?? "after";
 // The "before" run records failed checks and fails at the end, so its screenshots are taken too.
 const failed: string[] = [];
@@ -27,7 +27,8 @@ await setup.call("set_variables", { variables: [
 await setup.close();
 
 const deleteOn = (app: App) => app.eval<boolean>(`!![...document.querySelectorAll(".actions .abtn")].find((b) => b.textContent.includes("Delete selected") && !b.disabled)`);
-const panelEmpty = (app: App) => app.eval<boolean>(`!!document.querySelector("aside.panel .panel-empty")`);
+// Q284: the selection is edited in the inspector; with none selected it shows only its hints.
+const panelEmpty = (app: App) => app.eval<boolean>(`!!document.querySelector(".tagsinsp .dk-sec .hint") && !document.querySelector(".tagsinsp .form")`);
 const rows = (app: App) => app.eval<string[]>(`[...document.querySelectorAll(".grid tbody tr")].map((r) => r.textContent)`);
 const pickRow = (app: App, text: string) => app.eval(`[...document.querySelectorAll(".grid tbody tr")].find((r) => r.textContent.includes(${JSON.stringify(text)}))?.click()`);
 const settle = async (app: App) => {

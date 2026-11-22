@@ -6,7 +6,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { assert, exampleProject, launchApp, type App } from "./cdp.ts";
+import { assert, exampleProject, launchApp, type App, evidence } from "./cdp.ts";
 
 const theme = (process.argv[2] ?? "dark") as "dark" | "light";
 const project = exampleProject();
@@ -34,13 +34,13 @@ try {
   await app.waitFor(`document.querySelector(".gitdiff").textContent.includes("hellomcedge")`);
   const main = await height(app, ".gitmain");
   const start = await table(app);
-  await app.shot(`design/235/default-${theme}.png`);
+  await app.shot(evidence(`design/235/default-${theme}.png`));
 
   await dragBy(app, 150);
   const lower = await table(app);
   assert(near(lower, start + 150), `dragging down 150px grows the table (${start} -> ${lower})`);
   assert(near(lower + 6 + await height(app, ".gitdiff"), main), "the diff takes the rest");
-  await app.shot(`design/235/dragged-${theme}.png`);
+  await app.shot(evidence(`design/235/dragged-${theme}.png`));
 
   await dragBy(app, 2000);
   assert(near(await height(app, ".gitdiff"), 60), `the diff keeps its minimum (${await height(app, ".gitdiff")})`);

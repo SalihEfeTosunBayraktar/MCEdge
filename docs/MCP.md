@@ -42,8 +42,8 @@ source server; with `MCEDGE_MCP_EXE=<install folder>\MCEdge.exe` they start an i
 
 | Tool | Arguments | What it does |
 | --- | --- | --- |
-| `project_info` | - | Kind (mcedge or gradle), name, mod settings and engines, or the Gradle mod's JDK. |
-| `create_project` | `parent` (absolute), `name`, `modId`, `package?`, `engines?`, `template?` (`empty`, `example`), `folder?`, `author?` | File > New project (KUYRUK 126): makes `<parent>/<folder or modId>` (must not exist or be empty). `empty` has no elements; `example` is the bundled example (item, block, tool, recipes, creative tab) renamed to the new mod id and package, without its dependencies. The package defaults to `com.<author or example>.<modId>`; `engines` saves the target engines. This server stays on its project; run `mcedge mcp <new folder>` to work in the new one. |
+| `project_info` | - | Kind (mcedge or gradle), name, mod settings and engines, or the Gradle mod's JDK, and `memory`: the limits light mode (Preferences > Performance) gives Gradle and jdtls (`mode` normal or low, `jdtlsMb`, `gradleMb`; absent leaves the project's own setting). Builds you start run with them, so a low heap can fail a big build: say so to the user instead of raising it yourself. |
+| `create_project` | `parent` (absolute), `name`, `modId`, `package?`, `engines?`, `template?` (`empty`, `example`), `starter?` (`{ id, params }` of the gallery, added to an empty project), `folder?`, `author?` | File > New project (KUYRUK 126): makes `<parent>/<folder or modId>` (must not exist or be empty). `empty` has no elements; `example` is the bundled example (item, block, tool, recipes, creative tab) renamed to the new mod id and package, without its dependencies. The package defaults to `com.<author or example>.<modId>`; `engines` saves the target engines. This server stays on its project; run `mcedge mcp <new folder>` to work in the new one. |
 | `get_mod` *MCEdge* | - | Mod settings: id, name, version, package, authors, description, license, website, credits, logo, dependencies. |
 | `update_mod` *MCEdge* | `name`, `id`, `version`, `package`, `engines`, `authors`, `description`, `license`, `website`, `credits`, `logo`, `dependencies` | Changes only the given keys; `dependencies` replaces the list of `{ modId, version, required, side, source? }`; `source` says where dev runs get the jar: Modrinth by default (slug = modId, or `source.modrinth`; a mod Modrinth lacks is tried on CurseForge by `modId` when the computer has a CurseForge API key), `source.curseforge` (CurseForge project slug or numeric id; KUYRUK 173), or `source.maven` (`group:artifact:version`, `{loader}` and `{mc}` filled per engine) from `source.repository`. The CurseForge API key is set by the user in the app's Preferences (or `MCEDGE_CURSEFORGE_KEY`), never in the project. A new `id` or `package` goes through `change_mod_identity`, so ids and keys follow. Returns the settings and the problems about them. |
 | `resolve_dependencies` *MCEdge* | `engines?`, `refresh?` | Downloads the jars of the dependencies for dev runs (KUYRUK 152): per engine the newest Modrinth (or CurseForge) version for its loader and Minecraft version that meets the dependency's version, plus the mods that version requires (or the Maven artifact). Each answer names its `source`; a CurseForge dependency without a key fails with a message saying where to set it, and a file its author keeps off third-party downloads fails too. Jars are cached once per machine as a local Maven repository under `<toolchains>/mods`; the generator adds them to the Gradle project (Fabric 1.21.5 `modImplementation`/`modRuntimeOnly`, Forge 1.16.5 `fg.deobf` copied into `run/mods` because FML 36 finds mods only there, NeoForge and Fabric 26.3 `implementation`/`runtimeOnly`; required dependencies also compile, optional ones are runtime only), so `runClient` and `runServer` load them. Builds, runs and exports resolve by themselves; a mod with no version for an engine is `unavailable` there, and a required one is also a generation warning. The generated metadata asks for the mod id the engine's jar really has (GeckoLib is `geckolib3` on 1.16.5). `refresh` looks for newer versions. |
@@ -92,6 +92,8 @@ when an op cannot run, or when the result has problems the project did not have 
 | `save_template` *MCEdge* | `name`, `description?`, `params`, `elements` | Saves elements to `templates/<name>.json`; each parameter's value becomes a placeholder in ids and strings, in four spellings (`name`=`ruby_gem`: `{{name}}` ruby_gem, `{{Name}}` RubyGem, `{{Name Words}}` Ruby Gem, `{{NAME}}` RUBY_GEM). |
 | `list_templates` *MCEdge* | - | Templates with their parameters (and the example value each replaced) and elements. |
 | `create_from_template` *MCEdge* | `name`, `params`, `folder?`, `dryRun?`, `allowProblems?` | Creates a template's elements with the parameters filled in; references between them follow the ids. |
+| `list_starters` *MCEdge* | - | The template gallery (Q252, [STARTERS.md](STARTERS.md)): the starters that built and passed a dedicated-server smoke test on every target engine. Each has `id`, `name`, `description`, `params` (with the example value), `elements` and `verifiedOn` (engines). |
+| `create_from_starter` *MCEdge* | `id`, `params`, `folder?`, `dryRun?`, `allowProblems?` | Adds a starter and its textures to the project as one atomic change checked like `batch_elements`. `params` gives each parameter of the starter (lowercase letters, digits, `_`), e.g. `{ "name": "ruby" }` makes `ruby_sword`. A texture file that already exists is never replaced; the call is refused. |
 
 ## Locked generated code (KUYRUK 131)
 
@@ -117,7 +119,7 @@ locked class) and `tools/ui-test/locked-code.ts` test it.
 | `procedure_blocks` | `category?`, `query?` | Blocks with their inputs, fields, sides and per-engine generation. |
 | `procedure_triggers` | - | Global triggers and the dependencies they provide. |
 | `read_procedure` | `id`, `engine?`, `java?` | Settings, block program (IR JSON), needed dependencies, trigger dependencies, engine warnings, generated Java. |
-| `write_procedure` | `id`, `program`, `title?`, `globalTrigger?`, `returnType?` | Creates or replaces a procedure from IR JSON (`{ format: 1, variables, stacks: [{ x, y, blocks }] }`); returns its warnings. |
+| `write_procedure` | `id`, `program`, `title?`, `globalTrigger?`, `returnType?` | Creates or replaces a procedure from IR JSON (`{ format: 1, variables, stacks: [{ x, y, blocks }] }`); returns its warnings. `java_code` blocks take `gen` (Minecraft version) and an optional `loader` (`any` default, `neoforge`, `forge`, `fabric`): the block is emitted only where both match, otherwise it is skipped with a "not generated" warning. Use `loader` for Java that imports one loader's classes. |
 | `write_ai_goals` | `entity`, `program` | A living entity's AI goals from IR JSON (goal blocks of category "ai"). |
 | `entity_models` | - | Project entity models with their parts, texture size and animations. |
 
@@ -184,32 +186,64 @@ Colours are `#rrggbb`, `#rrggbbaa` or `transparent`; reads return `#rrggbbaa`.
 | --- | --- | --- |
 | `list_textures` | - | Project PNGs with their size. |
 | `create_texture` | `path`, `width`, `height`, `fill?` | New PNG under `textures/`, transparent or filled; never overwrites. |
-| `read_texture` | `path`, `x?`, `y?`, `width?`, `height?` | Pixels as rows of colours, top row first. |
-| `write_texture_pixels` | `path`, `pixels?`, `rects?`, `rows?` | Single pixels, filled rectangles and whole rows, applied in that order. |
+| `read_texture` | `path`, `x?`, `y?`, `width?`, `height?`, `frame?` | Pixels as rows of colours, top row first; `frame` reads one frame of an animated strip (Q271). |
+| `write_texture_pixels` | `path`, `pixels?`, `rects?`, `rows?`, `frame?` | Single pixels, filled rectangles and whole rows, applied in that order; with `frame`, coordinates are inside that frame (also on `draw_texture_shapes`). |
 | `resize_texture` | `path`, `width`, `height` | Nearest-neighbour scale (16 to 32 doubles every pixel). |
 | `edit_texture_region` | `path`, `action` (`copy`, `move`, `clear`), `rect` {x, y, width, height}, `to?` {x, y}, `toPath?` | The texture editor's selection: copy a rectangle to another place (or into another texture), move it (the old place becomes transparent) or clear it. |
 | `resize_texture_canvas` | `path`, `width`, `height`, `anchor` (default `center`) | Resize canvas without scaling: the picture keeps its pixels at the anchor, new space is transparent. |
+| `trim_texture_canvas` | `path` | Q274: cuts the fully transparent margins around the drawing away (the editor's Trim to drawing); pixels are not scaled. An animated texture uses one square box for all frames so they stay square and aligned. Returns the new size, frame count and removed margins; refuses an empty texture. |
 | `adjust_texture` | `path`, `hue?` (-180 to 180), `desaturate?` (0 to 1), `rect?` | Adjust colours: shift the hue, take out colour; the whole texture or a rectangle. |
 | `delete_texture` | `path` | Refused while an element or the mod logo uses it. |
 | `set_texture_animation` | `path`, `frametime?`, `interpolate?`, `frames?`, `mode?`, `still?` | The texture editor's Animation panel: a vertical strip of square frames with `<png>.mcmeta`. `mode` (Q229): `loop` (default), `hold_last` (play once, stay on the last frame), `hold_first` (play once, then show the first frame), `ping_pong` (forwards, then backwards); stored in the .mcmeta's own `"mcedge"` section, which the game ignores, and generated as the vanilla frame list that plays it. Blocks and items start a once mode when the player enters a world (and after a resource reload); GUI images when their `animationStart` says (`open`, `always`, `procedure`: the `gui_image_restart` block). `still: true` deletes the .mcmeta. |
+
+## Pixel art (Q271)
+
+Tools for drawing good pixel art, on the same project PNGs. `pixel_art_guide` is the guidance (config/pixel-art-guide.json): read its workflow before drawing. Every drawing tool takes `frame?` for one frame of an animated strip and `rect?` {x, y, width, height} to limit the area.
+
+| Tool | Arguments | What it does |
+| --- | --- | --- |
+| `pixel_art_guide` | `topic?` | The workflow and topic list, or the rules of one topic: palette, shading, lines, clusters, outlines, anti_aliasing, dithering, minecraft, animation, atlas. |
+| `preview_texture` | `path`, `scale?`, `grid?`, `tile?`, `frames?` | The texture as an image the agent can look at: enlarged without blurring on a checkerboard, a pixel grid when large enough, `tile` 3x3 to check seams, an animated strip's frames side by side. |
+| `texture_palette` | `path`, `rect?` | Colours in use, most used first, with counts. |
+| `color_ramp` | `base`, `steps?`, `hueShift?`, `contrast?` | A hue-shifted shading ramp, darkest first (shadows towards blue, highlights towards yellow). Draws nothing. |
+| `snap_texture_to_palette` | `path`, `palette?`, `fromTexture?`, `dither?`, `rect?`, `frame?` | Every drawn pixel takes its nearest palette colour (alpha kept); `fromTexture` uses another texture's colours. |
+| `fill_texture` | `path`, `x`, `y`, `color`, `mode?` (`flood`, `replace`), `diagonal?`, `rect?`, `frame?` | Paint bucket, or replace one colour everywhere. |
+| `gradient_texture` | `path`, `colors`, `direction?`, `dither?`, `mask?` (`all`, `opaque`), `rect?`, `frame?` | A gradient through colour stops (horizontal, vertical, diagonal, diagonal_up, radial); `dither` blends stops with an ordered pattern; `mask: opaque` shades only drawn pixels. |
+| `outline_texture` | `path`, `mode?` (`outer`, `inner`), `color?`, `diagonal?`, `rect?`, `frame?` | Outline around drawn pixels; without `color` a selective outline (a darker shade of the colour it borders; close shades merged). |
+| `edit_texture_frames` | `path`, `action` (`add`, `duplicate`, `delete`, `move`), `index`, `to?` | Frames of an animated strip; the .mcmeta frame order follows. |
+| `pack_texture_atlas` | `path`, `textures` [{name, path}], `padding?`, `powerOfTwo?`, `overwrite?` | Packs textures into one sheet; returns each one's rectangle by name. |
+| `slice_texture_atlas` | `path`, `folder`, `grid?` {width, height, prefix}, `rects?`, `overwrite?` | Cuts a sheet into textures by a grid (empty cells skipped) or by named rects. |
+| `check_pixel_art` | `path`, `maxColors?`, `tileable?` | Common mistakes with positions: too many colours, near-duplicate colours, stray pixels, doubled corners, pillow shading, low contrast, half-transparent pixels, tiling seams; animated textures frame by frame. |
 
 ## GUI and overlay layouts (layout editor)
 
 | Tool | Arguments | What it does |
 | --- | --- | --- |
 | `read_gui_layout` | `type` (`gui` or `overlay`), `id` | Widgets, canvas size (overlays 427x240), the player inventory frame of GUIs with slots, grid settings. |
-| `write_gui_layout` | `type`, `id`, `widgets` | Replaces the widgets (format: ELEMENT-TYPES.md "GUI widgets"). Overlays take labels, images and state images only; slot indexes are unique; images (a state image's states too) and procedures must exist. |
+| `write_gui_layout` | `type`, `id`, `widgets` | Replaces the widgets (format: ELEMENT-TYPES.md "GUI widgets"). Overlays take labels, images and state images only; slot indexes are unique; images (a state image's states too) and procedures must exist. `opacity`, `tint` and `tintStrength` (Q273) only on images, image buttons, toggle buttons and state images. |
 | `overlay_layout` | `id`, `screens` (window sizes, optional), `guiScale` (0 auto) | Where an overlay's widgets land on players' screens: the GUI scale the game picks, the screen in canvas pixels, window pixels per canvas pixel, each widget's anchor and top left, flagged `outside` when it reaches past the screen. The overlay's `anchor`, `scaleMode`, `fixedScale` are fields (`update_element`). |
 | `read_tab_order` | `tab` | A mod creative tab's contents in order: elements (`type`, `id`) whose `creativeTabs` name it, titled sections, section ends and spacers; elements not ordered yet come last. |
 | `write_tab_order` | `tab`, `order` | Sets the order (entries `{kind: "element", type, id}`, `{kind: "section", title}`, `{kind: "spacer", slots?}`, `{kind: "end"}`: the rows after it stand outside sections, an end closing no section is dropped); elements must be in the tab, members left out are appended. Sections and section ends start a new row and spacers leave empty slots on 1.16.5; from 1.20 only the order shows. |
 
 The screen settings of a GUI (size, slots, background, triggers) are ordinary fields: `update_element`.
 
+## GUI design (Q272)
+
+Design help on top of the layout tools. `gui_design_guide` is the guidance (config/gui-design-guide.json); `preview_gui` draws without the app, text in an original pixel font with Minecraft-like widths (config/gui-font.json, built by `tools/gui-font.py`).
+
+| Tool | Arguments | What it does |
+| --- | --- | --- |
+| `gui_design_guide` | `topic?` | The workflow and topic list, or the rules of one topic: layout, slots, text, buttons, colour, overlays, art. |
+| `preview_gui` | `type?`, `id`, `scale?`, `numbers?`, `highlight?` | The GUI or overlay as an image, drawn in the generated screen's order (panel, slot frames, player inventory, images, buttons, text fields, checkboxes, labels); overlays on 427x240 with the hotbar, health and hunger area marked. `numbers` tags widgets with their index, `highlight` outlines widgets by index or name. |
+| `check_gui_layout` | `type?`, `id` | Findings with widget indexes: `outside`, `overlap`, `overlaps_inventory`, `text_too_wide`, `text_overlap`, `low_contrast`, `empty_button`, `almost_aligned` (edges 1-2 px apart in one row or column), `slot_pitch`, `tight_margin`, `under_hud`. |
+| `arrange_gui_widgets` | `type?`, `id`, `steps`, `dryRun?` | Steps in order, then saved: `slot_grid` {x, y, rows, columns, firstId?, spacing?}, `align` {widgets, to: left/right/top/bottom/center_x/center_y}, `distribute` {widgets, axis, gap?}, `center` {widgets, axis}, `move` {widgets, dx?, dy?}; widgets by index or name. Returns the positions and the check's findings. |
+| `create_panel_texture` | `path`, `width`, `height`, `style?` (`vanilla`, `inset`, `dark`, `slot`), `overwrite?` | A vanilla-look panel PNG at an exact size for GUI images and backgrounds. |
+
 ## Resources (Resources > Import, File > Export workspace)
 
 | Tool | Arguments | What it does |
 | --- | --- | --- |
-| `list_resources` | - | Sounds, models and structures with the id elements use (`<modid>:<name>` or the model name); models also give their kind (`json`, `obj`, `java`, `bbmodel`) and the element fields using them (`block/ruby_lamp.customModelName`). Assign a model with `update_element` on a `model` field whose `modelKinds` lists that kind; `coverage` shows what each engine generates. |
+| `list_resources` | - | Sounds, models and structures with the id elements use (`<modid>:<name>` or the model name); models also give their kind (`json`, `obj`, `java`, `bbmodel`) and the element fields using them (`block/ruby_lamp.customModelName`). Assign a model with `update_element` on a `model` field whose `modelKinds` lists that kind; `coverage` shows what each engine generates. Every project structure is packed into the mod, and procedures read its blocks one by one with the `structure_*` blocks (`procedure_blocks` with query `structure_`). |
 | `import_resources` | `kind` (`sound`, `model`, `structure`), `files` (absolute) | Copies .ogg / .json .java .obj .mtl / .nbt files; a Blockbench `.bbmodel` becomes a JSON block model with its textures in `textures/block`. |
 | `minecraft_ids` | `kind?`, `query?` | Tools > Minecraft data lists: the game ids the editor knows by kind; without kind the kinds and counts. |
 | `list_common_tags` | - | Tags > Common tags: common tags with the elements of this mod each suggests; add one with `set_tag`. |
@@ -235,7 +269,7 @@ MCEdge projects and is ignored for Gradle mods. Long runs are non-blocking: star
 | Tool | Arguments | What it does |
 | --- | --- | --- |
 | `build` | `engine` | Generates and builds; returns success, the jar and compiler errors or the log tail. The full log is `out/<engine>/build/mcedge-build.log` (`read_file`). |
-| `build_errors` *MCEdge* | `engine`, `warnings?` | The compile errors of the last build, each pointed back at its source: the element whose class it is, for procedures the block (IR path as `read_procedure` gives it, block id and fields), and `fields` whose value is on the failing Java line. A failed `build` returns the same list as `sources`. |
+| `build_errors` *MCEdge* | `engine`, `warnings?` | The compile errors of the last build, each pointed back at its source: the element whose class it is, for procedures the block (IR path as `read_procedure` gives it, block id and fields), and `fields` whose value is on the failing Java line. A failed `build` returns the same list as `sources`. Q246: each error also has `explain` `{ id, params, fix }`: the id of its plain-language explanation (`config/build-explanations.json` maps what the compiler printed to an id; the app shows the texts `buildError.<id>.*` in `config/ui-strings`), the values the rule found (`symbol`, `package`, ...) and the fix hint in English. `failures` lists Gradle's own failures the rules recognise (a dependency that cannot be resolved, no matching Java, out of memory, no network), each as `{ message, explain }`; `build` returns them too. An error no rule knows has no `explain` and only its raw lines, so check `explain` before relying on it. |
 | `export_jar` | MCEdge: `engines`, `folder` (absolute), `pattern?`; Gradle mod: `folder` | File > Export mod jar: builds each engine and copies its jar under the name pattern (`{modid}-{modversion}-{loader}-{mc}.jar`); a Gradle mod is built with its own wrapper and its jar copied. An MCEdge export in which every engine builds is remembered for `changelog`. |
 | `publish_mod` | `engines`, `folder` (absolute), `pattern?`, `platforms` (modrinth, curseforge), `release_type?` (release, beta, alpha), `changelog?`, `dry_run?` | File > Export with publishing (Q238): checks the projects in `mod.publish`, this computer's tokens ($MCEDGE_MODRINTH_TOKEN / $MCEDGE_CURSEFORGE_TOKEN or Preferences) and that `v<version>` is not tagged; exports every engine; each engine's dedicated server must start with the mod; then tags `v<version>` (own git repo only) and uploads each jar as version `<version>+<loader>-<mc>`. A failed step uploads nothing. `dry_run` runs builds and server tests only. |
 | `changelog` | - | The Export dialog's changelog draft (KUYRUK 168): commits since the last export in which every engine built (`.mcedge/last-export.json`), with `since`, `sinceMissing`, `truncated`, `uncommitted` and Markdown `text`. |
@@ -335,6 +369,29 @@ Runs the git CLI on PATH with the user's own config and credentials.
 | `git_revert` | `hash` | A new commit undoing one. |
 | `git_pull` / `git_push` | - | Fast-forward pull; push (sets the upstream on origin the first time). |
 
+## Runs need the app and the user (Q255)
+
+An agent must not start builds or the game behind the user's back. The tools listed in `config/agent-execution.json`
+(`build`, `export_jar`, `publish_mod`, `run_client`, `run_server`, `debug_client`, `gradle_task`, `run_scenario`,
+`tick_profile`, `observe_run`, `clear_gradle_caches`, `server_command`; their descriptions say so) are gated in the
+MCP server before they run. Everything else (reading, editing, git, logs, screenshots) is not.
+
+- **App closed** (no `presence-app.json` heartbeat younger than `presenceFreshSeconds`, or its process is gone): the tool is
+  refused with an error result: `[MCEdge] <tool> was not run. The MCEdge app is not open with this project ...`. Ask the
+  user to open MCEdge with this project, then call the tool again. The refusal is a red entry in the agent timeline.
+- **App open, "Ask me every time"** (Preferences > AI agent runs, the default): the server writes
+  `.mcedge/live/approval-<id>.json` (tool, shortened arguments, client name, session) and waits up to
+  `approvalTimeoutSeconds` for the app's answer (`approval-<id>.answer.json`). The app flashes its taskbar button and
+  shows a dialog with Allow once, Allow for this agent session (this MCP server run, until it ends or the app closes)
+  and Deny. Deny gives `The user denied it ...` (do not retry, ask the user); no answer gives `The user did not answer ...`.
+- **App open, "Allow without asking"**: the tool runs. The app publishes the choice as `agentRuns` in `presence-app.json`.
+- **Unattended runs** (the user wants an agent to work while the app is closed): start the server with
+  `mcedge mcp <project> --allow-headless-runs` or with `MCEDGE_ALLOW_HEADLESS_RUNS=1` in its environment. This is not an app
+  preference, because the app is not running then. With the app open the question is still asked.
+
+`MCEDGE_APPROVAL_TIMEOUT_S` overrides the timeout (tests). `tools/mcp-test/agent-run-gate.ts` and
+`tools/ui-test/agent-run-approval.ts` test the gate and the dialog.
+
 ## Live co-editing
 
 The user in the app and an agent over MCP can change the same project at the same time; there is no approve or
@@ -342,7 +399,7 @@ reject step.
 
 | Tool | Arguments | What it does |
 | --- | --- | --- |
-| `collaborators` | - | What the user has open in the app (`item/ruby`, `resources`, ...) while it runs, the latest agent changes and how many notes of the user wait. |
+| `collaborators` | - | What the user has open in the app (`item/ruby`, `resources`, ...) while it runs, the latest agent changes and how many notes of the user wait. Once the user answered the first-run setup (Q244), `app.level` (`new`, `some`, `java`), `app.mode` (`simple`, `advanced`) and `app.hint`, how to explain things to them (`config/experience.json`). |
 | `begin_step` | `title`, `model?` | Starts a named step of the agent's work; the app groups the following calls under it and can undo it in one click. `model` names the model the agent runs on (`claude-opus-4-5`, `gpt-5-codex`, `gemini-2.5-pro`, `deepseek-chat`); it is kept for the rest of the session and files the session in the app's Agents panel (KUYRUK 195). The result text is unchanged. |
 | `read_notes` | `all?` | Notes the user left for the agent in the app (id, time, text, target such as `item/ruby` or `item/ruby#stackSize`), unacknowledged ones unless `all`. |
 | `ack_note` | `id`, `reply?` | Marks a note handled, with an optional reply the app shows under it. |
@@ -360,13 +417,14 @@ How it works:
   Keep my strokes).
 - Every tool call is logged to `.mcedge/live/activity.jsonl` (time, session, step, tool, target, the fields it worked
   on, the MCP client's name and version from `initialize` as `client` and `clientVersion`, and the model the agent
-  named in `begin_step` as `model`; the last two only when known, older lines lack them) and refreshes `.mcedge/live/presence-agent.json`; the app writes `presence-app.json`. The folder ignores itself
+  named in `begin_step` as `model`; the last two only when known, older lines lack them) and refreshes `.mcedge/live/presence-agent.json`; the app writes `presence-app.json` (also `agentRuns`, see "Runs need the app and the user"). The folder ignores itself
   in git.
 - Agent timeline (KUYRUK 144). Around every changing call the server compares the project files before and after
   (build output, `schemas` and `.mcedge` aside; long runs such as `build` are not compared) and logs a field-level
   diff: for a JSON file the top-level keys with their old and new value, for other files created, changed or deleted.
   The before/after itself goes to `.mcedge/live/changes.jsonl` (files up to 256 KB, a call up to 2 MB, the store keeps
   its newer half past 8 MB; a change beyond that is shown but cannot be undone).
+- Manual path (Q251). For a call that changed something, the timeline and the AI panel's tool row show how to do it by hand (`By hand: Mod elements > ruby > Properties > Max stack size`), in the UI language, built from the tool name, the target and the changed fields by `config/manual-paths.json` (`src/live/manualPath.ts`). A new tool gets a path by adding one rule there; a tool without a rule shows none. Agents need do nothing; they may point the user to the timeline when teaching.
 - Calls form steps: a `begin_step` names one, which lasts until the next `begin_step` or five idle minutes; otherwise a
   step ends when the agent moves from a change to another target or pauses for 30 seconds. One MCP server run is one
   session.

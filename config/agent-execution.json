@@ -1,0 +1,12 @@
+{
+  "$comment": "Q255: what an AI agent may start over MCP while the user is not looking. tools: MCP tools that run Gradle, the game or other heavy processes; they only run while the MCEdge app has the project open and, unless the user chose Allow without asking (Preferences > AI agents), after the user confirmed in the app. Without the app they are refused unless the MCP server was started with the flag or the environment variable below (unattended runs). approvalTimeoutSeconds: how long a call waits for the user's answer (silence refuses). presenceFreshSeconds: the app counts as open this long after its last heartbeat.",
+  "tools": [
+    "build", "export_jar", "publish_mod", "run_client", "run_server", "debug_client", "gradle_task",
+    "run_scenario", "tick_profile", "observe_run", "clear_gradle_caches", "server_command"
+  ],
+  "approvalTimeoutSeconds": 120,
+  "presenceFreshSeconds": 60,
+  "headlessFlag": "--allow-headless-runs",
+  "headlessEnv": "MCEDGE_ALLOW_HEADLESS_RUNS",
+  "timeoutEnv": "MCEDGE_APPROVAL_TIMEOUT_S"
+}

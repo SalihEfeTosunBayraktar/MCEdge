@@ -7,11 +7,11 @@
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect } from "../mcp-test/client.ts";
-import { assert, exampleProject, REPO, run, type App } from "./cdp.ts";
+import { assert, exampleProject, REPO, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
 const project = exampleProject();
-const OUT = "design/model-preview";
+const OUT = evidence("design/model-preview");
 mkdirSync(join(project, "models"), { recursive: true });
 const lamp = JSON.parse(readFileSync(join(REPO, "tools/codegen-test/project/models/ruby_lamp.json"), "utf8"));
 lamp.textures = { 0: "ruby_block", 1: "hellomcedge:ruby", particle: "ruby_block" };

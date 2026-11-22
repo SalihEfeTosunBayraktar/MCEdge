@@ -6,10 +6,10 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run } from "./cdp.ts";
+import { assert, exampleProject, run, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/usability";
+const OUT = evidence("design/usability");
 const project = exampleProject();
 addElement(project, "item", "gem", { name: "Ruby Gem" });
 

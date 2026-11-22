@@ -4,7 +4,7 @@
  * Alt+Up/Down and dragging move a collapsed section with everything in it, and a selection the fold hides goes to its
  * section. Args: theme (dark/light), language (en/tr). Screenshots go to design/163/.
  */
-import { assert, run } from "./cdp.ts";
+import { assert, run, evidence } from "./cdp.ts";
 import { openTab, savedOrder, tabOrderProject, visibleRows, waitSaved } from "./tabOrderFixture.ts";
 
 const theme = (process.argv[2] ?? "dark") as "dark" | "light";
@@ -29,7 +29,7 @@ await run(async (app) => {
   assert((await app.eval<string>(`${row("#Gems")}.textContent`)).includes("4"), "the folded section says how many rows it hides");
   await app.sleep(1200);
   assert(same(savedOrder(project), start), "folding does not change the stored order");
-  await app.shot(`design/163/tab-order-${theme}-${lang}-after.png`);
+  await app.shot(evidence(`design/163/tab-order-${theme}-${lang}-after.png`));
 
   // 2. Down moves the folded section with its four rows past the whole next section.
   await app.eval(`${row("#Gems")}.click()`);

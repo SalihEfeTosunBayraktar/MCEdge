@@ -1,0 +1,6 @@
+@wait 10
+say data-phase-read
+@wait 4
+stop
+@wait 15
+@kill

@@ -1,4 +1,4 @@
-import type { BlockDef } from "../blockTypes.ts";
+import { javaCodeLoaderMatches, type BlockDef } from "../blockTypes.ts";
 import { LOCAL_TYPES, type LocalType, type ValueType } from "../model.ts";
 import { anyIn, body, dropdown, ent, global, list, logic, num, numField, procedure, stmt, textField, txt, value, variable, W } from "./dsl.ts";
 
@@ -34,12 +34,14 @@ const flow: BlockDef[] = [
     code: (c) => `if (true) return ${c.i.value};`,
   })),
   // Java typed by hand or imported from a mod: the procedure's dependencies are parameters by name. It is written
-  // against one Minecraft version's class names, so it generates only there.
+  // against one Minecraft version's class names, so it generates only there. The optional loader limits it to one
+  // mod loader too (NeoForge-only classes would not compile on Fabric); "any", or no value in an older project, means all.
   stmt("java_code", "flow", "both", {
-    fields: [textField("code"), textField("deps"), textField("imports"), dropdown("gen", ["1.16.5", "1.21.5", "26.3"])],
+    fields: [textField("code"), textField("deps"), textField("imports"), dropdown("gen", ["1.16.5", "1.21.5", "26.3"]), dropdown("loader", ["any", "neoforge", "forge", "fabric"])],
     code: (c) => {
       // The compiler reports it as a build warning.
       if (String(c.f.gen) !== c.gen) return `// java_code written for Minecraft ${String(c.f.gen).replace(/[^\w.]/g, "")} is not generated for ${c.gen}`;
+      if (!javaCodeLoaderMatches(c.f.loader, c.loader)) return `// java_code written for ${String(c.f.loader).replace(/[^\w.]/g, "")} is not generated for ${c.loader}`;
       for (const name of String(c.f.imports ?? "").split(/\s+/)) if (name) c.imports.qualified(name);
       // "if (true)" keeps javac's reachability rules happy when the code ends with a return.
       return `if (true) {\n${String(c.f.code ?? "")}\n}`;
@@ -95,6 +97,13 @@ const logicBlocks: BlockDef[] = [
   value("compare_itemstacks", "logic", "both", "logic", {
     inputs: [{ name: "a", type: "itemstack" }, { name: "b", type: "itemstack" }],
     code: { "1.16.5": (c) => `${c.i.a}.sameItem(${c.i.b})`, modern: (c) => `${c.j.ItemStack}.isSameItem(${c.i.a}, ${c.i.b})` },
+  }),
+  value("compare_itemstacks_full", "logic", "both", "logic", {
+    inputs: [{ name: "a", type: "itemstack" }, { name: "b", type: "itemstack" }],
+    code: {
+      "1.16.5": (c) => `(${c.i.a}.sameItem(${c.i.b}) && ${c.j.ItemStack}.tagMatches(${c.i.a}, ${c.i.b}))`,
+      modern: (c) => `${c.j.ItemStack}.isSameItemSameComponents(${c.i.a}, ${c.i.b})`,
+    },
   }),
   value("compare_item_types", "logic", "both", "logic", { inputs: [{ name: "a", type: "itemstack" }, { name: "b", type: "itemstack" }], code: (c) => `${c.i.a}.getItem() == ${c.i.b}.getItem()` }),
   value("compare_blockstates", "logic", "both", "logic", {

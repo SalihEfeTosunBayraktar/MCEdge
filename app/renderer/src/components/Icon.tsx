@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { pixelRects } from "./pixel.tsx";
 
 /** One-color 8x8 pixel glyphs drawn in currentColor (Workbench identity). */
@@ -93,13 +94,19 @@ const GLYPHS = {
 
 export type IconName = keyof typeof GLYPHS;
 
-export function Icon({ name, size = 16 }: { name: IconName; size?: number }) {
+/** The rects of each glyph, built once (an icon is rendered hundreds of times per screen). */
+const glyphRects = new Map<IconName, React.ReactNode[]>();
+
+/** Memoised: a parent re-rendering with the same name and size leaves the icon alone (Q280). */
+export const Icon = memo(function Icon({ name, size = 16 }: { name: IconName; size?: number }) {
+  let rects = glyphRects.get(name);
+  if (!rects) glyphRects.set(name, (rects = pixelRects(GLYPHS[name], () => "currentColor")));
   return (
     <svg className="ico" width={size} height={size} viewBox="0 0 8 8" shapeRendering="crispEdges" aria-hidden="true">
-      {pixelRects(GLYPHS[name], () => "currentColor")}
+      {rects}
     </svg>
   );
-}
+});
 
 /**
  * Marks of the agents in the Agents panel (KUYRUK 195): 12x12 one-color glyphs drawn for MCEdge in the icon style, a

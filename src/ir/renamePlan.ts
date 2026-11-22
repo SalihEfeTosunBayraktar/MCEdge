@@ -56,7 +56,7 @@ export function texturePaths(type: ElementType | undefined, element: Element): s
         for (const v of Object.values(value)) if (typeof v === "string" && v) found.push(v);
       } else if (field.type === "gui_layout" && Array.isArray(value)) {
         for (const w of value as Record<string, unknown>[]) {
-          for (const key of ["image", "hoverImage", "onImage", "onHoverImage"]) if (typeof w?.[key] === "string" && w[key]) found.push(w[key] as string);
+          for (const key of ["image", "hoverImage", "onImage", "onHoverImage", "pressedImage", "onPressedImage"]) if (typeof w?.[key] === "string" && w[key]) found.push(w[key] as string);
           // A state image's states (KUYRUK 186).
           if (Array.isArray(w?.states)) for (const s of w.states as Record<string, unknown>[]) if (typeof s?.image === "string" && s.image) found.push(s.image);
         }
@@ -130,7 +130,7 @@ export function planRename(input: ProjectScanInput, target: ElementRef, newId: s
         }
         else if (field.type === "gui_layout" && Array.isArray(values[field.key])) for (const w of values[field.key] as Record<string, unknown>[]) {
           if (w && "image" in w) w.image = retexture(w.image);
-          for (const key of ["hoverImage", "onImage", "onHoverImage"]) if (w && key in w) w[key] = retexture(w[key]);
+          for (const key of ["hoverImage", "onImage", "onHoverImage", "pressedImage", "onPressedImage"]) if (w && key in w) w[key] = retexture(w[key]);
           if (Array.isArray(w?.states)) for (const s of w.states as Record<string, unknown>[]) if (s && "image" in s) s.image = retexture(s.image);
         }
       }

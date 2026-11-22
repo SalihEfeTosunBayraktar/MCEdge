@@ -4,10 +4,10 @@
  * procedure has Open procedure in its right-click menu, and Back returns to the caller; Ctrl+F focuses the block
  * search. Screenshots go to design/usability/.
  */
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/usability";
+const OUT = evidence("design/usability");
 const project = exampleProject();
 addElement(project, "procedure", "helper");
 addElement(project, "procedure", "main", {

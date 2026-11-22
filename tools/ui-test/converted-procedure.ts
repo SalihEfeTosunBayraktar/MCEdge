@@ -4,7 +4,7 @@
  */
 import { readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { assert, copyProject, run } from "./cdp.ts";
+import { assert, copyProject, run, evidence } from "./cdp.ts";
 
 const project = copyProject("C:/MyProjects/AI-Assisted/ETREconomy-MCEdge", "etr");
 const dir = join(project, "elements/procedures");
@@ -15,10 +15,11 @@ console.log("largest", largest.slice(0, 3));
 await run(async (app) => {
   await app.click(".rtab", "Mod elements");
   await app.waitFor(`document.querySelector(".tile")`, 20000);
-  for (const id of ["jobselect1", "playermoneyshow_value"]) {
+  // The project changes, so the two largest procedures are opened rather than two named ones.
+  for (const id of largest.slice(0, 2).map((f) => f.id)) {
     await app.eval(`(() => { const i = document.querySelector(".view input"); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(i, ${JSON.stringify(id)}); i.dispatchEvent(new Event("input", { bubbles: true })); })()`);
-    await app.waitFor(`document.querySelectorAll(".tile").length === 1`, 8000);
-    await app.eval(`document.getElementById("target")?.removeAttribute("id"); document.querySelector(".tile").setAttribute("id", "target")`);
+    await app.waitFor(`document.querySelectorAll(".tile").length >= 1`, 8000);
+    await app.eval(`document.getElementById("target")?.removeAttribute("id"); ([...document.querySelectorAll(".tile")].find((t) => t.textContent.trim() === ${JSON.stringify(id)}) ?? document.querySelector(".tile")).setAttribute("id", "target")`);
     const started = Date.now();
     await app.click("#target", undefined, { double: true });
     await app.waitFor(`document.querySelectorAll(".blocklyDraggable, .blocklyBlockCanvas g").length > 3`, 90000);
@@ -29,7 +30,7 @@ await run(async (app) => {
     console.log(id, "opened in", ms, "ms");
     assert(count > 1, `${id} shows blocks`);
     assert(!unknown, `${id} has no unknown block`);
-    await app.shot(`design/folders/procedure-${id}.png`);
+    await app.shot(evidence(`design/folders/procedure-${id}.png`));
     await app.key("Escape");
     await app.click(".rtab", "Mod elements");
     await app.sleep(600);

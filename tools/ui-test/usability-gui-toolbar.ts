@@ -3,10 +3,10 @@
  * Turkish at 1280 px, and the X, Y column of the widget list stays on one line for 3-digit values. Screenshots go to
  * design/usability/.
  */
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/usability";
+const OUT = evidence("design/usability");
 const project = exampleProject();
 addElement(project, "gui", "shop", {
   type: 1, width: 256, height: 220, layers: [{ name: "Background" }, { name: "Foreground items" }],

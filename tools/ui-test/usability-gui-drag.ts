@@ -5,10 +5,10 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/usability";
+const OUT = evidence("design/usability");
 const project = exampleProject();
 addElement(project, "gui", "shop", { type: 1, width: 176, height: 166 });
 const saved = () => JSON.parse(readFileSync(join(project, "elements/guis/shop.json"), "utf8")).components as Record<string, number | string>[];

@@ -7,9 +7,9 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, REPO, run } from "./cdp.ts";
+import { assert, REPO, run, evidence } from "./cdp.ts";
 
-const OUT = "design/242";
+const OUT = evidence("design/242");
 for (const lang of ["en", "tr"]) {
   const strings = JSON.parse(readFileSync(join(REPO, "config", "ui-strings", `${lang}.json`), "utf8")) as Record<string, string>;
   for (const theme of ["dark", "light"] as const) {
@@ -32,15 +32,15 @@ for (const lang of ["en", "tr"]) {
       await app.waitFor(`document.querySelector("[data-testid=pref-ai-model]")`);
 
       // Everything open: the dialog stays in the window and the wheel scrolls the sections.
-      const fit = await app.eval<{ bottom: number; height: number; scroll: number; client: number }>(`(() => { const d = document.querySelector(".prefsdialog").getBoundingClientRect(); const f = document.querySelector(".prefsdialog > .form"); return { bottom: d.bottom, height: innerHeight, scroll: f.scrollHeight, client: f.clientHeight }; })()`);
+      const fit = await app.eval<{ bottom: number; height: number; scroll: number; client: number }>(`(() => { const d = document.querySelector(".prefsdialog").getBoundingClientRect(); const f = document.querySelector(".prefsdialog .prefsbody > .form"); return { bottom: d.bottom, height: innerHeight, scroll: f.scrollHeight, client: f.clientHeight }; })()`);
       assert(fit.bottom <= fit.height, `the dialog stays in the window: ${JSON.stringify(fit)}`);
       assert(fit.scroll > fit.client, `the sections are taller than the dialog here: ${JSON.stringify(fit)}`);
-      const box = await app.eval<{ x: number; y: number }>(`(() => { const r = document.querySelector(".prefsdialog > .form").getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()`);
+      const box = await app.eval<{ x: number; y: number }>(`(() => { const r = document.querySelector(".prefsdialog .prefsbody > .form").getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()`);
       for (let i = 0; i < 12; i++) await app.wheel(box.x, box.y, 240);
       await app.sleep(300);
-      const top = await app.eval<number>(`document.querySelector(".prefsdialog > .form").scrollTop`);
+      const top = await app.eval<number>(`document.querySelector(".prefsdialog .prefsbody > .form").scrollTop`);
       assert(top > 0, `the wheel scrolled the sections: ${top}`);
-      const updates = await app.eval<boolean>(`(() => { const b = document.querySelector("[data-testid=pref-auto-update]").getBoundingClientRect(); const f = document.querySelector(".prefsdialog > .form").getBoundingClientRect(); return b.top >= f.top && b.bottom <= f.bottom; })()`);
+      const updates = await app.eval<boolean>(`(() => { const b = document.querySelector("[data-testid=pref-auto-update]").getBoundingClientRect(); const f = document.querySelector(".prefsdialog .prefsbody > .form").getBoundingClientRect(); return b.top >= f.top && b.bottom <= f.bottom; })()`);
       assert(updates, "Updates is reachable by scrolling");
       await app.shot(`${OUT}/scrolled-${lang}-${theme}.png`);
     }, { language: lang, theme, width: 1280, height: 720 });

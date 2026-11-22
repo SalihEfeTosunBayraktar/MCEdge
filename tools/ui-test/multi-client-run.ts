@@ -6,7 +6,7 @@
  *   node tools/ui-test/multi-client-run.ts
  */
 import { existsSync } from "node:fs";
-import { assert, exampleProject, run } from "./cdp.ts";
+import { assert, exampleProject, run, evidence } from "./cdp.ts";
 
 if (existsSync("C:/BrainOS/.ingame")) throw new Error("game mode is on (C:/BrainOS/.ingame)");
 const btn = (id: string) => `document.querySelector('[data-testid="${id}"]')`;
@@ -36,7 +36,7 @@ await run(async (app) => {
   await waitUser(`${engineId} client Dev2`, "Dev2");
   await app.sleep(10_000);
   await app.click(".engines .eng", `${engineId} client Dev2`);
-  await app.shot("design/190/app-two-clients-dark.png");
+  await app.shot(evidence("design/190/app-two-clients-dark.png"));
 
   await app.click(`.engines li:has([aria-label$="client Dev2"]) [data-testid="run-stop"]`);
   for (let i = 0; i < 60 && !(await events()).some((e) => e.engineId === `${engineId} client Dev2` && e.type === "done"); i++) await app.sleep(1000);

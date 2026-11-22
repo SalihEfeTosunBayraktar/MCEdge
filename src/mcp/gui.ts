@@ -24,6 +24,8 @@ const widget = z.object({
   hoverImage: z.string().optional().describe("image_button: project PNG of the hover state; set it for new buttons (two files, like MCreator). toggle_button: off with the mouse over it"),
   onImage: z.string().optional().describe("toggle_button: project PNG of the on state (default: image)"),
   onHoverImage: z.string().optional().describe("toggle_button: project PNG of on with the mouse over it (default: onImage)"),
+  pressedImage: z.string().optional().describe("image_button, toggle_button (off state) (Q275): project PNG shown for about 120 ms after a click, as click feedback; 1.21.5 and 26.3 only (1.16.5 ignores it). The hover look shows only under the mouse or with keyboard focus, not after a click"),
+  onPressedImage: z.string().optional().describe("toggle_button: project PNG shown for about 120 ms after a click while on (default: pressedImage)"),
   stateProcedure: z.string().optional().describe("toggle_button: logic procedure read every frame on the client; the button is on (draws onImage / onHoverImage) while it is true. The click procedure usually flips what it reads. "
     + "state_image: number procedure read on the client that picks the state shown (see stateValue); without it the first state whose condition holds"),
   states: z.array(z.object({
@@ -37,6 +39,7 @@ const widget = z.object({
   animationStart: z.enum(["open", "always", "procedure"]).optional().describe("image in a GUI (Q229): when an animated image's animation starts: open (default, when the screen opens), always (the game clock) or procedure (the gui_image_restart block; the first frame until then). It plays in the texture's playback mode (set_texture_animation mode)"),
   previewState: z.number().int().min(0).optional().describe("state_image, editor only: the state the canvas shows"),
   id: z.number().int().min(0).optional().describe("slot index"), output: z.boolean().optional(), limit: z.string().optional().describe("slot: only this item"),
+  allowed: z.array(z.object({ item: z.string().min(1).describe("item id, or #tag for an item tag (#forge:battery is #c:battery on 1.21+)") }).strict()).optional().describe("slot (Q257): place filter: items and #tags the slot accepts (with limit, any of them matches; none: anything). It combines with locked/lockCondition (a locked slot takes nothing; an unlocked one only what matches) and shift click only moves a stack into a slot that accepts it"),
   locked: z.boolean().optional().describe("slot: no placing or taking"), lockCondition: z.string().optional().describe("slot: logic procedure, locked while it is true"),
   keepOnClose: z.boolean().optional().describe("slot: an unbound GUI does not give this item back when it closes (display slots)"),
   layer: z.string().optional().describe("editor layer name (see layers); none or unknown means the first layer"),
@@ -50,6 +53,9 @@ const widget = z.object({
   backgroundOpacity: z.number().int().min(0).max(100).optional().describe("label: the background's opacity in percent (default 50)"),
   align: z.enum(["left", "center", "right"]).optional().describe("label: x is the text's left edge (default), centre or right edge; the generated screen measures the text every frame, so a changing text keeps that point"),
   backgroundPadding: z.number().int().min(0).max(8).optional().describe("label: pixels of background around the text (default 1)"),
+  opacity: z.number().int().min(0).max(100).optional().describe("image, image_button, toggle_button, state_image (Q273): opacity of the image's visible pixels in percent (default 100); empty pixels stay empty. Baked into the generated texture"),
+  tint: z.string().regex(/^(#[0-9a-fA-F]{6})?$/).optional().describe("same widgets: colour filter \"#rrggbb\" (\"\" none) multiplied into the visible pixels only, so shading stays and empty pixels stay empty; white changes nothing"),
+  tintStrength: z.number().int().min(0).max(100).optional().describe("same widgets: how strongly tint applies in percent (default 100; 0 none)"),
   anchor: z.union([z.enum(ANCHORS), z.literal("")]).optional().describe("overlay label, image: the screen point the widget keeps its distance to when the screen is not 427x240 (its distance to the same canvas point); leave out (or \"\") to use the overlay's `anchor` field (default center)"),
 }).strict();
 
@@ -100,9 +106,12 @@ export function registerGuiTools(server: McpServer, root: string, guard: Guard):
         if (type === "gui" && w.anchor) problems.push(`${i}: anchor is for overlay widgets only`);
         if (w.kind !== "label" && (w.background || w.backgroundOpacity !== undefined || w.backgroundPadding !== undefined)) problems.push(`${i}: background is for labels only`);
         if (w.kind !== "label" && w.align) problems.push(`${i}: align is for labels only`);
+        if ((w.opacity !== undefined || w.tint || w.tintStrength !== undefined) && !["image", "image_button", "toggle_button", "state_image"].includes(w.kind)) problems.push(`${i}: opacity, tint and tintStrength are for images, image buttons, toggle buttons and state images only`);
         if ((w.kind === "image" || w.kind === "image_button") && (!w.image || !existsSync(join(root, w.image)))) problems.push(`${i}: image "${w.image ?? ""}" not in the project`);
         if (w.hoverImage && w.kind !== "image_button" && w.kind !== "toggle_button") problems.push(`${i}: hoverImage is for image_button and toggle_button only`);
         if ((w.onImage || w.onHoverImage) && w.kind !== "toggle_button") problems.push(`${i}: onImage and onHoverImage are for toggle_button only`);
+        if (w.pressedImage && w.kind !== "image_button" && w.kind !== "toggle_button") problems.push(`${i}: pressedImage is for image_button and toggle_button only`);
+        if (w.onPressedImage && w.kind !== "toggle_button") problems.push(`${i}: onPressedImage is for toggle_button only`);
         if (w.stateProcedure && w.kind !== "toggle_button" && w.kind !== "state_image") problems.push(`${i}: stateProcedure is for toggle_button and state_image only`);
         if ((w.states || w.stateValue || w.updateTicks !== undefined || w.restartAnimation !== undefined || w.previewState !== undefined) && w.kind !== "state_image") problems.push(`${i}: states, stateValue, updateTicks, restartAnimation and previewState are for state_image only`);
         if (w.animationStart && w.kind !== "image") problems.push(`${i}: animationStart is for image only`);
@@ -112,8 +121,10 @@ export function registerGuiTools(server: McpServer, root: string, guard: Guard):
           if (s.condition && !procedures.has(s.condition)) problems.push(`${i}: state ${k}: no procedure "${s.condition}"`);
         });
         if (w.kind === "toggle_button" && (!w.image || !existsSync(join(root, w.image)))) problems.push(`${i}: image "${w.image ?? ""}" not in the project`);
-        for (const key of ["hoverImage", "onImage", "onHoverImage"] as const) if (w[key] && !existsSync(join(root, w[key]))) problems.push(`${i}: ${key} "${w[key]}" not in the project`);
+        for (const key of ["hoverImage", "onImage", "onHoverImage", "pressedImage", "onPressedImage"] as const) if (w[key] && !existsSync(join(root, w[key]))) problems.push(`${i}: ${key} "${w[key]}" not in the project`);
         for (const key of ["procedure", "textProcedure", "condition", "lockCondition", "stateProcedure"] as const) if (w[key] && !procedures.has(w[key])) problems.push(`${i}: no procedure "${w[key]}"`);
+        if (w.allowed && w.kind !== "slot") problems.push(`${i}: allowed is for slot only`);
+        (w.allowed ?? []).forEach((r, k) => { if (!/^#?[a-z0-9_.-]+(:[a-z0-9_./-]+)?$/.test(r.item)) problems.push(`${i}: allowed ${k}: "${r.item}" is not an item id or #tag`); });
         if (w.kind === "slot") {
           const slot = w.id ?? 0;
           if (slots.has(slot)) problems.push(`${i}: slot index ${slot} used twice`);

@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { GitBranch, GitFile, GitLogCommit, GitStatus } from "../../../shared/api.ts";
 import { api } from "../api.ts";
 import { Icon } from "../components/Icon.tsx";
-import { ActionBar, ActionButton, DataTable, Dialog, FindBar, FormGroup, FormRow, PanelEmpty, Separator, SidePanel } from "../components/ui.tsx";
+import { ActionButton, DataTable, Dialog, FindBar, FormGroup, FormRow, SidePanel, TabList } from "../components/ui.tsx";
+import { EmptyState, TabsRow } from "../dock/Dock.tsx";
 import { language, t } from "../strings.ts";
 import { layoutGraph, parseRefs, type GraphEdge, type GraphRow } from "./graph.ts";
 
@@ -107,8 +108,11 @@ export function GitView({ dir, onFilesChanged }: Props) {
     return (
       <section className="view">
         <FindBar query="" onQuery={() => undefined} placeholder={t("git.search")} disabled />
-        <ActionBar><ActionButton icon="plus" label={t("git.init")} tone="primary" onClick={() => act(() => api.gitInit(dir))} /></ActionBar>
-        <div className="scrollarea"><PanelEmpty text={t("git.noRepo")} /></div>
+        <div className="scrollarea">
+          <EmptyState icon="branch" text={t("git.notRepo")} hint={t("git.noRepo")}>
+            <ActionButton icon="plus" label={t("git.init")} tone="primary" onClick={() => act(() => api.gitInit(dir))} />
+          </EmptyState>
+        </div>
       </section>
     );
   }
@@ -123,22 +127,23 @@ export function GitView({ dir, onFilesChanged }: Props) {
   return (
     <section className="view gitview">
       <FindBar query={query} onQuery={setQuery} placeholder={t("git.search")}
-        meta={t("git.meta", { branch: status.branch, upstream: status.upstream ?? t("git.noUpstream"), ahead: status.ahead, behind: status.behind })} />
-      <ActionBar>
-        <ActionButton icon="down" label={t("git.pull")} disabled={busy || !status.remotes.length} onClick={() => act(() => api.gitPull(dir), true)} />
-        <ActionButton icon="up" label={t("git.push")} disabled={busy || !status.remotes.length} onClick={() => act(() => api.gitPush(dir))} />
-        <Separator />
-        <ActionButton icon="tidy" label={t("git.refresh")} disabled={busy} onClick={() => void refresh()} />
-      </ActionBar>
-      {/* Sub-tabs under the toolbar, as in Resources (KUYRUK 120). */}
-      <div className="langtabs pagetabs" role="tablist">
+        meta={t("git.meta", { branch: status.branch, upstream: status.upstream ?? t("git.noUpstream"), ahead: status.ahead, behind: status.behind })}
+        actions={<>
+          <ActionButton icon="down" label={t("git.pull")} disabled={busy || !status.remotes.length} onClick={() => act(() => api.gitPull(dir), true)} />
+          <ActionButton icon="up" label={t("git.push")} disabled={busy || !status.remotes.length} onClick={() => act(() => api.gitPush(dir))} />
+          <ActionButton icon="tidy" label={t("git.refresh")} disabled={busy} onClick={() => void refresh()} />
+        </>} />
+      {/* Sub-tabs under the bar, as in Resources (KUYRUK 120). */}
+      <TabsRow tabs={
+              <TabList className="langtabs pagetabs" label={t("git.tabs")}>
         <button role="tab" aria-selected={tab === "changes"} className={`ltab ${tab === "changes" ? "on" : ""}`} onClick={() => setTab("changes")}>
           {t("git.changes")}<span className="lpct">{status.files.length}</span>
         </button>
         <button role="tab" aria-selected={tab === "history"} className={`ltab ${tab === "history" ? "on" : ""}`} onClick={() => setTab("history")}>
           {t("git.history")}<span className="lpct">{log.length}</span>
         </button>
-      </div>
+      </TabList>
+      } />
       {output && <p className={`notice gitout ${output.ok ? "" : "bad"}`}>{output.text}</p>}
       <div className="split">
         <div className="gitmain">

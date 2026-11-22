@@ -1,6 +1,7 @@
 import type { Element, FieldDef } from "../../../../src/elements/model.ts";
 import { t, type StringKey } from "../strings.ts";
 import { ANCHORS } from "../../../../src/elements/overlayLayout.ts";
+import { textWidth as pixelTextWidth } from "../../../../src/elements/pixelFont.ts";
 
 /**
  * Widgets of a gui_layout value (docs/ELEMENT-TYPES.md "GUI widgets"), positions relative to the GUI's top left
@@ -25,6 +26,9 @@ export interface Widget {
   /** toggle_button: the on state's textures, plain and under the mouse; `stateProcedure` says on or off. */
   onImage?: string;
   onHoverImage?: string;
+  /** image_button, toggle_button (Q275): shown briefly after a click (toggle: off, and on with onPressedImage). */
+  pressedImage?: string;
+  onPressedImage?: string;
   /** toggle_button: logic, on while true. state_image (KUYRUK 186): number, the state shown (`stateValue`: its index or a percentage). */
   stateProcedure?: string;
   /** state_image: its states, each a picture (a still frame of a strip with `frame`) with an optional condition. */
@@ -70,6 +74,10 @@ export interface Widget {
   backgroundPadding?: number;
   /** label (KUYRUK 183): x is the text's left edge (default), centre or right edge. */
   align?: string;
+  /** image, image_button, toggle_button, state_image (Q273): opacity 0-100 and a multiplied tint colour with its strength 0-100, on visible pixels only. */
+  opacity?: number;
+  tint?: string;
+  tintStrength?: number;
 }
 
 /** One state of a state_image (the generator's ImageState, src/generator/types/gui.ts). */
@@ -115,7 +123,8 @@ const DEFAULT_SIZE: Partial<Record<WidgetKind, { w: number; h: number }>> = {
 };
 
 /** Minecraft's font: about 6 px per character and 9 px per line at GUI scale 1. */
-export const textWidth = (text: string) => Math.max(6, [...text].length * 6);
+// Q276: the preview pixel font's widths (Minecraft-like), as the game measures text; an empty text keeps a grip.
+export const textWidth = (text: string) => Math.max(6, pixelTextWidth(text));
 
 /** Text size of a label or button: 1 unless 0.25 to 8 is set (the generator's rule, src/generator/types/gui.ts). */
 export function textScaleOf(w: Widget): number {
@@ -171,7 +180,8 @@ export function widgetBox(w: Widget, imageSize?: { w: number; h: number }): { x:
       return { x: w.align === "center" ? x - Math.floor(tw / 2) : w.align === "right" ? x - tw : x, y, w: tw, h: Math.round(9 * textScaleOf(w)) };
     }
     case "checkbox":
-      return { x, y, w: 24 + textWidth(w.text ?? ""), h: 20 };
+      // 1.21+: a 17 x 17 box, the text 4 pixels to its right.
+      return { x, y, w: 21 + textWidth(w.text ?? ""), h: 17 };
     case "image":
       return { x, y, w: num(w.width, imageSize?.w ?? 16), h: num(w.height, imageSize?.h ?? 16) };
     default: {
@@ -324,6 +334,10 @@ export function widgetFields(kind: WidgetKind, overlay: boolean): FieldDef[] {
   const condition = f("condition", "procedure", "gui.field.condition", { help: t("gui.field.conditionHelp"), ...deps });
   const z = f("z", "integer", "gui.field.z", { step: 1, min: -99, max: 99, help: t(overlay ? "gui.field.zHelpOverlay" : "gui.field.zHelp") });
   // Overlays only (KUYRUK 170): unset follows the overlay's anchor.
+  // Q273: an image's opacity and colour filter, applied to its visible pixels only.
+  const look = [f("opacity", "integer", "gui.field.opacity", { min: 0, max: 100, step: 5, help: t("gui.field.opacityHelp") }),
+    f("tint", "color", "gui.field.tint", { help: t("gui.field.tintHelp") }),
+    f("tintStrength", "integer", "gui.field.tintStrength", { min: 0, max: 100, step: 5, help: t("gui.field.tintStrengthHelp") })];
   const anchor = overlay ? [f("anchor", "select", "gui.field.anchor", { help: t("gui.field.anchorHelp"), default: "",
     options: [{ value: "", label: t("gui.anchor.overlay") }, ...ANCHORS.map((a) => ({ value: a, label: t(`gui.anchor.${a}`) }))] })] : [];
   switch (kind) {
@@ -341,13 +355,16 @@ export function widgetFields(kind: WidgetKind, overlay: boolean): FieldDef[] {
         f("procedure", "procedure", "gui.field.procedure", { help: t("gui.field.procedureHelp"), ...deps }), condition];
     case "image_button":
       return [name, f("image", "texture", "gui.field.normalImage", { help: t("gui.field.imageButtonHelp") }),
-        f("hoverImage", "texture", "gui.field.hoverImage", { help: t("gui.field.hoverImageHelp") }), ...pos, ...size,
+        f("hoverImage", "texture", "gui.field.hoverImage", { help: t("gui.field.hoverImageHelp") }),
+        f("pressedImage", "texture", "gui.field.pressedImage", { help: t("gui.field.pressedImageHelp") }), ...look, ...pos, ...size,
         f("procedure", "procedure", "gui.field.procedure", { help: t("gui.field.procedureHelp"), ...deps }), condition];
     case "toggle_button":
       return [name, f("image", "texture", "gui.field.offImage", { help: t("gui.field.offImageHelp") }),
         f("hoverImage", "texture", "gui.field.offHoverImage", { help: t("gui.field.offHoverImageHelp") }),
         f("onImage", "texture", "gui.field.onImage", { help: t("gui.field.onImageHelp") }),
         f("onHoverImage", "texture", "gui.field.onHoverImage", { help: t("gui.field.onHoverImageHelp") }),
+        f("pressedImage", "texture", "gui.field.offPressedImage", { help: t("gui.field.pressedImageHelp") }),
+        f("onPressedImage", "texture", "gui.field.onPressedImage", { help: t("gui.field.onPressedImageHelp") }), ...look,
         f("stateProcedure", "procedure", "gui.field.stateProcedure", { help: t("gui.field.stateProcedureHelp"), ...deps }), ...pos, ...size,
         f("procedure", "procedure", "gui.field.procedure", { help: t("gui.field.toggleProcedureHelp"), ...deps }), condition];
     case "text_field":
@@ -356,7 +373,7 @@ export function widgetFields(kind: WidgetKind, overlay: boolean): FieldDef[] {
       return [name, f("text", "text", "gui.field.text"), f("checked", "boolean", "gui.field.checked"), ...pos];
     case "image":
       // Q229: when an animated image starts; overlays have no opening, so they keep the game clock or a procedure.
-      return [name, f("image", "texture", "gui.field.image"), ...pos, ...anchor, ...size.map((s) => ({ ...s, help: t("gui.field.imageSizeHelp") })), z, condition,
+      return [name, f("image", "texture", "gui.field.image"), ...look, ...pos, ...anchor, ...size.map((s) => ({ ...s, help: t("gui.field.imageSizeHelp") })), z, condition,
         ...(overlay ? [] : [f("animationStart", "select", "gui.field.animationStart", { help: t("gui.field.animationStartHelp"), default: "open",
           options: (["open", "always", "procedure"] as const).map((v) => ({ value: v, label: t(`gui.animationStart.${v}`) })) })])];
     case "state_image":
@@ -372,11 +389,14 @@ export function widgetFields(kind: WidgetKind, overlay: boolean): FieldDef[] {
           options: (["index", "percent"] as const).map((v) => ({ value: v, label: t(`gui.stateValue.${v}`) })) }),
         f("updateTicks", "integer", "gui.field.updateTicks", { min: 0, max: 1200, step: 1, help: t("gui.field.updateTicksHelp") }),
         f("restartAnimation", "boolean", "gui.field.restartAnimation", { help: t("gui.field.restartAnimationHelp") }),
-        ...pos, ...anchor, ...size, z, condition];
+        ...look, ...pos, ...anchor, ...size, z, condition];
     case "slot":
       return [f("id", "integer", "gui.field.slotId", { min: 0, step: 1, help: t("gui.field.slotIdHelp") }), ...pos,
         f("output", "boolean", "gui.field.output", { help: t("gui.field.outputHelp") }),
         f("limit", "item", "gui.field.limit", { help: t("gui.field.limitHelp") }),
+        f("allowed", "list", "gui.field.allowed", { help: t("gui.field.allowedHelp"), fields: [
+          f("item", "item", "gui.field.allowedItem", { allowTags: true }),
+        ] }),
         f("locked", "boolean", "gui.field.locked", { help: t("gui.field.lockedHelp") }),
         f("lockCondition", "procedure", "gui.field.lockCondition", { help: t("gui.field.lockConditionHelp"), ...deps }),
         f("keepOnClose", "boolean", "gui.field.keepOnClose", { help: t("gui.field.keepOnCloseHelp") })];

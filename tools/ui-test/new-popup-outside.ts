@@ -5,7 +5,7 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, REPO, run, type App } from "./cdp.ts";
+import { assert, exampleProject, REPO, run, type App, evidence } from "./cdp.ts";
 
 const lang = (process.argv[2] ?? "en") as "en" | "tr";
 const theme = (process.argv[3] ?? "dark") as "dark" | "light";
@@ -19,13 +19,13 @@ await run(async (app) => {
 
   await clickNew(app);
   await app.waitFor(`!!document.querySelector(".addpop")`);
-  await app.shot(`design/231/open-${lang}-${theme}.png`);
+  await app.shot(evidence(`design/231/open-${lang}-${theme}.png`));
   await app.click(".addpop .popsearch input");
   await app.click(".addpop .pophead");
   assert(await open(app), "clicks inside the popup keep it open");
   await app.click(".wsname");
   assert(!(await open(app)), "a click outside closes the type list");
-  await app.shot(`design/231/closed-${lang}-${theme}.png`);
+  await app.shot(evidence(`design/231/closed-${lang}-${theme}.png`));
 
   await clickNew(app);
   assert(await open(app), "New opens it again");

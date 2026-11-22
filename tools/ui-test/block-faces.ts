@@ -6,10 +6,10 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/187";
+const OUT = evidence("design/187");
 const project = exampleProject();
 addElement(project, "block", "cube_demo", { name: "Ruby Cube", texture: "textures/ruby_block.png", textureTop: "textures/ruby_apple.png" });
 addElement(project, "block", "slab_demo", { name: "Ruby Slab", blockBase: "Slab", texture: "textures/ruby_block.png" });

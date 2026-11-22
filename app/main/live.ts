@@ -1,10 +1,12 @@
-import { ipcMain } from "electron";
+import { BrowserWindow, ipcMain } from "electron";
 import { readActivity, readPresence, writePresence } from "../../src/live/activity.ts";
+import { answerApproval, pendingApprovals, type ApprovalChoice } from "../../src/live/approval.ts";
 import { addNote, deleteNote, readNotes } from "../../src/live/notes.ts";
 import { createTask, deleteTask, listTasks, reviewTask, type TaskSource } from "../../src/live/tasks.ts";
 import { readShow } from "../../src/live/show.ts";
 import { undoCalls } from "../../src/live/timeline.ts";
 import type { LiveState } from "../shared/api.ts";
+import { readAppState } from "./appState.ts";
 
 /** Calls the agent timeline shows (older ones stay in activity.jsonl until it is trimmed). */
 const TIMELINE_CALLS = 800;
@@ -13,7 +15,18 @@ const TIMELINE_CALLS = 800;
 export function registerLive(): void {
   ipcMain.handle("live:state", (_e, dir: string): LiveState => ({ entries: readActivity(dir, TIMELINE_CALLS), agent: readPresence(dir, "agent"), notes: readNotes(dir), show: readShow(dir) }));
   ipcMain.handle("live:presence", (_e, dir: string, open: string, shown?: { id: string; error?: string }) =>
-    writePresence(dir, { who: "app", at: new Date().toISOString(), open, pid: process.pid, ...(shown ? { shown } : {}) }));
+    {
+    const { level, mode, agentRuns } = readAppState().preferences ?? {};
+    writePresence(dir, { who: "app", at: new Date().toISOString(), open, pid: process.pid, ...(shown ? { shown } : {}), ...(level ? { level, mode: mode ?? "advanced" } : {}),
+      agentRuns: agentRuns === "allow" ? "allow" : "ask" });
+  });
+  // Agent runs that wait for the user (Q255): the app shows a dialog per request and writes the answer for the MCP server.
+  ipcMain.handle("live:approvals", (_e, dir: string) => pendingApprovals(dir));
+  ipcMain.handle("live:answerApproval", (_e, dir: string, id: string, answer: ApprovalChoice) => answerApproval(dir, id, answer));
+  // Makes the taskbar button flash so the user notices the request; a hidden test window stays quiet.
+  ipcMain.handle("live:flash", (e) => {
+    if (process.env.MCEDGE_TEST_HIDDEN !== "1") BrowserWindow.fromWebContents(e.sender)?.flashFrame(true);
+  });
   // Written like an outside change: the watcher reloads the project and the open editor merges the undone fields.
   ipcMain.handle("live:undo", (_e, dir: string, calls: string[]) => undoCalls(dir, calls));
   ipcMain.handle("live:addNote", (_e, dir: string, text: string, target?: string) => addNote(dir, text, target));

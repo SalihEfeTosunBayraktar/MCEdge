@@ -1,5 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { readActivity, readPresence, writePresence } from "../live/activity.ts";
+import { levelHint } from "../live/experience.ts";
 import { readNotes } from "../live/notes.ts";
 
 type Text = { content: { type: "text"; text: string }[]; isError?: boolean };
@@ -43,10 +44,11 @@ export function trackActivity(server: McpServer, root: string): void {
 
   server.registerTool("collaborators", {
     description: "Who else works on this project right now: what the user has open in the MCEdge app (if it is running) and the latest changes. "
-      + "Edits are merged live field by field; avoid rewriting a field the user is editing at the same moment.",
+      + "Edits are merged live field by field; avoid rewriting a field the user is editing at the same moment. "
+      + "app.level is the user's modding experience (new, some, java) and app.hint says how to explain things to them.",
   }, () => {
     const app = readPresence(root, "app");
     const appActive = !!app && Date.now() - Date.parse(app.at) < ACTIVE_MS;
-    return { content: [{ type: "text" as const, text: JSON.stringify({ app: appActive ? { open: app!.open, at: app!.at } : null, recent: readActivity(root, 300).filter((e) => !e.read).slice(-20), notesWaiting: readNotes(root).filter((n) => !n.ack).length }, null, 2) }] };
+    return { content: [{ type: "text" as const, text: JSON.stringify({ app: appActive ? { open: app!.open, at: app!.at, ...(app!.level ? { level: app!.level, mode: app!.mode, hint: levelHint(app!.level) } : {}) } : null, recent: readActivity(root, 300).filter((e) => !e.read).slice(-20), notesWaiting: readNotes(root).filter((n) => !n.ack).length }, null, 2) }] };
   });
 }

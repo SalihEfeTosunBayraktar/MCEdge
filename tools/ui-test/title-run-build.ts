@@ -4,9 +4,9 @@
  * they call the same commands as the Build & run menu, and that Run turns into Stop while the client runs.
  * Screenshots go to design/title-run-build/.
  */
-import { assert, exampleProject, run } from "./cdp.ts";
+import { assert, exampleProject, run, evidence } from "./cdp.ts";
 
-const OUT = "design/title-run-build";
+const OUT = evidence("design/title-run-build");
 const btn = (id: string) => `document.querySelector('[data-testid="${id}"]')`;
 
 await run(async (app) => {

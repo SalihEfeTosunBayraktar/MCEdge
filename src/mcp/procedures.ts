@@ -79,7 +79,7 @@ export function registerProcedureTools(server: McpServer, root: string, guard: (
   server.registerTool(
     "procedure_blocks",
     {
-      description: "List procedure blocks: id, label, category, side (server/client/both), output type, inputs, fields, dependencies and the engines that generate it. Filter by category or a search text.",
+      description: "List procedure blocks: id, label, category, side (server/client/both), output type, inputs, fields, dependencies and the engines that generate it (a java_code block shows all; its gen and loader fields decide per project block). Filter by category or a search text.",
       inputSchema: { category: z.enum(CATEGORIES).optional(), query: z.string().optional() },
     },
     ({ category, query }) =>
@@ -158,7 +158,7 @@ export function registerProcedureTools(server: McpServer, root: string, guard: (
   server.registerTool(
     "write_procedure",
     {
-      description: "Create or replace a procedure from IR JSON. program = { format: 1, variables: [{name, type}], stacks: [{ x, y, blocks: [{ block: \"start\" }, ...] }] }; a block is { block, fields?, inputs? } where an input holds a value block, a list of statement blocks, or a number/string/boolean literal. Returns the warnings of the saved procedure.",
+      description: "Create or replace a procedure from IR JSON. program = { format: 1, variables: [{name, type}], stacks: [{ x, y, blocks: [{ block: \"start\" }, ...] }] }; a block is { block, fields?, inputs? } where an input holds a value block, a list of statement blocks, or a number/string/boolean literal. java_code blocks take `gen` (the Minecraft version the Java is written for) and an optional `loader` (any | neoforge | forge | fabric, default any): the block is emitted only on an engine whose version and loader both match, elsewhere it is skipped with a \"not generated\" warning, so set loader on code that imports one loader's classes. Returns the warnings of the saved procedure.",
       inputSchema: {
         id: z.string(),
         program: z.record(z.string(), z.unknown()),

@@ -3,7 +3,7 @@
  * (user, 2026-11-07: "böyle yerlerde textureların gözükmesi daha mantıklı addansa").
  */
 import { resolve } from "node:path";
-import { assert, copyProject, REPO, run } from "./cdp.ts";
+import { assert, copyProject, REPO, run, evidence } from "./cdp.ts";
 
 const project = copyProject(resolve(REPO, "..", "ETREconomy-MCEdge"), "etr");
 const filterSelect = `document.querySelector(".fsel select")`;
@@ -22,7 +22,7 @@ await run(async (app) => {
   const cells = await app.eval<number>(`document.querySelectorAll(".texpop .texcell").length`);
   const previews = await app.eval<number>(`document.querySelectorAll(".texpop .texcell img").length`);
   console.log("cells", cells, "previews loaded", previews);
-  await app.shot("design/textures/picker.png");
+  await app.shot(evidence("design/textures/picker.png"));
   await app.eval(`(() => { const i = document.querySelector(".texpop input"); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(i, "money"); i.dispatchEvent(new Event("input", { bubbles: true })); })()`);
   await app.sleep(300);
   const filtered = await app.eval<number>(`document.querySelectorAll(".texpop .texcell").length`);

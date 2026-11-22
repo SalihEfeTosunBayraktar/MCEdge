@@ -3,10 +3,10 @@
  * description, group titles, field labels, help and select options of the Procedure and Block forms read
  * Turkish; in English the type.json text is shown. Screenshots go to design/element-types-tr/.
  */
-import { assert, exampleProject, run } from "./cdp.ts";
+import { assert, exampleProject, run, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/element-types-tr";
+const OUT = evidence("design/element-types-tr");
 
 for (const language of ["tr", "en"] as const) {
   const project = exampleProject();

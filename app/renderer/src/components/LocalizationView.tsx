@@ -15,11 +15,15 @@ import type { ElementRef } from "../model.ts";
 import { t } from "../strings.ts";
 import { typeOf } from "../types.ts";
 import { Flag } from "./Brand.tsx";
+import { PageNav, PageNavItem } from "../dock/Dock.tsx";
 import { Sprite } from "./Sprite.tsx";
 import { useRevealQuery } from "../hooks/reveal.ts";
 import {
-  ActionBar, ActionButton, Dialog, FindBar, FindSelect, FormGroup, FormRow, MenuList, Separator, ShortcutsButton, startResize, useColumnWidths,
+  ActionButton, Dialog, FindBar, FindSelect, FormGroup, FormRow, MenuList, Separator, ShortcutsButton, startResize, useColumnWidths,
 } from "./ui.tsx";
+
+/** DOM id of a grid cell: the grid names its current cell by it (aria-activedescendant) for a screen reader (Q248). */
+const cellId = (key: string, lang: string) => `loc:${key}:${lang}`.replace(/\s/g, "_");
 
 /** A grid cell: a lang key in one language. */
 interface Cell { key: string; lang: string }
@@ -197,7 +201,39 @@ export function LocalizationView({ snapshot, engineId, onSaved, onOpenElement }:
 
   return (
     <section className="view">
-      <FindBar query={query} onQuery={setQuery} placeholder={t("localization.search")}
+      <FindBar query={query} onQuery={setQuery} placeholder={t("localization.search")} denseActions
+        actions={<>
+          <div className="menuwrap">
+            <ActionButton icon="globe" popup label={t("localization.languages")} pressed={languageMenu} onClick={() => setLanguageMenu(!languageMenu)} />
+            {languageMenu && (
+              <MenuList onClose={() => setLanguageMenu(false)} items={[
+                { label: t("localization.addLanguage"), onClick: () => setDialog("language") },
+                { label: t("localization.renameLanguage"), onClick: languages.length > 1 ? () => setDialog("rename") : undefined },
+                { label: t("localization.removeLanguage"), danger: true, onClick: languages.length > 1 ? () => setDialog("remove") : undefined },
+                ...(languages.length > 1 ? [{ label: "", separator: true }] : []),
+                ...languages.filter((l) => l !== BASE_LANGUAGE).map((l) => ({
+                  label: t("localization.showColumn", { lang: languageLabel(l) }), checked: !hidden.includes(l), keepOpen: true,
+                  onClick: () => setHidden(hidden.includes(l) ? hidden.filter((h) => h !== l) : [...hidden, l]),
+                })),
+              ]} />
+            )}
+          </div>
+          <ActionButton icon="import" label={t("localization.import")} onClick={() => void api.importTranslations().then((file) => file && setImporting(file))} />
+          <ActionButton icon="save" label={t("localization.export")} onClick={() => setDialog("export")} />
+          <ActionButton icon="next" label={t("localization.nextMissing")} title="Ctrl+Enter" disabled={!rows.length} onClick={() => goNextMissing()} />
+          {overridden.length > 0 && <ActionButton icon="undo" label={t("localization.resetName")}
+            onClick={() => setLocalization({ ...localization, [BASE_LANGUAGE]: Object.fromEntries(Object.entries(localization[BASE_LANGUAGE] ?? {}).filter(([k]) => !overridden.includes(k))) })} />}
+          {selected.length > 0 && <ActionButton icon="trash" tone="danger" disabled={!deletable.length}
+            label={deletable.length > 1 ? `${t("action.deleteSelected")} (${deletable.length})` : t("action.deleteSelected")}
+            title={selected.length > deletable.length ? t("localization.elementKeyNoDelete") : undefined}
+            onClick={() => (deletable.length > 1 ? setDialog("delete") : removeKeys(deletable))} />}
+          <ShortcutsButton shortcuts={[
+            [t("keys.k.click"), t("keys.loc.edit")], ["Enter / Shift+Enter", t("keys.loc.downUp")], ["Tab / Shift+Tab", t("keys.loc.nextPrev")],
+            ["Ctrl+Enter", t("keys.loc.nextMissing")], ["Esc", t("keys.loc.cancel")], [t("keys.k.arrows"), t("keys.loc.move")],
+            [t("keys.k.shiftClick"), t("keys.loc.select")], ["?", t("keys.list")],
+          ]} />
+          <ActionButton icon="plus" label={t("localization.addKey")} tone="primary" onClick={() => setDialog("key")} />
+        </>}
         meta={rows.length === keys.length
           ? t("localization.count", { count: keys.length, languages: languages.length })
           : t("localization.countShown", { shown: rows.length, count: keys.length, languages: languages.length })}>
@@ -222,44 +258,10 @@ export function LocalizationView({ snapshot, engineId, onSaved, onOpenElement }:
           { value: "missing", label: t("sort.missingFirst") },
         ]} />
       </FindBar>
-      <ActionBar>
-        <ActionButton icon="plus" label={t("localization.addKey")} tone="primary" onClick={() => setDialog("key")} />
-        <div className="menuwrap">
-          <ActionButton icon="globe" label={t("localization.languages")} pressed={languageMenu} onClick={() => setLanguageMenu(!languageMenu)} />
-          {languageMenu && (
-            <MenuList onClose={() => setLanguageMenu(false)} items={[
-              { label: t("localization.addLanguage"), onClick: () => setDialog("language") },
-              { label: t("localization.renameLanguage"), onClick: languages.length > 1 ? () => setDialog("rename") : undefined },
-              { label: t("localization.removeLanguage"), danger: true, onClick: languages.length > 1 ? () => setDialog("remove") : undefined },
-              ...(languages.length > 1 ? [{ label: "", separator: true }] : []),
-              ...languages.filter((l) => l !== BASE_LANGUAGE).map((l) => ({
-                label: t("localization.showColumn", { lang: languageLabel(l) }), checked: !hidden.includes(l), keepOpen: true,
-                onClick: () => setHidden(hidden.includes(l) ? hidden.filter((h) => h !== l) : [...hidden, l]),
-              })),
-            ]} />
-          )}
-        </div>
-        <ActionButton icon="import" label={t("localization.import")} onClick={() => void api.importTranslations().then((file) => file && setImporting(file))} />
-        <ActionButton icon="save" label={t("localization.export")} onClick={() => setDialog("export")} />
-        <Separator />
-        <ActionButton icon="next" label={t("localization.nextMissing")} title="Ctrl+Enter" disabled={!rows.length} onClick={() => goNextMissing()} />
-        <ActionButton icon="undo" label={t("localization.resetName")} disabled={!overridden.length}
-          onClick={() => setLocalization({ ...localization, [BASE_LANGUAGE]: Object.fromEntries(Object.entries(localization[BASE_LANGUAGE] ?? {}).filter(([k]) => !overridden.includes(k))) })} />
-        <Separator />
-        <ActionButton icon="trash" tone="danger" disabled={!deletable.length}
-          label={deletable.length > 1 ? `${t("action.deleteSelected")} (${deletable.length})` : t("action.deleteSelected")}
-          title={selected.length > deletable.length ? t("localization.elementKeyNoDelete") : undefined}
-          onClick={() => (deletable.length > 1 ? setDialog("delete") : removeKeys(deletable))} />
-        <Separator />
-        <ShortcutsButton shortcuts={[
-          [t("keys.k.click"), t("keys.loc.edit")], ["Enter / Shift+Enter", t("keys.loc.downUp")], ["Tab / Shift+Tab", t("keys.loc.nextPrev")],
-          ["Ctrl+Enter", t("keys.loc.nextMissing")], ["Esc", t("keys.loc.cancel")], [t("keys.k.arrows"), t("keys.loc.move")],
-          [t("keys.k.shiftClick"), t("keys.loc.select")], ["?", t("keys.list")],
-        ]} />
-      </ActionBar>
       <div className="locbody">
       <Groups keys={found} group={group} onGroup={setGroup} typeOfKey={(k) => defaults[k]?.typeId} typeName={typeName} />
-      <div ref={gridRef} className="tablewrap locgrid" tabIndex={0} onKeyDown={gridKeys} data-rows={rows.length}>
+      <div ref={gridRef} className="tablewrap locgrid" tabIndex={0} role="grid" aria-label={t("section.localization")} aria-activedescendant={cell ? cellId(cell.key, cell.lang) : undefined}
+        onKeyDown={gridKeys} data-rows={rows.length}>
         <LocTable scroller={gridRef} rows={rows} languages={columns} selected={selected} cell={cell} editing={editing}
           keyType={(k) => defaults[k]?.typeId} typeName={typeName}
           header={(l) => (
@@ -351,20 +353,18 @@ function Groups({ keys, group, onGroup, typeOfKey, typeName }: {
   }
   const on = (g: Group) => g.kind === group.kind && (g.kind === "all" || (group.kind !== "all" && g.id === group.id));
   const item = (g: Group, label: React.ReactNode, count: number) => (
-    <button type="button" key={`${g.kind}:${g.kind === "all" ? "" : g.id}`} className={`lgroup ${on(g) ? "on" : ""}`}
-      data-group={g.kind === "all" ? "all" : `${g.kind}:${g.id}`} onClick={() => onGroup(g)}>
-      <span className="lgname">{label}</span><span className="lgcount">{count}</span>
-    </button>
+    <PageNavItem key={`${g.kind}:${g.kind === "all" ? "" : g.id}`} on={on(g)} className="lgroup" data={g.kind === "all" ? "all" : `${g.kind}:${g.id}`}
+      label={<span className="lgname">{label}</span>} count={count} onClick={() => onGroup(g)} />
   );
   return (
-    <nav className="locgroups" aria-label={t("localization.groups")}>
+    <PageNav className="locgroups" label={t("localization.groups")}>
       {item({ kind: "all" }, t("localization.allKeys"), keys.length)}
       {types.size > 0 && <div className="lghead">{t("localization.fromElements")}</div>}
       {[...types].sort((a, b) => typeName(a[0]).localeCompare(typeName(b[0])))
         .map(([id, n]) => item({ kind: "type", id }, <><Sprite name={spriteFor(id)} size={12} />{typeName(id)}</>, n))}
       {prefixes.size > 0 && <div className="lghead">{t("localization.customKeys")}</div>}
       {[...prefixes].sort((a, b) => a[0].localeCompare(b[0])).map(([id, n]) => item({ kind: "prefix", id }, id ? <code>{id}.*</code> : t("localization.noPrefix"), n))}
-    </nav>
+    </PageNav>
   );
 }
 
@@ -458,11 +458,11 @@ function LocTable({ scroller, rows, languages, selected, cell, editing, keyType,
   }, [cell?.key, cell?.lang]);
   const spacer = (height: number) => <tr className="spacer" aria-hidden="true"><td colSpan={columns.length} style={{ height }} /></tr>;
   return (
-    <table className="grid" style={{ minWidth: 280 + 200 * languages.length }}>
+    <table className="grid" role="presentation" style={{ minWidth: 280 + 200 * languages.length }}>
       <colgroup>{columns.map((id) => <col key={id} style={widths[id] ? { width: widths[id] } : id === "key" ? { width: "30%" } : undefined} />)}</colgroup>
       <thead>
-        <tr>{columns.map((id) => (
-          <th key={id}>
+        <tr role="row">{columns.map((id) => (
+          <th key={id} role="columnheader">
             {id === "key" ? t("localization.key") : header(id)}
             <span className="colgrip" role="separator" aria-orientation="vertical" onMouseDown={(e) => startResize(e, id, widths, setWidths)} />
           </th>
@@ -471,8 +471,8 @@ function LocTable({ scroller, rows, languages, selected, cell, editing, keyType,
       <tbody ref={body}>
         {spacer(start * rowHeight)}
         {rows.slice(start, end).map((key) => (
-          <tr key={key} data-key={key} className={isSel.has(key) ? "sel" : ""}>
-            <td className="lockey" onMouseDown={(e) => (e.preventDefault(), onPickRow(key, e))}>
+          <tr key={key} data-key={key} role="row" aria-selected={isSel.has(key)} className={isSel.has(key) ? "sel" : ""}>
+            <td className="lockey" role="rowheader" onMouseDown={(e) => (e.preventDefault(), onPickRow(key, e))}>
               <KeyLabel name={key} typeId={keyType(key)} typeName={typeName} />
             </td>
             {languages.map((lang) => {
@@ -480,7 +480,7 @@ function LocTable({ scroller, rows, languages, selected, cell, editing, keyType,
               const here = cell?.key === key && cell.lang === lang;
               const cls = [here ? "cur" : "", !v.value ? "miss" : "", v.inherited ? "inh" : "", v.mismatch ? "ph" : ""].join(" ");
               return (
-                <td key={lang} data-lang={lang} data-row={key} className={cls} onClick={() => !(here && editing) && onOpen({ key, lang })}>
+                <td key={lang} id={cellId(key, lang)} role="gridcell" aria-selected={here} data-lang={lang} data-row={key} className={cls} onClick={() => !(here && editing) && onOpen({ key, lang })}>
                   {here && editing
                     ? <CellEditor initial={v.editValue} onDone={(value, move) => onFinish({ key, lang }, value, move)} />
                     : v.value || (lang === BASE_LANGUAGE ? "" : <span className="nomiss">{t("localization.noTranslation")}</span>)}

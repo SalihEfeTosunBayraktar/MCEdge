@@ -29,6 +29,8 @@ export interface Commands {
   run: () => void;
   stop: () => void;
   toggleTheme: () => void;
+  /** Window > Simple mode (Q244). */
+  toggleSimpleMode: () => void;
   go: (section: Section) => void;
   showPanel: (panel: PanelId) => void;
   /** Asks for name, folder and size of a new texture, then opens it in the texture editor. */
@@ -72,6 +74,8 @@ export interface Commands {
   openDeveloperDocs: () => void;
   /** Help > Connect an AI agent: the MCP command and client setup for the open project (Q201). */
   connectAgent: () => void;
+  /** Help > Guided tour (Q245): starts the first-mod tour, or brings a closed one back. */
+  startTour: () => void;
   /** Help > Report a bug: prepares a GitHub issue with the version, engine and build output (Q208). */
   reportBug: () => void;
   /** Ctrl+N: the element list with the New popup open. */

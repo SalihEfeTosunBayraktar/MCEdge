@@ -5,7 +5,7 @@
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { assert, copyProject, REPO, run, type App } from "./cdp.ts";
+import { assert, copyProject, REPO, run, type App, evidence } from "./cdp.ts";
 
 const theme = (process.argv[2] ?? "dark") as "dark" | "light";
 const lang = process.argv[3] ?? "en";
@@ -13,7 +13,7 @@ const project = copyProject(resolve(REPO, "..", "ETREconomy-MCEdge"), "etr");
 mkdirSync(join(project, "sounds"), { recursive: true });
 writeFileSync(join(project, "sounds", "coin_drop.ogg"), Buffer.from("OggS"));
 writeFileSync(join(project, "tags.json"), JSON.stringify({ tags: [{ type: "item", id: "etreco:coins", entries: [] }] }, null, 2));
-const shot = (app: App, name: string) => app.shot(`design/136/${name}-${theme}-${lang}-after.png`);
+const shot = (app: App, name: string) => app.shot(evidence(`design/136/${name}-${theme}-${lang}-after.png`));
 const CTRL = 2;
 
 /** Opens quick open, types, waits for the first hit of `kind` naming `target`, and opens it with Up/Down and Enter. */

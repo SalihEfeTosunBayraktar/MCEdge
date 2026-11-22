@@ -1,8 +1,9 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { ProjectSnapshot } from "../../../shared/api.ts";
 import { api } from "../api.ts";
 import { Icon } from "../components/Icon.tsx";
-import { ActionBar, ActionButton, FormGroup, FormRow, PanelEmpty, Separator, ShortcutsButton, SidePanel } from "../components/ui.tsx";
+import { ActionButton, AlertDialog, FormRow, PanelEmpty, Separator, ShortcutsButton } from "../components/ui.tsx";
+import { EditorShell, RailButton, RailSeparator, StatusItems, useFitOnResize, ZoomGroup, type DockSection } from "../dock/Dock.tsx";
 import { invalidateTexture } from "../hooks/useTexture.ts";
 import { beginSave } from "../saveStatus.ts";
 import { t, type StringKey } from "../strings.ts";
@@ -14,7 +15,7 @@ import { blend, joinFrames, mcmetaText, NEW_ANIMATION, parseMcmeta, scheduleOf, 
 import { frameAt, PLAYBACK_MODES, type PlaybackMode } from "../../../../src/resources/textureAnimation.ts";
 import { blank, clone, decodePng, encodePng, floodFill, fromHex, getPixel, line, resize, setPixel, toHex, type Pixels, type Rgba } from "./pixels.ts";
 import { useCtrlWheel } from "../hooks/useCtrlWheel.ts";
-import { ANCHORS, clearRegion, clip, copyRegion, desaturate, pasteRegion, resizeCanvas, shiftHue, type Anchor, type Rect } from "../../../../src/textures/edit.ts";
+import { ANCHORS, clearRegion, clip, copyRegion, desaturate, pasteRegion, resizeCanvas, shiftHue, trimBox, type Anchor, type Rect } from "../../../../src/textures/edit.ts";
 
 type Tool = "select" | "pencil" | "eraser" | "fill" | "picker" | ShapeKind;
 /** Copied pixels, kept while the app runs, so a piece of one texture can be pasted into another. */
@@ -57,8 +58,14 @@ export function TextureEditor({ snapshot, path, onSaved, onClose }: Props) {
   const [colour, setColour] = useState<Rgba>([178, 46, 38, 255]);
   const [recent, setRecent] = useState<string[]>([]);
   const [zoom, setZoom] = useState(16);
+  /** The zoom follows the canvas area (a collapsed inspector, a bigger window) until the user zooms by hand; Fit goes back. */
+  const [fitted, setFitted] = useState(true);
   const [grid, setGrid] = useState(true);
   const [hover, setHover] = useState<[number, number]>();
+  /** The pixel cursor is driven by the keyboard (arrow keys); the screen reader hears where it is and what is there. */
+  const keyboardCursor = useRef(false);
+  const heldKey = useRef(false);
+  const [said, setSaid] = useState("");
   /** Shapes are drawn filled instead of as an outline. */
   const [filled, setFilled] = useState(false);
   /** Mirrored drawing: every stroke, shape and fill is repeated across the vertical and/or horizontal centre line. */
@@ -296,7 +303,7 @@ export function TextureEditor({ snapshot, path, onSaved, onClose }: Props) {
       g.setLineDash([]);
       g.lineDashOffset = 0;
     }
-    if (hover && tool !== "select") {
+    if (hover && (tool !== "select" || keyboardCursor.current)) {
       g.strokeStyle = "#f2a53a";
       g.lineWidth = 2;
       g.strokeRect(hover[0] * zoom + 1, hover[1] * zoom + 1, zoom - 2, zoom - 2);
@@ -494,6 +501,14 @@ export function TextureEditor({ snapshot, path, onSaved, onClose }: Props) {
     setSelection(undefined);
     editFrames((frames, i) => ({ frames: frames.map((f) => asPixels(resizeCanvas(f, canvasW, canvasH, anchor))), index: i }));
   };
+  /** Q274: cuts the empty margins of every frame away, the drawing's pixels unchanged (an animation's frames stay square). */
+  const trimCanvas = () => {
+    const frames = allFrames();
+    const box = frames.length && trimBox(frames, !!anim);
+    if (!box || (box.w === frames[0].width && box.h === frames[0].height)) return;
+    setSelection(undefined);
+    editFrames((all, i) => ({ frames: all.map((f) => asPixels(copyRegion(f, box))), index: i }));
+  };
   const flipImage = (axis: "horizontal" | "vertical") => {
     const img = pixels.current;
     if (!img) return;
@@ -518,8 +533,12 @@ export function TextureEditor({ snapshot, path, onSaved, onClose }: Props) {
   const down = (e: React.PointerEvent) => {
     const img = pixels.current, cell = cellAt(e);
     if (playing || !img || !cell || (e.button !== 0 && e.button !== 2)) return;
+    keyboardCursor.current = false;
     e.currentTarget.setPointerCapture(e.pointerId);
-    const secondary = e.button === 2;
+    press(img, cell, e.button === 2, e.detail);
+  };
+  /** A press on a cell (the mouse button, or Space on the pixel cursor); `secondary` erases with any tool. */
+  const press = (img: Pixels, cell: [number, number], secondary: boolean, detail: number) => {
     if (tool === "select") {
       const sel = selectionRef.current;
       if (sel && !secondary && cell[0] >= sel.x && cell[1] >= sel.y && cell[0] < sel.x + sel.w && cell[1] < sel.y + sel.h) {
@@ -545,7 +564,7 @@ export function TextureEditor({ snapshot, path, onSaved, onClose }: Props) {
       }
       // A double click, or a click on the first corner, closes the polygon.
       const first = s.points[0];
-      if (e.detail >= 2 || (s.points.length > 2 && first[0] === cell[0] && first[1] === cell[1])) return commitShape();
+      if (detail >= 2 || (s.points.length > 2 && first[0] === cell[0] && first[1] === cell[1])) return commitShape();
       s.points.push(cell);
       return void previewShape();
     }
@@ -565,8 +584,12 @@ export function TextureEditor({ snapshot, path, onSaved, onClose }: Props) {
   };
   const move = (e: React.PointerEvent) => {
     if (playing) return;
-    const cell = cellAt(e) ?? (e.buttons ? clampedCell(e) : undefined);
+    keyboardCursor.current = false;
     setHover(cellAt(e));
+    dragTo(cellAt(e) ?? (e.buttons ? clampedCell(e) : undefined), e.buttons !== 0);
+  };
+  /** The pointer, or the pixel cursor with Space held, reached `cell`: continues the stroke, selection, move or shape. */
+  const dragTo = (cell: [number, number] | undefined, pressed: boolean) => {
     const m = moving.current;
     if (m && cell) {
       const dx = cell[0] - m.start[0], dy = cell[1] - m.start[1];
@@ -584,7 +607,7 @@ export function TextureEditor({ snapshot, path, onSaved, onClose }: Props) {
     const d = shapeDraft.current;
     if (d && cell) {
       if (d.kind === "polygon") previewShape(cell);
-      else if (e.buttons) (d.points[1] = cell, previewShape());
+      else if (pressed) (d.points[1] = cell, previewShape());
       return;
     }
     const s = stroke.current, img = pixels.current;
@@ -608,7 +631,48 @@ export function TextureEditor({ snapshot, path, onSaved, onClose }: Props) {
     stroke.current = undefined;
     if (s?.changed) (pushUndo(s.before), remember(s.colour), changed());
   };
-  const zoomBy = (step: number) => setZoom((z) => ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, ZOOMS.indexOf(z) + step))] ?? z);
+  /** Keyboard painting: arrows move the pixel cursor (Shift: 4 pixels), Space presses the mouse button on it, Shift+Space the right one. */
+  const descId = useId();
+  const announce = (cell: [number, number]) => {
+    const img = pixels.current;
+    if (!img) return;
+    const px = getPixel(img, cell[0], cell[1]);
+    setSaid(t("paint.cursorPixel", { x: cell[0], y: cell[1], colour: px[3] === 0 ? t("paint.transparent") : toHex(px) }));
+  };
+  const canvasKey = (e: React.KeyboardEvent) => {
+    const img = pixels.current;
+    if (!img || playing || e.ctrlKey || e.metaKey || e.altKey) return;
+    const at = hover ?? [0, 0] as [number, number];
+    const by = e.shiftKey ? 4 : 1;
+    const step: Record<string, [number, number]> = { ArrowLeft: [-by, 0], ArrowRight: [by, 0], ArrowUp: [0, -by], ArrowDown: [0, by], Home: [-img.width, 0], End: [img.width, 0] };
+    if (step[e.key]) {
+      e.preventDefault();
+      const next: [number, number] = [Math.max(0, Math.min(img.width - 1, at[0] + step[e.key][0])), Math.max(0, Math.min(img.height - 1, at[1] + step[e.key][1]))];
+      keyboardCursor.current = true;
+      setHover(next);
+      dragTo(next, heldKey.current);
+      announce(next);
+    } else if (e.key === " ") {
+      e.preventDefault();
+      if (e.repeat || heldKey.current) return;
+      heldKey.current = true;
+      keyboardCursor.current = true;
+      setHover(at);
+      press(img, at, e.shiftKey, 1);
+      announce(at);
+    }
+  };
+  const releaseKey = () => {
+    if (!heldKey.current) return;
+    heldKey.current = false;
+    up();
+    if (hover) announce(hover);
+  };
+  const zoomBy = (step: number) => (setFitted(false), setZoom((z) => ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, ZOOMS.indexOf(z) + step))] ?? z));
+  useFitOnResize(area, fitted, (box) => {
+    const img = pixels.current;
+    if (img) setZoom(ZOOMS.filter((z) => z <= Math.min((box.w - 48) / img.width, (box.h - 48) / img.height)).at(-1) ?? 1);
+  });
   // Ctrl + wheel, natively so the window does not zoom too (KUYRUK 179).
   useCtrlWheel(area, zoomBy);
   const setSize = (size: number) => {
@@ -651,98 +715,12 @@ export function TextureEditor({ snapshot, path, onSaved, onClose }: Props) {
   const name = file.slice(file.lastIndexOf("/") + 1);
   const hex = toHex(colour);
   const square = p && p.width === p.height && SIZES.includes(p.width);
-  return (
-    <section className="view painter">
-      <div className="findbar edhead">
-        <span className="slot small"><canvas ref={preview} className="pixel" style={{ width: 24, height: 24 }} /></span>
-        <span className="edname">{name}{dirty && <span className="unsaved" title={t("paint.unsaved")}> *</span>}</span>
-        <span className="ttype">{t("paint.type")}</span>
-        {dirty && !conflict && <span className="livechip conflict">{t(isNew.current ? "paint.notCreated" : restored ? "paint.restored" : "paint.unsaved")}</span>}
-        {conflict && <span className="livechip conflict"><i className="liveled" />{t("paint.conflictChip")}</span>}
-        {reloadedAt && !conflict && <span className="livechip"><i className="liveled" />{t("paint.reloaded")}</span>}
-        {savedAt && !dirty && <span className="livechip">{t("paint.saved")}</span>}
-        <span className="fmeta">
-          {hover && <span className="pcursor">{t("paint.cursor", { x: hover[0], y: hover[1] })}</span>}
-          {p ? t("paint.meta", { width: p.width, height: p.height, path: file }) : file}
-        </span>
-      </div>
-      <ActionBar>
-        <ActionButton icon="back" label={t("paint.back")} onClick={close} />
-        <Separator />
-        <ActionButton icon="save" label={t("paint.save")} title="Ctrl+S" tone={dirty ? "primary" : undefined} disabled={!dirty || !p} onClick={() => void save()} />
-        <ActionButton icon="saveas" label={t("paint.saveAs")} title="Ctrl+Shift+S" disabled={!p} onClick={() => setDialog("saveAs")} />
-        <Separator />
-        {conflict && (
+  const sections: DockSection[] = p ? [
+      {
+        id: "paint.colourGroup", icon: "picker", title: t("paint.colourGroup"), defaultOpen: true, badge: hex,
+        body: (
           <>
-            <ActionButton icon="check" label={t("paint.keepMine")} tone="primary" onClick={keepMine} />
-            <ActionButton icon="import" label={t("paint.reloadDisk")} onClick={() => void reloadFromDisk()} />
-            <Separator />
-          </>
-        )}
-        <ActionButton icon="undo" label={t("paint.undo")} title="Ctrl+Z" disabled={playing || !undo.current.length} onClick={doUndo} />
-        <ActionButton icon="redo" label={t("paint.redo")} title="Ctrl+Y" disabled={playing || !redo.current.length} onClick={doRedo} />
-        <Separator />
-        <ActionButton compact icon="copy" label={t("paint.copy")} title="Ctrl+C" disabled={!selection} onClick={copySelection} />
-        <ActionButton compact icon="cut" label={t("paint.cut")} title="Ctrl+X" disabled={playing || !selection} onClick={cutSelection} />
-        <ActionButton compact icon="paste" label={t("paint.paste")} title="Ctrl+V" disabled={playing || !hasClipboard || !p} onClick={paste} />
-        <ActionButton icon="trash" label={t("paint.deleteSelected")} title="Delete" tone="danger" disabled={playing || !selection} onClick={deleteSelection} />
-        <Separator />
-        <ActionButton icon="fliph" label={t("paint.flipH")} disabled={playing || !p} onClick={() => flipImage("horizontal")} />
-        <ActionButton icon="flipv" label={t("paint.flipV")} disabled={playing || !p} onClick={() => flipImage("vertical")} />
-        <Separator />
-        <ActionButton icon="zoomin" label={t("paint.zoomIn")} title="+" disabled={zoom === ZOOMS.at(-1)} onClick={() => zoomBy(1)} />
-        <ActionButton icon="zoomout" label={t("paint.zoomOut")} title="-" disabled={zoom === ZOOMS[0]} onClick={() => zoomBy(-1)} />
-        <ActionButton icon="grid" label={t("paint.grid")} title="G" pressed={grid} onClick={() => setGrid(!grid)} />
-        <Separator />
-        {anim && (
-          <>
-            <ActionButton icon={playing ? "stop" : "play"} label={t(playing ? "paint.stop" : "paint.play")} title={t(playing ? "paint.stopHint" : "paint.playHint")}
-              pressed={playing} onClick={togglePlay} />
-            <Separator />
-          </>
-        )}
-        <ShortcutsButton shortcuts={[
-          ["M", t("keys.paint.select")], ["Ctrl+C / Ctrl+X / Ctrl+V", t("keys.paint.clipboard")], ["Delete", t("keys.paint.deleteSelected")],
-          ["Ctrl+A / Ctrl+D", t("keys.paint.selectAll")], ["P / B", t("keys.paint.pencil")], ["E", t("keys.paint.eraser")], ["F", t("keys.paint.fill")], ["I", t("keys.paint.picker")],
-          ["L", t("keys.paint.line")], ["R", t("keys.paint.rect")], ["O", t("keys.paint.ellipse")], ["Y", t("keys.paint.polygon")],
-          ["Shift+F", t("keys.paint.filled")], ["G", t("keys.paint.grid")], ["+ / -", t("keys.paint.zoom")], [t("keys.k.ctrlWheel"), t("keys.paint.wheel")],
-          [t("keys.k.rightClick"), t("keys.paint.erase")], ["Ctrl+S", t("keys.save")], ["Ctrl+Shift+S", t("keys.saveAs")], ["Ctrl+Z", t("keys.undo")],
-          ["Ctrl+Y / Ctrl+Shift+Z", t("keys.redo")], ["Esc", t("keys.paint.stopPlay")], ["?", t("keys.list")],
-        ]} />
-      </ActionBar>
-      {conflict && <p className="notice codenotice">{t("paint.conflict")}</p>}
-      <div className="split paintsplit">
-        <div className="ptools" role="toolbar" aria-label={t("paint.tools")} aria-orientation="vertical">
-          <ActionButton icon="select" label={t("paint.select")} title="M" pressed={tool === "select"} disabled={playing} onClick={() => pickTool("select")} />
-          <ActionButton icon="edit" label={t("paint.pencil")} title="P" pressed={tool === "pencil"} disabled={playing} onClick={() => pickTool("pencil")} />
-          <ActionButton icon="eraser" label={t("paint.eraser")} title="E" pressed={tool === "eraser"} disabled={playing} onClick={() => pickTool("eraser")} />
-          <ActionButton icon="bucket" label={t("paint.fill")} title="F" pressed={tool === "fill"} disabled={playing} onClick={() => pickTool("fill")} />
-          <ActionButton icon="picker" label={t("paint.picker")} title="I" pressed={tool === "picker"} disabled={playing} onClick={() => pickTool("picker")} />
-          <span className="ptgroup">{t("paint.shapes")}</span>
-          <ActionButton icon="line" label={t("paint.line")} title="L" pressed={tool === "line"} disabled={playing} onClick={() => pickTool("line")} />
-          <ActionButton icon="rect" label={t("paint.rect")} title="R" pressed={tool === "rect"} disabled={playing} onClick={() => pickTool("rect")} />
-          <ActionButton icon="ellipse" label={t("paint.ellipse")} title="O" pressed={tool === "ellipse"} disabled={playing} onClick={() => pickTool("ellipse")} />
-          <ActionButton icon="polygon" label={t("paint.polygon")} title={t("paint.polygonHint")} pressed={tool === "polygon"} disabled={playing} onClick={() => pickTool("polygon")} />
-          <ActionButton icon="filled" label={t("paint.filled")} title="Shift+F" pressed={filled} disabled={playing} onClick={() => setFilled(!filled)} />
-          <span className="ptgroup">{t("paint.mirrorDraw")}</span>
-          <ActionButton icon="mirrorx" label={t("paint.mirrorX")} title={t("paint.mirrorXHint")} pressed={mirrorX} disabled={playing} onClick={() => setMirrorX(!mirrorX)} />
-          <ActionButton icon="mirrory" label={t("paint.mirrorY")} title={t("paint.mirrorYHint")} pressed={mirrorY} disabled={playing} onClick={() => setMirrorY(!mirrorY)} />
-        </div>
-        <div ref={area} className="paintarea">
-          {error ? <p className="error-text">{error}</p> : !p ? <p className="empty-note">{t("paint.loading")}</p> : (
-            <div className="paintframe" style={{ ["--cell" as string]: `${Math.max(4, zoom / 2)}px` }}>
-              {playing && <span className="playbadge" role="status"><Icon name="play" />{t("paint.playing")}</span>}
-              <canvas ref={canvas} className={`paintcanvas ${playing ? "playing" : `tool-${tool}`}`} onPointerDown={down} onPointerMove={move} onPointerUp={up}
-                onPointerLeave={() => setHover(undefined)} onContextMenu={(e) => e.preventDefault()}
-                style={{ width: p.width * zoom, height: p.height * zoom }} aria-label={t("paint.canvas")} />
-            </div>
-          )}
-        </div>
-        <SidePanel title={t("paint.panel")}>
-          {!p ? <PanelEmpty text={t("paint.loading")} /> : (
-            <div className="form paintform">
-              <FormGroup title={t("paint.colourGroup")}>
-                <FormRow label={t("paint.colour")}>
+            <FormRow label={t("paint.colour")}>
                   <div className="fpair">
                     <input type="color" className="swatch" value={hex} aria-label={t("paint.colour")}
                       onChange={(e) => setColour(fromHex(e.target.value, colour[3] || 255)!)} />
@@ -763,12 +741,22 @@ export function TextureEditor({ snapshot, path, onSaved, onClose }: Props) {
                   {recent.length ? <Swatches colours={recent} current={colour} onPick={(h) => setColour(fromHex(h)!)} />
                     : <p className="hint nomargin">{t("paint.noRecent")}</p>}
                 </FormRow>
-              </FormGroup>
-              <FormGroup title={t("paint.previewGroup")}>
-                <TexturePreview pixels={p} />
-              </FormGroup>
-              <FormGroup title={t("paint.canvasGroup")}>
-                <FormRow label={t("paint.size")}>
+          </>
+        ),
+      },
+      {
+        id: "paint.previewGroup", icon: "image", title: t("paint.previewGroup"), defaultOpen: true,
+        body: (
+          <>
+            <TexturePreview pixels={p} />
+          </>
+        ),
+      },
+      {
+        id: "paint.canvasGroup", icon: "grid", title: t("paint.canvasGroup"), defaultOpen: true, badge: `${p.width}×${p.height}`,
+        body: (
+          <>
+            <FormRow label={t("paint.size")}>
                   <select value={square ? p.width : ""} disabled={playing} onChange={(e) => setSize(Number(e.target.value))}>
                     {!square && <option value="">{t("paint.customSize", { width: p.width, height: p.height })}</option>}
                     {SIZES.map((s) => <option key={s} value={s}>{t("paint.customSize", { width: s, height: s })}</option>)}
@@ -786,14 +774,24 @@ export function TextureEditor({ snapshot, path, onSaved, onClose }: Props) {
                     {ANCHORS.map((a) => <option key={a} value={a}>{t(`paint.anchor.${a}` as StringKey)}</option>)}
                   </select>
                 </FormRow>
-                <button type="button" className="abtn resizecanvas" disabled={playing || (p.width === canvasW && p.height === canvasH)} onClick={applyCanvasSize}>
-                  <Icon name="fit" />{t("paint.resizeCanvas")}
-                </button>
+                <div className="framebtns">
+                  <button type="button" className="abtn resizecanvas" disabled={playing || (p.width === canvasW && p.height === canvasH)} onClick={applyCanvasSize}>
+                    <Icon name="fit" />{t("paint.resizeCanvas")}
+                  </button>
+                  <button type="button" className="abtn trimcanvas" disabled={playing} title={t("paint.trimCanvasHelp")} onClick={trimCanvas}>
+                    <Icon name="fit" />{t("paint.trimCanvas")}
+                  </button>
+                </div>
                 <p className="hint">{t("paint.canvasHint")}</p>
                 <FormRow label={t("paint.file")}><div className="fval"><code>{file}</code></div></FormRow>
-              </FormGroup>
-              <FormGroup title={t("paint.adjustGroup")}>
-                <FormRow label={t("paint.hue")}>
+          </>
+        ),
+      },
+      {
+        id: "paint.adjustGroup", icon: "hue", title: t("paint.adjustGroup"), defaultOpen: true,
+        body: (
+          <>
+            <FormRow label={t("paint.hue")}>
                   <div className="fpair">
                     <input type="range" min={-180} max={180} value={hue} aria-label={t("paint.hue")} onChange={(e) => setHue(Number(e.target.value))} />
                     <span className="mono opacityval">{hue}°</span>
@@ -804,9 +802,14 @@ export function TextureEditor({ snapshot, path, onSaved, onClose }: Props) {
                   <button type="button" className="abtn desaturate" disabled={playing} onClick={applyDesaturate}><Icon name="grey" />{t("paint.desaturate")}</button>
                 </div>
                 <p className="hint">{t(selection ? "paint.adjustSelection" : "paint.adjustAll")}</p>
-              </FormGroup>
-              <FormGroup title={t("paint.animGroup")}>
-                {!anim ? (
+          </>
+        ),
+      },
+      {
+        id: "paint.animGroup", icon: "frames", title: t("paint.animGroup"), defaultOpen: true, badge: anim ? String(allFrames().length) : undefined,
+        body: (
+          <>
+            {!anim ? (
                   <>
                     <p className="hint nomargin">{t("paint.stillHint")}</p>
                     <button type="button" className="abtn" onClick={makeAnimated}><Icon name="frames" />{t("paint.makeAnimated")}</button>
@@ -851,30 +854,130 @@ export function TextureEditor({ snapshot, path, onSaved, onClose }: Props) {
                     <button type="button" className="abtn" disabled={playing} onClick={makeStill}>{t("paint.makeStill")}</button>
                   </>
                 )}
-              </FormGroup>
-              <p className="hint">{t("paint.shortcuts")}</p>
+          </>
+        ),
+      },
+  ] : [];
+  const status = (
+    <StatusItems items={[
+      hover ? <span className="pcursor">{t("paint.cursor", { x: hover[0], y: hover[1] })}</span> : null,
+      <span className="fmeta">{p ? t("paint.meta", { width: p.width, height: p.height, path: file }) : file}</span>,
+      t(`paint.${tool}` as StringKey),
+    ]} />
+  );
+  return (
+    <section className="view painter">
+      {conflict && <p className="notice codenotice">{t("paint.conflict")}</p>}
+      <EditorShell label={t("dock.editor")} bar={
+        <>
+          <ActionButton icon="back" label={t("paint.back")} onClick={close} />
+          <span className="dk-id edhead">
+        <span className="slot small"><canvas ref={preview} className="pixel" style={{ width: 24, height: 24 }} /></span>
+        <span className="edname">{name}{dirty && <span className="unsaved" title={t("paint.unsaved")}> *</span>}</span>
+        <span className="ttype">{t("paint.type")}</span>
+        {dirty && !conflict && <span className="livechip conflict">{t(isNew.current ? "paint.notCreated" : restored ? "paint.restored" : "paint.unsaved")}</span>}
+        {conflict && <span className="livechip conflict"><i className="liveled" />{t("paint.conflictChip")}</span>}
+        {reloadedAt && !conflict && <span className="livechip"><i className="liveled" />{t("paint.reloaded")}</span>}
+        {savedAt && !dirty && <span className="livechip">{t("paint.saved")}</span>}
+          </span>
+          <Separator />
+          <ActionButton icon="save" label={t("paint.save")} title="Ctrl+S" tone={dirty ? "primary" : undefined} disabled={!dirty || !p} onClick={() => void save()} />
+          <ActionButton hideLabel icon="saveas" label={t("paint.saveAs")} title="Ctrl+Shift+S" disabled={!p} onClick={() => setDialog("saveAs")} />
+          <Separator />
+          {conflict && (
+          <>
+            <ActionButton icon="check" label={t("paint.keepMine")} tone="primary" onClick={keepMine} />
+            <ActionButton icon="import" label={t("paint.reloadDisk")} onClick={() => void reloadFromDisk()} />
+            <Separator />
+          </>
+        )}
+          <ActionButton hideLabel icon="undo" label={t("paint.undo")} title="Ctrl+Z" disabled={playing || !undo.current.length} onClick={doUndo} />
+          <ActionButton hideLabel icon="redo" label={t("paint.redo")} title="Ctrl+Y" disabled={playing || !redo.current.length} onClick={doRedo} />
+          <Separator />
+          <ActionButton compact icon="copy" label={t("paint.copy")} title="Ctrl+C" disabled={!selection} onClick={copySelection} />
+          <ActionButton compact icon="cut" label={t("paint.cut")} title="Ctrl+X" disabled={playing || !selection} onClick={cutSelection} />
+          <ActionButton compact icon="paste" label={t("paint.paste")} title="Ctrl+V" disabled={playing || !hasClipboard || !p} onClick={paste} />
+          <ActionButton hideLabel icon="trash" label={t("paint.deleteSelected")} title="Delete" tone="danger" disabled={playing || !selection} onClick={deleteSelection} />
+          <span className="dk-grow" />
+          <ActionButton icon="grid" label={t("paint.grid")} title="G" pressed={grid} onClick={() => setGrid(!grid)} />
+          {anim && (
+          <>
+            <ActionButton icon={playing ? "stop" : "play"} label={t(playing ? "paint.stop" : "paint.play")} title={t(playing ? "paint.stopHint" : "paint.playHint")}
+              pressed={playing} onClick={togglePlay} />
+            <Separator />
+          </>
+        )}
+          <Separator />
+          <ZoomGroup zoom={zoom} canOut={zoom !== ZOOMS[0]} canIn={zoom !== ZOOMS.at(-1)} onOut={() => zoomBy(-1)} onIn={() => zoomBy(1)}
+            onFit={() => setFitted(true)} fitted={fitted} />
+          <ShortcutsButton shortcuts={[
+          ["M", t("keys.paint.select")], ["Ctrl+C / Ctrl+X / Ctrl+V", t("keys.paint.clipboard")], ["Delete", t("keys.paint.deleteSelected")],
+          ["Ctrl+A / Ctrl+D", t("keys.paint.selectAll")], ["P / B", t("keys.paint.pencil")], ["E", t("keys.paint.eraser")], ["F", t("keys.paint.fill")], ["I", t("keys.paint.picker")],
+          ["L", t("keys.paint.line")], ["R", t("keys.paint.rect")], ["O", t("keys.paint.ellipse")], ["Y", t("keys.paint.polygon")],
+          ["Shift+F", t("keys.paint.filled")], ["G", t("keys.paint.grid")], [t("keys.k.arrows") + " / Shift+" + t("keys.k.arrows"), t("keys.paint.cursor")],
+          ["Space / Shift+Space", t("keys.paint.space")], ["+ / -", t("keys.paint.zoom")], [t("keys.k.ctrlWheel"), t("keys.paint.wheel")],
+          [t("keys.k.rightClick"), t("keys.paint.erase")], ["Ctrl+S", t("keys.save")], ["Ctrl+Shift+S", t("keys.saveAs")], ["Ctrl+Z", t("keys.undo")],
+          ["Ctrl+Y / Ctrl+Shift+Z", t("keys.redo")], ["Esc", t("keys.paint.stopPlay")], ["?", t("keys.list")],
+        ]} />
+        </>
+      } railLabel={t("paint.tools")} railClass="ptools" rail={
+        <>
+          <RailButton icon="select" label={t("paint.select")} shortcut="M" pressed={tool === "select"} disabled={playing} onClick={() => pickTool("select")} />
+          <RailButton icon="edit" label={t("paint.pencil")} shortcut="P" pressed={tool === "pencil"} disabled={playing} onClick={() => pickTool("pencil")} />
+          <RailButton icon="eraser" label={t("paint.eraser")} shortcut="E" pressed={tool === "eraser"} disabled={playing} onClick={() => pickTool("eraser")} />
+          <RailButton icon="bucket" label={t("paint.fill")} shortcut="F" pressed={tool === "fill"} disabled={playing} onClick={() => pickTool("fill")} />
+          <RailButton icon="picker" label={t("paint.picker")} shortcut="I" pressed={tool === "picker"} disabled={playing} onClick={() => pickTool("picker")} />
+          <RailSeparator />
+          <RailButton icon="line" label={t("paint.line")} shortcut="L" pressed={tool === "line"} disabled={playing} onClick={() => pickTool("line")} />
+          <RailButton icon="rect" label={t("paint.rect")} shortcut="R" pressed={tool === "rect"} disabled={playing} onClick={() => pickTool("rect")} />
+          <RailButton icon="ellipse" label={t("paint.ellipse")} shortcut="O" pressed={tool === "ellipse"} disabled={playing} onClick={() => pickTool("ellipse")} />
+          <RailButton icon="polygon" label={t("paint.polygon")} shortcut={t("paint.polygonHint")} pressed={tool === "polygon"} disabled={playing} onClick={() => pickTool("polygon")} />
+          <RailButton icon="filled" label={t("paint.filled")} shortcut="Shift+F" pressed={filled} disabled={playing} onClick={() => setFilled(!filled)} />
+          <RailSeparator />
+          <RailButton icon="mirrorx" label={t("paint.mirrorX")} shortcut={t("paint.mirrorXHint")} pressed={mirrorX} disabled={playing} onClick={() => setMirrorX(!mirrorX)} />
+          <RailButton icon="mirrory" label={t("paint.mirrorY")} shortcut={t("paint.mirrorYHint")} pressed={mirrorY} disabled={playing} onClick={() => setMirrorY(!mirrorY)} />
+          <RailSeparator />
+          <RailButton icon="fliph" label={t("paint.flipH")} disabled={playing || !p} onClick={() => flipImage("horizontal")} />
+          <RailButton icon="flipv" label={t("paint.flipV")} disabled={playing || !p} onClick={() => flipImage("vertical")} />
+        </>
+      } sections={sections} inspectorLabel={t("dock.inspector")} bodyClass="form paintform" status={status}
+        inspectorEmpty={!p ? <PanelEmpty text={t("paint.loading")} /> : undefined}>
+        <div ref={area} className="paintarea">
+          {error ? <p className="error-text">{error}</p> : !p ? <p className="empty-note">{t("paint.loading")}</p> : (
+            <div className="paintframe" style={{ ["--cell" as string]: `${Math.max(4, zoom / 2)}px` }}>
+              {playing && <span className="playbadge" role="status"><Icon name="play" />{t("paint.playing")}</span>}
+              <canvas ref={canvas} className={`paintcanvas ${playing ? "playing" : `tool-${tool}`}`} onPointerDown={down} onPointerMove={move} onPointerUp={up}
+                onPointerLeave={() => setHover(undefined)} onContextMenu={(e) => e.preventDefault()}
+                tabIndex={0} role="application" aria-describedby={descId} onKeyDown={canvasKey} onKeyUp={(e) => e.key === " " && releaseKey()} onBlur={releaseKey}
+                onFocus={(e) => {
+                  // Reached with the keyboard: the pixel cursor appears (at the top left) and is read out.
+                  if (hover || !e.currentTarget.matches(":focus-visible")) return;
+                  keyboardCursor.current = true;
+                  setHover([0, 0]);
+                  announce([0, 0]);
+                }}
+                style={{ width: p.width * zoom, height: p.height * zoom }} aria-label={t("paint.canvas")} />
+              <span id={descId} className="sr-only">{t("paint.keysHelp")}</span>
+              <span className="sr-only" role="status" aria-live="polite">{said}</span>
             </div>
           )}
-        </SidePanel>
-      </div>
+        </div>
+      </EditorShell>
       {dialog === "saveAs" && (
         <SaveAsDialog snapshot={snapshot} current={file} onCancel={() => setDialog(undefined)}
           onSave={(target) => (setDialog(undefined), void write(target))} />
       )}
       {dialog === "close" && (
-        <div className="backdrop">
-          <div className="dialog" role="alertdialog" onKeyDown={(e) => e.key === "Escape" && setDialog(undefined)}>
-            <div className="ptitle">{t("paint.closeTitle")}</div>
-            <p className="hint">{t(isNew.current ? "paint.closeNew" : "paint.closeText", { name })}</p>
-            <div className="dlg-buttons">
-              <button type="button" autoFocus className="abtn primary" onClick={() => void save().then(() => !dirtyRef.current && onClose())}>
-                <Icon name="save" /><span>{t("paint.save")}</span>
-              </button>
-              <button type="button" className="abtn danger" onClick={closeAnyway}><span>{t("paint.discard")}</span></button>
-              <button type="button" className="abtn" onClick={() => setDialog(undefined)}><span>{t("dialog.cancel")}</span></button>
-            </div>
+        <AlertDialog title={t("paint.closeTitle")} onEscape={() => setDialog(undefined)}>
+          <p className="hint">{t(isNew.current ? "paint.closeNew" : "paint.closeText", { name })}</p>
+          <div className="dlg-buttons">
+            <button type="button" autoFocus className="abtn primary" onClick={() => void save().then(() => !dirtyRef.current && onClose())}>
+              <Icon name="save" /><span>{t("paint.save")}</span>
+            </button>
+            <button type="button" className="abtn danger" onClick={closeAnyway}><span>{t("paint.discard")}</span></button>
+            <button type="button" className="abtn" onClick={() => setDialog(undefined)}><span>{t("dialog.cancel")}</span></button>
           </div>
-        </div>
+        </AlertDialog>
       )}
     </section>
   );
@@ -914,7 +1017,7 @@ function FrameThumb({ pixels }: { pixels: Pixels }) {
 function Swatches({ colours, current, onPick }: { colours: string[]; current: Rgba; onPick: (hex: string) => void }) {
   const hex = toHex(current);
   return (
-    <div className="swatches" role="listbox">
+    <div className="swatches" role="listbox" aria-label={t("paint.palette")}>
       {colours.map((c) => (
         <button key={c} type="button" role="option" aria-selected={c === hex} title={c} className={`sw ${c === hex ? "sel" : ""}`}
           style={{ background: c }} onClick={() => onPick(c)} />

@@ -25,6 +25,9 @@ export const DEFAULT_SEVERITY: Partial<Record<CheckCode, Severity>> = {
   translatedStore: "warning",
   // Typed translation keys nothing uses: they cost nothing in the game, they are only leftovers (Q222).
   unusedTranslation: "info",
+  // A texture drawn at a size that is not a whole multiple of it builds; it only looks blurred or stretched (Q275).
+  guiImageScale: "warning",
+  guiImageTooBig: "warning",
   // Legal values past a field's soft limit (warnAbove/warnBelow).
   unusualHigh: "info",
   unusualLow: "info",

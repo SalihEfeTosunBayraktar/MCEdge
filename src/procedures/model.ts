@@ -84,20 +84,28 @@ export function mainStack(ir: ProcedureIR): Stack | undefined {
   return ir.stacks.find((s) => s.blocks[0]?.block === "start");
 }
 
-/** Every block node of a program, depth first, with its path ("stacks[0].blocks[2].inputs.then[1]"). */
+/**
+ * Every block node of a program, depth first, with its path ("stacks[0].blocks[2].inputs.then[1]"). Iterative with an
+ * explicit stack: a recursive generator re-yields every node through each level above it, and validation walks all
+ * 770 programs of a big project several times (Q280). The order is the recursive one.
+ */
 export function* walkNodes(ir: ProcedureIR): Generator<{ node: BlockNode; path: string; stack: number }> {
-  for (let s = 0; s < ir.stacks.length; s++) {
+  const work: [BlockNode, string, number][] = [];
+  // Pushed backwards, so popping gives stack 0, block 0 first.
+  for (let s = ir.stacks.length - 1; s >= 0; s--) {
     const blocks = ir.stacks[s].blocks ?? [];
-    for (let i = 0; i < blocks.length; i++) yield* walkNode(blocks[i], `stacks[${s}].blocks[${i}]`, s);
+    for (let i = blocks.length - 1; i >= 0; i--) work.push([blocks[i], `stacks[${s}].blocks[${i}]`, s]);
   }
-}
-
-function* walkNode(node: BlockNode, path: string, stack: number): Generator<{ node: BlockNode; path: string; stack: number }> {
-  if (!isNode(node)) return;
-  yield { node, path, stack };
-  for (const [name, value] of Object.entries(node.inputs ?? {})) {
-    if (Array.isArray(value)) for (let i = 0; i < value.length; i++) yield* walkNode(value[i], `${path}.inputs.${name}[${i}]`, stack);
-    else if (isNode(value)) yield* walkNode(value, `${path}.inputs.${name}`, stack);
+  while (work.length) {
+    const [node, path, stack] = work.pop()!;
+    if (!isNode(node)) continue;
+    yield { node, path, stack };
+    const inputs = Object.entries(node.inputs ?? {});
+    for (let n = inputs.length - 1; n >= 0; n--) {
+      const [name, value] = inputs[n];
+      if (Array.isArray(value)) for (let i = value.length - 1; i >= 0; i--) work.push([value[i], `${path}.inputs.${name}[${i}]`, stack]);
+      else if (isNode(value)) work.push([value, `${path}.inputs.${name}`, stack]);
+    }
   }
 }
 

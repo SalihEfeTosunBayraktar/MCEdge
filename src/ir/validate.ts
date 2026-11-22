@@ -6,6 +6,7 @@ import { loadIntegrations } from "../elements/integrations.ts";
 import { listEngines } from "../engines/registry.ts";
 import { gameRuleIssues } from "./gameRules.ts";
 import { translatedStoreIssues } from "./translatedStores.ts";
+import { guiImageIssues } from "./guiImages.ts";
 import type { Severity } from "./problems.ts";
 import { registryIdIssues } from "./registryIds.ts";
 import { projectSoundFiles, SOUND_EVENTS_FILE, soundEventProblems, soundEvents } from "../resources/soundEvents.ts";
@@ -48,9 +49,15 @@ export function validateProject(project: ModProject, projectDir: string): Valida
   // Recipes live in their own registry, so a recipe may share its id with the item it makes.
   const registry = typeRegistry();
   const seen = { recipe: new Set<string>(), shared: new Set<string>() };
+  // One stat per distinct path per validation: a project names the same few hundred textures thousands of times (Q280).
+  const present = new Map<string, boolean>();
   const ctx: ValidationContext = {
     elementIds: elementIdLookup(project.elements),
-    fileExists: (path) => existsSync(resolve(projectDir, path)),
+    fileExists: (path) => {
+      let found = present.get(path);
+      if (found === undefined) present.set(path, (found = existsSync(resolve(projectDir, path))));
+      return found;
+    },
   };
   for (const [typeId, elements] of Object.entries(project.elements)) {
     const type = registry.byId.get(typeId);
@@ -74,6 +81,8 @@ export function validateProject(project: ModProject, projectDir: string): Valida
   issues.push(...gameRuleIssues(project.elements));
   // text_translate in a server procedure written into a text store the clients read (KUYRUK 204).
   issues.push(...translatedStoreIssues(project.elements, project.variables, registry.byId));
+  // GUI and overlay images drawn at a size that blurs them, GUI images larger than the GUI (Q275).
+  issues.push(...guiImageIssues(project.elements, projectDir));
 
   // Sound events (sound_events.json, KUYRUK 132).
   try {

@@ -6,10 +6,10 @@
  */
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/usability";
+const OUT = evidence("design/usability");
 const project = exampleProject();
 writeFileSync(join(project, "variables.json"), JSON.stringify({ variables: [
   { name: "coins", type: "number", scope: "player_lifetime", initial: "0" },

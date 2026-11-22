@@ -1,0 +1,7 @@
+{
+  "suggestLight": { "maxRamGb": 8, "maxCores": 4 },
+  "memory": {
+    "normal": { "jdtlsMb": 1024 },
+    "low": { "jdtlsMb": 768, "gradleMb": 2048 }
+  }
+}

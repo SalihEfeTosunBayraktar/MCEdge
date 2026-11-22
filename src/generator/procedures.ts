@@ -86,7 +86,9 @@ function createBuild(env: GenEnv): ProcedureBuild {
     const text = code({
       run: (deps, cancel) => {
         const args = call.replace(/%(\w+)/g, (_, d: Dependency) => deps[d] ?? defaultValue(DEPENDENCIES[d].type === "world" ? undefined : (DEPENDENCIES[d].type as never), imports));
-        return `${args};\n${cancel ? `if (${penv.pkg}.procedures.ProcedureHelpers.takeCancel()) {\n${cancel}\n}` : `${penv.pkg}.procedures.ProcedureHelpers.takeCancel();`}`;
+        // The cancel flag is scoped to this dispatch (Q281); finally keeps it balanced when the procedure throws.
+        const h = `${penv.pkg}.procedures.ProcedureHelpers`;
+        return `boolean mcedgeCancel = ${h}.beginEvent();\ntry {\n${args};\n} finally {\nmcedgeCancel = ${h}.endEvent(mcedgeCancel);\n}${cancel ? `\nif (mcedgeCancel) {\n${cancel}\n}` : ""}`;
       },
     });
     if (text) triggers.push(text);
@@ -132,7 +134,7 @@ function createBuild(env: GenEnv): ProcedureBuild {
     if (!sessionGuis(env).length && usesSessions(env, [...compiled.values()].map((c) => `${c.source}${c.clientSource ?? ""}`))) sources.push(guiSessionsSource(env));
     if (bubbles) sources.push(transitionsSource(penv), bubblesSource(penv), bubbleRenderSource(penv));
     if (radial) sources.push(...radialSources(env, penv, (id, deps, returns) => callIn({ env: penv, compiled, scope, warnings }, id, deps, "radial_menu", returns)));
-    sources.push(registrationSource(penv, qualified, usesQueue, vars.some((v) => v.player), syncsVars));
+    sources.push(registrationSource(penv, qualified, usesQueue, vars.some((v) => v.player), syncsVars, [...helpers].some((name) => /^(set)?[eE]ntitySaved/.test(name))));
     if (listensToPlace) sources.push(blockPlaceEventsSource(penv.pkg));
     if (listensToHoe) sources.push(hoeUseEventsSource(penv.pkg));
     sources.push(variablesSource(penv, vars));
@@ -247,6 +249,13 @@ export function procedureCall(env: GenEnv, typeId: string, element: Element, fie
 export function procedureCallById(env: GenEnv, procedureId: unknown, deps: Partial<Record<Dependency, string>>, where: string, returns?: "logic" | "number"): string | undefined {
   if (typeof procedureId !== "string" || !procedureId) return undefined;
   return callIn(procedureBuild(env), procedureId, deps, where, returns);
+}
+
+/** Return type of a generated procedure ("logic", "number", ...), undefined when empty, not generated or returning nothing. */
+export function procedureReturnType(env: GenEnv, procedureId: unknown): string | undefined {
+  if (typeof procedureId !== "string" || !procedureId) return undefined;
+  const build = procedureBuild(env);
+  return build.compiled.has(procedureId) ? build.scope.procedures.get(procedureId)?.returnType : undefined;
 }
 
 /** procedureCallById within a build, also while it is being made. */

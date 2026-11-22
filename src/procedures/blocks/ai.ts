@@ -24,6 +24,7 @@ export const AI_BLOCKS: BlockDef[] = [
   goal("ai_attack_melee", [speed(1.2), check("longMemory", false)]),
   goal("ai_attack_range_melee", [speed(1.2), numField("range", 2), check("longMemory", false)]),
   goal("ai_attack_procedure", [speed(1.2), numField("range", 4), numField("interval", 20), { name: "procedure", kind: "procedure", default: "" }]),
+  goal("ai_work", [{ name: "procedure", kind: "procedure", default: "" }]),
   goal("ai_attack_fly", [speed(1), numField("radius", 16)]),
   goal("ai_leap", [speed(0.5)]),
   goal("ai_panic", [speed(1.2)]),

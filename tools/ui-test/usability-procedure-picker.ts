@@ -5,10 +5,10 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/usability";
+const OUT = evidence("design/usability");
 const project = exampleProject();
 addElement(project, "item", "gem", { name: "Ruby Gem" });
 for (let i = 0; i < 300; i++) addElement(project, "procedure", `proc_${String(i).padStart(3, "0")}`);

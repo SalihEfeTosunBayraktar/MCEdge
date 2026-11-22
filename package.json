@@ -1,12 +1,13 @@
 {
   "name": "mcedge",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "license": "GPL-3.0-or-later",
   "type": "module",
   "description": "Block-based, AI-collaborative Minecraft mod editor (core)",
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "test:ui": "node tools/ui-test/run-all.ts",
     "mcedge": "node src/cli.ts",
     "dev": "electron-vite dev",
     "build:app": "electron-vite build && vite build -c vite.cli.config.ts",

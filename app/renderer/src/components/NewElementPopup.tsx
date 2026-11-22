@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { displayNameField, newElement, REGISTRY_PROVIDERS, typeFields, type ElementType } from "../../../../src/elements/model.ts";
+import { hidden } from "../experience.ts";
 import { pascal } from "../../../../src/generator/java.ts";
 import { customStub } from "../../../../src/generator/types/custom_element.ts";
 import type { Coverage, ProjectSnapshot } from "../../../shared/api.ts";
@@ -10,7 +11,8 @@ import { language, t, type StringKey } from "../strings.ts";
 import { typeGenerated, typeOf } from "../types.ts";
 import { Icon } from "./Icon.tsx";
 import { Sprite } from "./Sprite.tsx";
-import { FormGroup, FormRow } from "./ui.tsx";
+import { StarterStep } from "./StarterGallery.tsx";
+import { FormGroup, FormRow, TabList, useDialogFocus } from "./ui.tsx";
 
 interface Props {
   snapshot: ProjectSnapshot;
@@ -54,10 +56,14 @@ function typeLetters(entries: CatalogEntry[]): Map<string, string> {
 export function NewElementPopup({ snapshot, coverage, engineName, onCreated, onCancel }: Props) {
   const [filter, setFilter] = useState("");
   const [chosen, setChosen] = useState<ElementType>();
+  // The template gallery step (Q252) instead of the type list.
+  const [starters, setStarters] = useState(false);
   const list = useRef<HTMLDivElement>(null);
   const root = useRef<HTMLDivElement>(null);
+  // Gives the focus back to what opened the popup when it closes (Q248); declared first, so the list below keeps the focus it takes.
+  useDialogFocus(root);
   // The list takes the focus when the popup opens and again after Back from the name step, so Escape and letters work.
-  useEffect(() => { if (!chosen) list.current?.focus(); }, [chosen]);
+  useEffect(() => { if (!chosen && !starters) list.current?.focus(); }, [chosen, starters]);
   // A click anywhere outside the popup closes it (Q231). Bubble phase, after React's handlers: the New button's own
   // toggle runs first, so a click on it closes the popup instead of reopening it. The click that opened the popup
   // happened before it mounted and is skipped.
@@ -71,7 +77,7 @@ export function NewElementPopup({ snapshot, coverage, engineName, onCreated, onC
     return () => document.removeEventListener("click", close);
   }, [onCancel]);
 
-  const all = catalog().sort((a, b) => entryLabel(a).localeCompare(entryLabel(b)));
+  const all = catalog().filter((e) => !hidden("elementTypes", e.typeId)).sort((a, b) => entryLabel(a).localeCompare(entryLabel(b)));
   const letters = useMemo(() => typeLetters(all), [all.map((e) => e.typeId).join()]); // eslint-disable-line react-hooks/exhaustive-deps
   const q = filter.trim().toLowerCase();
   const entries = all.filter((e) => !q || entryLabel(e).toLowerCase().includes(q));
@@ -94,8 +100,10 @@ export function NewElementPopup({ snapshot, coverage, engineName, onCreated, onC
 
   return (
     <div ref={root} className="addpop" role="dialog" aria-label={t("new.title")}
-      onKeyDown={(e) => e.key === "Escape" && (chosen ? setChosen(undefined) : onCancel())}>
-      {chosen ? (
+      onKeyDown={(e) => e.key === "Escape" && (chosen ? setChosen(undefined) : starters ? setStarters(false) : onCancel())}>
+      {starters ? (
+        <StarterStep snapshot={snapshot} onBack={() => setStarters(false)} onCreated={onCreated} />
+      ) : chosen ? (
         <NameStep snapshot={snapshot} type={chosen} onBack={() => setChosen(undefined)} onCreated={onCreated}
           notGenerated={typeGenerated(coverage, chosen.id) === "no"} engineName={engineName} />
       ) : (
@@ -103,10 +111,11 @@ export function NewElementPopup({ snapshot, coverage, engineName, onCreated, onC
           <div className="pophead">
             <span>{t("new.title")}</span>
             <span className="pophint">{t("new.hint")}</span>
+            <button type="button" className="abtn" data-testid="new-from-starter" onClick={() => setStarters(true)}><Icon name="tiles" /><span>{t("starter.fromNew")}</span></button>
           </div>
           <label className="search popsearch">
             <Icon name="search" />
-            <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={t("new.filter", { count: all.length })} />
+            <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={t("new.filter", { count: all.length })} aria-label={t("new.filter", { count: all.length })} />
           </label>
           <div ref={list} className={q ? "popcols" : "popfolders"} tabIndex={-1}
             onKeyDown={(e) => {
@@ -114,7 +123,7 @@ export function NewElementPopup({ snapshot, coverage, engineName, onCreated, onC
               if (entry && !e.ctrlKey && !e.altKey) (e.preventDefault(), choose(entry));
             }}>
             {!q && (
-              <div className="pgroups" role="tablist" aria-orientation="vertical">
+              <TabList className="pgroups" label={t("new.groups")} vertical>
                 {groups.map(({ group, entries: inGroup }) => (
                   <button key={group} type="button" role="tab" aria-selected={group === open} data-group={group}
                     className={`pfolder ${group === open ? "open" : ""}`}
@@ -125,7 +134,7 @@ export function NewElementPopup({ snapshot, coverage, engineName, onCreated, onC
                     <span className="pfcount">{inGroup.length}</span>
                   </button>
                 ))}
-              </div>
+              </TabList>
             )}
             {/* Search lists every match in two columns; a folder's types take the height of the largest folder, so the
                 popup does not jump while the pointer moves over the folders. */}

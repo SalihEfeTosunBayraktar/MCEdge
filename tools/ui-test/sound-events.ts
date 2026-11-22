@@ -9,9 +9,9 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect } from "../mcp-test/client.ts";
-import { assert, exampleProject, REPO, run, type App } from "./cdp.ts";
+import { assert, exampleProject, REPO, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/132";
+const OUT = evidence("design/132");
 const project = exampleProject();
 mkdirSync(join(project, "sounds"), { recursive: true });
 for (const n of ["ding", "ding_2"]) writeFileSync(join(project, "sounds", `${n}.ogg`), `OggS ${n}`);

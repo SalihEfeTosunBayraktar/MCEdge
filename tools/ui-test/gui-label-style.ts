@@ -6,7 +6,7 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, REPO, run, type App } from "./cdp.ts";
+import { assert, exampleProject, REPO, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
 const theme = (process.argv[2] ?? "dark") as "dark" | "light";
@@ -46,7 +46,7 @@ await run(async (app) => {
   const color = await app.eval<string>(`getComputedStyle(document.querySelector(".glabelbg")).backgroundColor`);
   assert(/rgba\(0, 0, 0, 0\.6/.test(color), `60% black: ${color}`);
   assert(Math.abs(text.x - box.x - 2 * z) < 1 && Math.abs(box.height - (8 + 4) * z) < 1, `the box is the text's width plus 2 each side and 8 + 4 high: ${JSON.stringify({ box, text, z })}`);
-  await app.shot(`design/182/gui-${theme}-${lang}.png`);
+  await app.shot(evidence(`design/182/gui-${theme}-${lang}.png`));
 
   await app.click(".abtn", S["editor.back"]);
   await app.waitFor(`document.querySelector(".tile")`);
@@ -55,5 +55,5 @@ await run(async (app) => {
   await app.click(".guilist .lrow", "HUD");
   await style(app);
   assert(saved("overlays", "stylehud").backgroundOpacity === 60 && await app.eval<boolean>(`!!document.querySelector(".glabelbg")`), "an overlay label has the background too");
-  await app.shot(`design/182/overlay-${theme}-${lang}.png`);
+  await app.shot(evidence(`design/182/overlay-${theme}-${lang}.png`));
 }, { project, theme, language: lang });

@@ -8,8 +8,9 @@ import { t } from "../strings.ts";
 import { integrations } from "../types.ts";
 import { TexturePicker } from "./TexturePicker.tsx";
 import {
-  ActionBar, ActionButton, DataTable, Dialog, FindBar, FindSelect, FormGroup, FormRow, PanelEmpty, Problems, Separator, SidePanel,
+  ActionButton, DataTable, Dialog, FindBar, FindSelect, FormGroup, FormRow, PanelEmpty, Problems, SidePanel, TabList
 } from "./ui.tsx";
+import { EmptyState, TabsRow } from "../dock/Dock.tsx";
 
 const SIDES = ["both", "client", "server"] as const;
 /** A dependency's source with one key set, or removed when empty; no source at all when nothing is left. */
@@ -45,7 +46,7 @@ export function SettingsView({ snapshot, onSaved }: Props) {
   const set = (patch: Partial<ModInfo>) => setMod({ ...mod, ...patch });
   const used = mod.integrations ?? [];
   const tabs = (
-    <div className="langtabs pagetabs" role="tablist" aria-label={t("section.settings")}>
+    <TabList className="langtabs pagetabs" label={t("section.settings")}>
       {TABS.map((k) => (
         <button key={k} role="tab" aria-selected={k === tab} className={`ltab ${k === tab ? "on" : ""}`} onClick={() => setTab(k)}>
           {t(`settings.tab.${k}`)}
@@ -53,7 +54,7 @@ export function SettingsView({ snapshot, onSaved }: Props) {
           {k === "integrations" && <span className="lpct">{used.length}</span>}
         </button>
       ))}
-    </div>
+    </TabList>
   );
   // After an identity change the draft takes the new id and package (already on disk), so no later save brings the old ones back.
   const props = { snapshot, mod, set, tabs, onSaved: (next: ProjectSnapshot) => (replaceMod(next.project.mod), onSaved(next)) };
@@ -101,17 +102,15 @@ function ModTab({ snapshot, mod, set, tabs, onSaved }: TabProps) {
   const issues = snapshot.issues.filter((issue) => issue.path.startsWith("mod.") && !issue.path.startsWith("mod.dependencies"));
   return (
     <>
-      <FindBar query={query} onQuery={setQuery} placeholder={t("settings.searchFields")} meta={t("settings.modMeta", { id: mod.id, package: mod.package })} />
-      <ActionBar>
-        <ActionButton icon="edit" label={t("settings.identity.change")} tone="primary" onClick={() => (setDone(undefined), setChanging(true))} />
-      </ActionBar>
-      {tabs}
+      <FindBar query={query} onQuery={setQuery} placeholder={t("settings.searchFields")} meta={t("settings.modMeta", { id: mod.id, package: mod.package })}
+        actions={<ActionButton icon="edit" label={t("settings.identity.change")} tone="primary" onClick={() => (setDone(undefined), setChanging(true))} />} />
+      <TabsRow tabs={tabs} />
       <div className="formscroll">
         <div className="form wide-labels">
           {done && <p className="notice">{done}</p>}
           {general.length > 0 && <FormGroup title={t("settings.general")}>{general}</FormGroup>}
           {publishing.length > 0 && <FormGroup title={t("settings.publishing")}>{publishing}</FormGroup>}
-          {!general.length && !publishing.length && <p className="empty-note">{t("settings.noFieldMatch")}</p>}
+          {!general.length && !publishing.length && <EmptyState icon="search" text={t("settings.noFieldMatch")} />}
           <Problems issues={issues} />
         </div>
       </div>
@@ -215,29 +214,28 @@ function DependenciesTab({ snapshot, mod, set, tabs }: TabProps) {
   const issues = snapshot.issues.filter((issue) => issue.path.startsWith("mod.dependencies"));
   return (
     <>
-      <FindBar query={query} onQuery={setQuery} placeholder={t("settings.search")} meta={t("settings.count", { count: mod.dependencies.length })}>
+      <FindBar query={query} onQuery={setQuery} placeholder={t("settings.search")} meta={t("settings.count", { count: mod.dependencies.length })}
+        actions={<>
+          <ActionButton icon="jar" label={t(resolving ? "settings.dep.resolving" : "settings.dep.resolve")} disabled={resolving || !mod.dependencies.length}
+            title={t("settings.dep.resolveHint")} onClick={resolve} />
+          {current && <ActionButton icon="trash" label={t("action.deleteSelected")} tone="danger" onClick={() => {
+            set({ dependencies: mod.dependencies.filter((_, i) => i !== selected) });
+            setSelected(undefined);
+          }} />}
+          <ActionButton icon="plus" label={t("settings.dep.add")} tone="primary" onClick={() => {
+            // The new row has no mod id yet: clear the search and filter so it is shown and stays selected.
+            setQuery("");
+            setSide("all");
+            set({ dependencies: [...mod.dependencies, NEW_DEPENDENCY] });
+            setSelected(mod.dependencies.length);
+          }} />
+        </>}>
         <FindSelect icon="filter" label={t("find.filter")} value={side} onChange={setSide} options={[
           { value: "all", label: t("settings.allSides") },
           ...SIDES.map((s) => ({ value: s, label: t(`side.${s}`) })),
         ]} />
       </FindBar>
-      <ActionBar>
-        <ActionButton icon="plus" label={t("settings.dep.add")} tone="primary" onClick={() => {
-          // The new row has no mod id yet: clear the search and filter so it is shown and stays selected.
-          setQuery("");
-          setSide("all");
-          set({ dependencies: [...mod.dependencies, NEW_DEPENDENCY] });
-          setSelected(mod.dependencies.length);
-        }} />
-        <ActionButton icon="jar" label={t(resolving ? "settings.dep.resolving" : "settings.dep.resolve")} disabled={resolving || !mod.dependencies.length}
-          title={t("settings.dep.resolveHint")} onClick={resolve} />
-        <Separator />
-        <ActionButton icon="trash" label={t("action.deleteSelected")} tone="danger" disabled={!current} onClick={() => {
-          set({ dependencies: mod.dependencies.filter((_, i) => i !== selected) });
-          setSelected(undefined);
-        }} />
-      </ActionBar>
-      {tabs}
+      <TabsRow tabs={tabs} />
       <div className="split">
         <div className="scrollarea">
           <DataTable rows={rows} rowKey={(r) => String(r.index)} selected={current ? String(selected) : undefined}
@@ -344,13 +342,10 @@ function IntegrationsTab({ mod, set, tabs }: TabProps) {
           { value: "off", label: t("settings.integrations.off") },
         ]} />
       </FindBar>
-      <ActionBar>
-        {(["off", "optional", "required"] as const).map((use) => (
-          <ActionButton key={use} icon={use === "off" ? "close" : "check"} label={useLabel(use)} disabled={!current}
-            pressed={!!current && useOf(current.id) === use} onClick={() => current && setUse(current.id, use)} />
-        ))}
-      </ActionBar>
-      {tabs}
+      <TabsRow tabs={tabs} actions={current && (["off", "optional", "required"] as const).map((use) => (
+        <ActionButton key={use} icon={use === "off" ? "close" : "check"} label={useLabel(use)}
+          pressed={useOf(current.id) === use} onClick={() => setUse(current.id, use)} />
+      ))} />
       <div className="split">
         <div className="scrollarea">
           <DataTable rows={rows} rowKey={(i) => i.id} selected={current?.id} onSelect={setSelected} empty={t("settings.integrations.none")}

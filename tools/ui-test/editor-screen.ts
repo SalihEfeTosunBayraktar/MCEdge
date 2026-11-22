@@ -8,11 +8,11 @@
  */
 import { copyFileSync, existsSync, mkdirSync, statSync } from "node:fs";
 import { connect } from "../mcp-test/client.ts";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const project = exampleProject();
 const visible = process.env.UI_TEST_VISIBLE === "1";
-const OUT = "design/153";
+const OUT = evidence("design/153");
 
 await run(async (app: App) => {
   const mcp = await connect(project);

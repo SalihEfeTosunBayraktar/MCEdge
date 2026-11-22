@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { explainGradleFailures, explainJavac, type BuildExplanation, type GradleFailure } from "../build/explain.ts";
 import { parseJavacDiagnostics, type JavacDiagnostic } from "../build/javacErrors.ts";
 import type { Element } from "../elements/model.ts";
 import { listEngines } from "../engines/registry.ts";
@@ -30,6 +31,8 @@ export interface MappedDiagnostic {
   block?: { path: string; block: string; fields?: Record<string, unknown> };
   /** Fields of the element (or block) whose value appears on the Java line: likely the cause. */
   fields?: string[];
+  /** What the error means and how to fix it (config/build-explanations.json); absent when no rule knows it. */
+  explain?: BuildExplanation;
 }
 
 /** The node at an IR path ("stacks[0].blocks[2].inputs.do[1]"). */
@@ -74,7 +77,8 @@ export function mapDiagnostics(root: string, outDir: string, diagnostics: JavacD
     const file = relative(outDir, abs).replaceAll("\\", "/");
     const lines = existsSync(abs) ? readFileSync(abs, "utf8").split("\n") : [];
     const code = lines[d.line - 1]?.trim() ?? d.detail[0]?.trim();
-    const out: MappedDiagnostic = { severity: d.severity, message: d.message, file, line: d.line, ...(code ? { code } : {}), detail: d.detail };
+    const explain = explainJavac(d.message, d.detail);
+    const out: MappedDiagnostic = { severity: d.severity, message: d.message, file, line: d.line, ...(code ? { code } : {}), detail: d.detail, ...(explain ? { explain } : {}) };
     const entry = map?.files[file];
     if (!entry) return out;
     out.element = entry.element;
@@ -102,19 +106,27 @@ export function buildDiagnostics(root: string, engine: string, lines?: string[],
   return mapDiagnostics(root, outDir, parseJavacDiagnostics(log).filter((d) => warnings || d.severity === "error"));
 }
 
+/** A failed build as the app and agents explain it: the mapped compile errors and the Gradle failures a rule recognises. */
+export function explainBuild(root: string, engine: string, lines: string[], warnings = false): { diagnostics: MappedDiagnostic[]; failures: GradleFailure[] } {
+  return { diagnostics: buildDiagnostics(root, engine, lines, warnings), failures: explainGradleFailures(lines) };
+}
+
 export function registerBuildErrorTools(server: McpServer, root: string, guard: Guard): void {
   server.registerTool(
     "build_errors",
     {
       description: "Compile errors of the engine's last build (out/<engine>/build/mcedge-build.log), each pointed back at its source through the generator's source map: "
         + "the element whose class it is, for procedures the block (IR path as in read_procedure, block id and fields), and the fields whose value is on the failing Java line. "
+        + "Each error carries `explain` {id, params, fix}: the id of its plain-language explanation (config/build-explanations.json) and the fix hint; `failures` lists Gradle's own failures (a dependency that cannot be resolved, no Java, out of memory) the same way. An error no rule knows has no `explain`. "
         + "Does not build; `build` returns the same list.",
       inputSchema: { engine: z.string(), warnings: z.boolean().default(false).describe("Include javac warnings") },
     },
     ({ engine, warnings }) => guard(() => {
       if (!listEngines().some((e) => e.id === engine)) throw new Error(`unknown engine ${engine}`);
+      const log = join(root, "out", engine, "build", "mcedge-build.log");
       const all = buildDiagnostics(root, engine, undefined, warnings);
-      return json({ count: all.length, diagnostics: all.slice(0, 100) });
+      const failures = existsSync(log) ? explainGradleFailures(readFileSync(log, "utf8").split("\n")) : [];
+      return json({ count: all.length, diagnostics: all.slice(0, 100), failures });
     }),
   );
 }

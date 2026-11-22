@@ -8,11 +8,11 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { connect } from "../mcp-test/client.ts";
-import { assert, exampleProject, launchApp, type App } from "./cdp.ts";
+import { assert, exampleProject, launchApp, type App, evidence } from "./cdp.ts";
 
 const language = process.argv[2] ?? "en";
 const theme = (process.argv[3] ?? "dark") as "dark" | "light";
-const OUT = "design/localization";
+const OUT = evidence("design/localization");
 const project = exampleProject();
 const file = (code: string) => join(project, "localization", `${code}.json`);
 const read = (code: string) => JSON.parse(readFileSync(file(code), "utf8")) as Record<string, string>;

@@ -4,11 +4,15 @@
  * fallback padding of the title bar uses; CDP cannot show the real overlay, so the test applies that padding itself); the find bar, the toolbars, the bottom panel tabs, the
  * Agents panel and Preferences show no clipped label and no overlapping sibling. Screenshots in design/224/.
  */
+import { writeFileSync } from "node:fs";
+import { join } from "node:path";
 import en from "../../config/ui-strings/en.json" with { type: "json" };
 import tr from "../../config/ui-strings/tr.json" with { type: "json" };
-import { assert, copyProject, launchApp, type App } from "./cdp.ts";
+import { assert, copyProject, launchApp, type App, evidence } from "./cdp.ts";
 
 const project = copyProject("C:/MyProjects/AI-Assisted/ETREconomy-MCEdge", "etr");
+// An agent is connected (the Problems panel and the Agents view fill with its work; copyProject drops the source's live state).
+writeFileSync(join(project, ".mcedge", "live", "presence-agent.json"), JSON.stringify({ who: "agent", at: new Date().toISOString(), client: "claude-code" }));
 const shots: Record<string, "dark" | "light"> = { "720-tr": "dark", "900-en": "dark", "720-en": "light" };
 let failed = false;
 
@@ -33,7 +37,8 @@ const fit = (app: App, view: string) => app.eval<string[]>(`(() => {
       }
     }
     for (const e of [c, ...c.querySelectorAll("*")]) {
-      if (!e.getClientRects().length || e.clientWidth === 0 || e.closest("svg, canvas, textarea")) continue;
+      // Q284: text kept only for assistive technology (visually hidden: 1 px box, clipped) is not a clipped label.
+      if (!e.getClientRects().length || e.clientWidth <= 1 || e.closest("svg, canvas, textarea")) continue;
       const s = getComputedStyle(e);
       if (s.overflowX !== "visible" && s.overflowX !== "hidden" && s.overflowX !== "clip") continue;
       if (e.scrollWidth > e.clientWidth + 1 && s.textOverflow !== "ellipsis" && (e.textContent || "").trim()) out.push(${JSON.stringify(view)} + ": " + sel + " clipped " + name(e) + " (" + e.scrollWidth + ">" + e.clientWidth + ")");
@@ -69,11 +74,11 @@ for (const language of ["en", "tr"]) {
       const sorted = [...r.boxes].sort((a, b) => a.l - b.l);
       for (let i = 1; i < sorted.length; i++) assert(sorted[i].l >= sorted[i - 1].r - 0.5 || sorted[i].r <= sorted[i - 1].r, `${key}: ${sorted[i - 1].n} overlaps ${sorted[i].n}`);
       for (const b of r.boxes) assert(b.r <= r.controls + 0.5, `${key}: ${b.n} (right ${b.r}) runs under the window controls (${r.controls})`);
-      if (shots[key]) await app.shot(`design/224/${key}-${shots[key]}.png`);
+      if (shots[key]) await app.shot(evidence(`design/224/${key}-${shots[key]}.png`));
 
       // Views: elements, Resources, the procedure and GUI editors, the bottom panels, Preferences.
       const problems: string[] = [];
-      const look = async (view: string) => { problems.push(...(await fit(app, `${key} ${view}`))); await app.shot(`design/224/fit-${key}-${view.replace(/\W+/g, "-")}-${theme}.png`).catch(() => {}); };
+      const look = async (view: string) => { problems.push(...(await fit(app, `${key} ${view}`))); await app.shot(evidence(`design/224/fit-${key}-${view.replace(/\W+/g, "-")}-${theme}.png`)).catch(() => {}); };
       await app.waitFor(`document.querySelector(".tile")`, 30000);
       await look("elements");
       await app.eval(`document.querySelector(".sitem.agent")?.click()`);

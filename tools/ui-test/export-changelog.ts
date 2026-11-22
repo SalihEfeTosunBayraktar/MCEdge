@@ -11,9 +11,9 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { LAST_EXPORT, recordExport } from "../../src/vcs/changelog.ts";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/168";
+const OUT = evidence("design/168");
 const project = exampleProject();
 const git = (...args: string[]) => {
   const r = spawnSync("git", ["-C", project, "-c", "user.name=Test", "-c", "user.email=test@example.com", ...args], { encoding: "utf8" });

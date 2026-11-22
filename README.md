@@ -191,7 +191,9 @@ node src/cli.ts engines
 
 Issues and pull requests are welcome. Before a pull request, run `npm run typecheck`; changes to the generator
 should build on every engine (`tools/codegen-test`), and UI changes have scripts in `tools/ui-test` that drive the
-real app. Code, comments and commit messages are in English.
+real app: `npm run build:app`, then `npm run test:ui` runs all of them one at a time with the window hidden and prints a pass/fail
+summary with timings (`npm run test:ui -- gui- tags` runs the tests whose names contain those words). Screenshots go to the untracked
+`.ui-out/`; `UPDATE_EVIDENCE=1` writes the tracked `design/` files instead. Code, comments and commit messages are in English.
 
 ## License
 

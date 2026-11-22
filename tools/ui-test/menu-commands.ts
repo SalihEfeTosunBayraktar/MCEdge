@@ -7,10 +7,11 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, REPO, run, type App, evidence } from "./cdp.ts";
 
 const project = exampleProject();
-const OUT = "design/menu-commands";
+const OUT = evidence("design/menu-commands");
+const appVersion = (JSON.parse(readFileSync(join(REPO, "package.json"), "utf8")) as { version: string }).version;
 const files = mkdtempSync(join(tmpdir(), "mcedge-import-"));
 const ogg = join(files, "Magic Ding.ogg");
 writeFileSync(ogg, Buffer.from("OggS fixture"));
@@ -95,12 +96,12 @@ await run(async (app) => {
 
   // Help
   await menu(app, "Help", "About MCEdge");
-  await app.waitFor(`document.querySelector(".aboutdlg code")?.textContent === "0.1.0"`);
+  await app.waitFor(`document.querySelector(".aboutdlg code")?.textContent === ${JSON.stringify(appVersion)}`);
   await app.shot(`${OUT}/about-dark.png`);
   await app.key("Escape");
   await app.setTheme("light");
   await menu(app, "Help", "About MCEdge");
-  await app.waitFor(`document.querySelector(".aboutdlg code")?.textContent === "0.1.0"`);
+  await app.waitFor(`document.querySelector(".aboutdlg code")?.textContent === ${JSON.stringify(appVersion)}`);
   await app.shot(`${OUT}/about-light.png`);
   await app.key("Escape");
   for (const theme of ["light", "dark"] as const) {

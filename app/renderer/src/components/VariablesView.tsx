@@ -5,9 +5,8 @@ import { api } from "../api.ts";
 import { useAutosave } from "../hooks/useAutosave.ts";
 import { t } from "../strings.ts";
 import { useRevealQuery } from "../hooks/reveal.ts";
-import {
-  ActionBar, ActionButton, DataTable, FindBar, FindSelect, FormGroup, FormRow, PanelEmpty, Problems, Separator, SidePanel,
-} from "./ui.tsx";
+import { ActionButton, DataTable, FindBar, FindSelect, FormRow, Problems } from "./ui.tsx";
+import { InspectorToggle, ViewShell, type DockSection } from "../dock/Dock.tsx";
 
 const DEFAULT_INITIAL: Record<Variable["type"], string> = {
   number: "0", logic: "false", string: "", itemstack: "minecraft:air", blockstate: "minecraft:air", direction: "north",
@@ -57,11 +56,51 @@ export function VariablesView({ snapshot, onSaved }: Props) {
     setSelected(undefined);
   };
   const issues = snapshot.issues.filter((issue) => issue.path.startsWith("variables["));
+  /** The selected variable, edited in the inspector (Q284), then the project's variable problems and the note. */
+  const sections: DockSection[] = [
+    { id: "variables.variable", icon: "vars", title: t("group.variable"), body: !current ? <p className="hint">{t("variables.selectHint")}</p> : (
+      <div className="form">
+        <FormRow label={t("variables.name")}>
+          <input value={current.name} onChange={(e) => update({ name: e.target.value.trim() })} />
+        </FormRow>
+        <FormRow label={t("variables.type")}>
+          <select value={current.type} onChange={(e) => {
+            const type = e.target.value as Variable["type"];
+            update({ type, initial: DEFAULT_INITIAL[type] });
+          }}>
+            {VARIABLE_TYPES.map((type) => <option key={type} value={type}>{t(`varType.${type}`)}</option>)}
+          </select>
+        </FormRow>
+        <FormRow label={t("variables.scope")}>
+          <select value={current.scope} onChange={(e) => update({ scope: e.target.value as Variable["scope"] })}>
+            {VARIABLE_SCOPES.map((s) => <option key={s} value={s}>{t(`scope.${s}`)}</option>)}
+          </select>
+        </FormRow>
+        <FormRow label={t("variables.initial")}>
+          {current.type === "logic" ? (
+            <select value={current.initial} onChange={(e) => update({ initial: e.target.value })}>
+              <option value="false">false</option><option value="true">true</option>
+            </select>
+          ) : (
+            <input value={current.initial} onChange={(e) => update({ initial: e.target.value })} />
+          )}
+        </FormRow>
+      </div>
+    ) },
+    { id: "variables.problems", icon: "warn", title: t("dock.problems"), badge: issues.length ? String(issues.length) : undefined, defaultOpen: issues.length > 0,
+      body: issues.length ? <Problems issues={issues} /> : <p className="hint">{t("dock.noProblemsHere")}</p> },
+    { id: "variables.note", icon: "info", title: t("dock.about"), defaultOpen: false, body: <p className="hint">{t("variables.note")}</p> },
+  ];
 
   return (
     <section className="view">
       <FindBar query={query} onQuery={setQuery} placeholder={t("variables.search")}
-        meta={t("variables.count", { count: variables.length })}>
+        meta={t("variables.count", { count: variables.length })}
+        actions={<>
+          {current && <ActionButton icon="trash" label={t("action.deleteSelected")} tone="danger" onClick={remove} />}
+          <ActionButton icon="plus" label={t("variables.add")} tone="primary" onClick={add} />
+          <InspectorToggle />
+        </>}>
         <FindSelect icon="filter" label={t("find.filter")} value={scope} onChange={setScope} options={[
           { value: "all", label: t("variables.allScopes") },
           ...VARIABLE_SCOPES.map((s) => ({ value: s, label: t(`scope.${s}`) })),
@@ -71,12 +110,7 @@ export function VariablesView({ snapshot, onSaved }: Props) {
           { value: "type", label: t("sort.type") },
         ]} />
       </FindBar>
-      <ActionBar>
-        <ActionButton icon="plus" label={t("variables.add")} tone="primary" onClick={add} />
-        <Separator />
-        <ActionButton icon="trash" label={t("action.deleteSelected")} tone="danger" disabled={!current} onClick={remove} />
-      </ActionBar>
-      <div className="split">
+      <ViewShell sections={sections} inspectorLabel={t("dock.inspector")} inspectorClass="tagsinsp">
         <DataTable rows={rows} rowKey={(r) => String(r.index)} selected={selected === undefined ? undefined : String(selected)}
           onSelect={(key) => setSelected(Number(key))} empty={variables.length ? t("list.noMatch") : t("variables.empty")}
           columns={[
@@ -85,40 +119,7 @@ export function VariablesView({ snapshot, onSaved }: Props) {
             { label: t("variables.scope"), width: "24%", cell: (r) => t(`scope.${r.v.scope}`) },
             { label: t("variables.initial"), cell: (r) => <code>{r.v.initial || "—"}</code> },
           ]} />
-        <SidePanel title={t("variables.edit")}>
-          {current ? (
-            <FormGroup title={t("group.variable")}>
-              <FormRow label={t("variables.name")}>
-                <input value={current.name} onChange={(e) => update({ name: e.target.value.trim() })} />
-              </FormRow>
-              <FormRow label={t("variables.type")}>
-                <select value={current.type} onChange={(e) => {
-                  const type = e.target.value as Variable["type"];
-                  update({ type, initial: DEFAULT_INITIAL[type] });
-                }}>
-                  {VARIABLE_TYPES.map((type) => <option key={type} value={type}>{t(`varType.${type}`)}</option>)}
-                </select>
-              </FormRow>
-              <FormRow label={t("variables.scope")}>
-                <select value={current.scope} onChange={(e) => update({ scope: e.target.value as Variable["scope"] })}>
-                  {VARIABLE_SCOPES.map((s) => <option key={s} value={s}>{t(`scope.${s}`)}</option>)}
-                </select>
-              </FormRow>
-              <FormRow label={t("variables.initial")}>
-                {current.type === "logic" ? (
-                  <select value={current.initial} onChange={(e) => update({ initial: e.target.value })}>
-                    <option value="false">false</option><option value="true">true</option>
-                  </select>
-                ) : (
-                  <input value={current.initial} onChange={(e) => update({ initial: e.target.value })} />
-                )}
-              </FormRow>
-            </FormGroup>
-          ) : <PanelEmpty text={t("variables.selectHint")} />}
-          <Problems issues={issues} />
-          <p className="hint">{t("variables.note")}</p>
-        </SidePanel>
-      </div>
+      </ViewShell>
     </section>
   );
 }

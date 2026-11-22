@@ -3,7 +3,7 @@
  * (user, 2026-11-07: "bir filtre uygulayıp filtreden seçilen nesneden çıkınca filtresiz defulta atıyor").
  */
 import { resolve } from "node:path";
-import { assert, copyProject, REPO, run } from "./cdp.ts";
+import { assert, copyProject, REPO, run, evidence } from "./cdp.ts";
 
 const project = copyProject(resolve(REPO, "..", "ETREconomy-MCEdge"), "etr");
 const filterSelect = `document.querySelector(".fsel select")`;
@@ -31,5 +31,5 @@ await run(async (app) => {
   console.log("filter after coming back", value, after);
   assert(value === "procedure", "the filter is kept");
   assert(after === filtered, "the same elements are listed");
-  await app.shot("design/folders/filter-kept.png");
+  await app.shot(evidence("design/folders/filter-kept.png"));
 }, { project });

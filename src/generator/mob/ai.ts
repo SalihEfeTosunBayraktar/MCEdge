@@ -139,6 +139,43 @@ export function compileGoals(env: GenEnv, e: Element, t: MobTraits): Goals {
         blocks.add(n.block);
         break;
       }
+      case "ai_work": {
+        // A job written as procedures: the start condition (canUse), the work procedure every tick while active, and the
+        // keep-going condition (canContinueToUse; the start condition again when empty). No condition means always.
+        const work = procedureCallById(env, f("procedure", ""), at, where(n));
+        lines.push(`this.goalSelector.addGoal(${prio}, new ${G}.Goal() {
+            {
+                this.setFlags(java.util.EnumSet.of(${N.Flag}.MOVE, ${N.Flag}.LOOK));
+            }
+
+            @Override
+            public boolean canUse() {
+                return ${start ?? "true"};
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return ${keep ?? start ?? "true"};
+            }
+
+${legacy ? "" : `            @Override
+            public boolean requiresUpdateEveryTick() {
+                return true;
+            }
+
+`}            @Override
+            public void stop() {
+                ${self}.getNavigation().stop();
+            }
+
+            @Override
+            public void tick() {
+                ${work ? `${work};` : ""}
+            }
+        });`);
+        blocks.add(n.block);
+        break;
+      }
       case "ai_attack_fly": {
         const hurt = legacy ? `${self}.doHurtTarget(target)` : `${self}.doHurtTarget(getServerLevel(target), target)`;
         lines.push(`this.goalSelector.addGoal(${prio}, new ${G}.Goal() {

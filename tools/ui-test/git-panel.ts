@@ -9,10 +9,10 @@ import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { connect } from "../mcp-test/client.ts";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const project = exampleProject();
-const OUT = "design/git-panel";
+const OUT = evidence("design/git-panel");
 const sh = (cwd: string, ...args: string[]) => {
   const r = spawnSync("git", args, { cwd, encoding: "utf8" });
   if (r.status !== 0) throw new Error(`git ${args.join(" ")}: ${r.stderr}`);

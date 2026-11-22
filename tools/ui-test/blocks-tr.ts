@@ -1,12 +1,12 @@
 /**
  * KUYRUK #71: the block palette of the procedure editor in Turkish. Screenshots go to design/blocks-tr/.
  */
-import { assert, exampleProject, run } from "./cdp.ts";
+import { assert, exampleProject, run, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
 const project = exampleProject();
 addElement(project, "procedure", "demo");
-const OUT = "design/blocks-tr";
+const OUT = evidence("design/blocks-tr");
 
 await run(async (app) => {
   await app.click(".rtab", "Mod öğeleri");

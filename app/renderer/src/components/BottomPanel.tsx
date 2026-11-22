@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { isRunKey, runKey, type LiveState, type TaskSource, type ValidationIssue } from "../../../shared/api.ts";
+import { isRunKey, runKey, type ExperienceLevel, type LiveState, type TaskSource, type ValidationIssue } from "../../../shared/api.ts";
+import { hidden } from "../experience.ts";
 import type { ProblemAction } from "../../../../src/ir/problems.ts";
 import type { EngineBuild } from "../model.ts";
 import { t, type StringKey } from "../strings.ts";
 import type { AgentTasks } from "./AgentTasks.tsx";
 import { AgentsView } from "./AgentsView.tsx";
+import { BuildExplain } from "./BuildExplain.tsx";
 import { ProblemsPanel } from "./ProblemsPanel.tsx";
 import { ScenariosView } from "./ScenariosView.tsx";
-import { ContextMenu } from "./ui.tsx";
+import { ContextMenu, TabList } from "./ui.tsx";
 import { Icon } from "./Icon.tsx";
 
 /** "activity" and "tasks" (the panels before KUYRUK 195) open the Agents panel at the latest session or at the tasks. */
@@ -59,15 +61,69 @@ interface Props {
   onClose: () => void;
   /** Opens Help > Report a bug; offered next to a failed build (Q208). */
   onReport?: () => void;
+  /** Explained build errors (Q246): the project, the user's level, and the two buttons (go to an element and field; ask the AI). */
+  explain?: { dir: string; level?: ExperienceLevel; mapped: boolean; onOpen: (element: string, field?: string) => void; onAsk: (text: string) => void };
+}
+
+const HEIGHT_KEY = "mcedge.panelHeight";
+const PANEL_MIN_HEIGHT = 120;
+/** Window height the rest of the screen keeps: the panel never takes the last 200 px of content (Q279), see `.bottom-panel` in styles.css. */
+const readHeight = (): number | undefined => {
+  try {
+    const h = Number(localStorage.getItem(HEIGHT_KEY));
+    return h >= PANEL_MIN_HEIGHT ? h : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+/** The top edge of the panel: drag (or use the arrow keys) to set its height; remembered, clamped by the CSS. */
+function PanelGrip({ panelRef }: { panelRef: React.RefObject<HTMLElement | null> }) {
+  const [dragging, setDragging] = useState(false);
+  const apply = (h: number) => {
+    const value = Math.max(PANEL_MIN_HEIGHT, Math.round(h));
+    document.documentElement.style.setProperty("--panel-h", `${value}px`);
+    try {
+      localStorage.setItem(HEIGHT_KEY, String(value));
+    } catch {
+      // Lasts until the app closes.
+    }
+  };
+  const down = (e: React.PointerEvent) => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    e.preventDefault();
+    const startY = e.clientY, startH = panel.getBoundingClientRect().height;
+    setDragging(true);
+    const move = (m: PointerEvent) => apply(startH + startY - m.clientY);
+    const up = () => (window.removeEventListener("pointermove", move), window.removeEventListener("pointerup", up), setDragging(false));
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+  const key = (e: React.KeyboardEvent) => {
+    const panel = panelRef.current;
+    if (!panel || (e.key !== "ArrowUp" && e.key !== "ArrowDown")) return;
+    e.preventDefault();
+    apply(panel.getBoundingClientRect().height + (e.key === "ArrowUp" ? 24 : -24));
+  };
+  return <span className={`bpgrip ${dragging ? "on" : ""}`} role="separator" aria-orientation="horizontal" aria-label={t("panel.resizeHeight")} title={t("panel.resizeHeight")}
+    tabIndex={0} onPointerDown={down} onKeyDown={key} />;
 }
 
 /** Problems list, streaming build/run log and the Gradle console under the content area. */
-export function BottomPanel({ panel, issues, ignoredIssues = [], onProblemAction, onProblemFix, console: hasConsole, scenariosDir, agent, tasks, onNewTask, builds, engineId, onGradle, onStopGradle, onStopRun, onSelect, onClose, onReport }: Props) {
+// The remembered height is put back once, when the first panel opens.
+if (typeof document !== "undefined") {
+  const h = readHeight();
+  if (h) document.documentElement.style.setProperty("--panel-h", `${h}px`);
+}
+
+export function BottomPanel({ panel, issues, ignoredIssues = [], onProblemAction, onProblemFix, console: hasConsole, scenariosDir, agent, tasks, onNewTask, builds, engineId, onGradle, onStopGradle, onStopRun, onSelect, onClose, onReport, explain }: Props) {
   const engineIds = Object.keys(builds).filter((id) => !id.endsWith(" gradle"));
   const [shown, setShown] = useState<string | undefined>();
   const [menu, setMenu] = useState<{ x: number; y: number; source: TaskSource }>();
   const current = shown && builds[shown] ? shown : engineIds.find((id) => builds[id].status === "running") ?? engineIds.at(-1);
   const log = useRef<HTMLPreElement>(null);
+  const box = useRef<HTMLElement>(null);
   const consoleKey = runKey(engineId, "gradle");
   const lines = panel === "gradle" ? builds[consoleKey]?.lines ?? [] : current ? builds[current].lines : [];
   useEffect(() => {
@@ -76,31 +132,32 @@ export function BottomPanel({ panel, issues, ignoredIssues = [], onProblemAction
   }, [lines.length, panel]);
 
   return (
-    <section className={`bottom-panel ${isAgents(panel) || panel === "scenarios" ? "tall" : ""}`}>
-      <nav className="panel-tabs" role="tablist">
-        <button role="tab" className={`ptab ${panel === "problems" ? "on" : ""}`} onClick={() => onSelect("problems")}>
-          <Icon name="warn" />{t("panel.problems")}
+    <section ref={box} className={`bottom-panel ${isAgents(panel) || panel === "scenarios" ? "tall" : ""}`}>
+      <PanelGrip panelRef={box} />
+      <TabList className="panel-tabs" label={t("panel.tabs")}>
+        <button role="tab" title={t("panel.problems")} className={`ptab ${panel === "problems" ? "on" : ""}`} onClick={() => onSelect("problems")}>
+          <Icon name="warn" /><span className="ptlabel">{t("panel.problems")}</span>
         </button>
-        <button role="tab" className={`ptab ${panel === "build" ? "on" : ""}`} onClick={() => onSelect("build")}>
-          <Icon name="hammer" />{t("panel.build")}
+        <button role="tab" title={t("panel.build")} className={`ptab ${panel === "build" ? "on" : ""}`} onClick={() => onSelect("build")}>
+          <Icon name="hammer" /><span className="ptlabel">{t("panel.build")}</span>
         </button>
-        {hasConsole && (
-          <button role="tab" className={`ptab ${panel === "gradle" ? "on" : ""}`} onClick={() => onSelect("gradle")}>
-            <Icon name="code" />{t("panel.gradle")}
+        {hasConsole && !hidden("panels", "gradle") && (
+          <button role="tab" title={t("panel.gradle")} className={`ptab ${panel === "gradle" ? "on" : ""}`} onClick={() => onSelect("gradle")}>
+            <Icon name="code" /><span className="ptlabel">{t("panel.gradle")}</span>
           </button>
         )}
-        {scenariosDir && (
-          <button role="tab" className={`ptab ${panel === "scenarios" ? "on" : ""}`} data-testid="tab-scenarios" onClick={() => onSelect("scenarios")}>
-            <Icon name="play" />{t("panel.scenarios")}
+        {scenariosDir && !hidden("panels", "scenarios") && (
+          <button role="tab" title={t("panel.scenarios")} className={`ptab ${panel === "scenarios" ? "on" : ""}`} data-testid="tab-scenarios" onClick={() => onSelect("scenarios")}>
+            <Icon name="play" /><span className="ptlabel">{t("panel.scenarios")}</span>
           </button>
         )}
-        <button role="tab" className={`ptab ${isAgents(panel) ? "on" : ""}`} onClick={() => onSelect("agents")}>
-          <Icon name="usages" />{t("panel.agents")}
+        <button role="tab" title={t("panel.agents")} className={`ptab ${isAgents(panel) ? "on" : ""}`} onClick={() => onSelect("agents")}>
+          <Icon name="usages" /><span className="ptlabel">{t("panel.agents")}</span>
           {tasks?.tasks.some((task) => task.status === "done") && <span className="pcount">{tasks.tasks.filter((task) => task.status === "done").length}</span>}
         </button>
         <span className="sgrow" />
         <button className="vbtn" title={t("panel.close")} onClick={onClose}><Icon name="close" size={12} /></button>
-      </nav>
+      </TabList>
       {panel === "problems" ? (
         <ProblemsPanel issues={issues} ignored={ignoredIssues} onNewTask={onNewTask} onAction={onProblemAction} onFix={onProblemFix} />
       ) : isAgents(panel) ? (
@@ -132,10 +189,15 @@ export function BottomPanel({ panel, issues, ignoredIssues = [], onProblemAction
               <li><button type="button" className="linkbtn reportbtn" data-testid="report-build" onClick={onReport}>{t("bug.reportThis")}</button></li>
             )}
           </ul>
-          <pre ref={log} className="log" onContextMenu={onNewTask && ((e) => {
-            const line = lineAt(e, lines);
-            if (line) (e.preventDefault(), setMenu({ x: e.clientX, y: e.clientY, source: { kind: "build", text: line } }));
-          })}>{lines.join("\n")}</pre>
+          <div className="buildmain">
+            {explain && current && !isRunKey(current) && builds[current].status === "failed" && !builds[current].stopped && (
+              <BuildExplain dir={explain.dir} engineId={explain.mapped ? current : undefined} lines={lines} level={explain.level} onOpen={explain.onOpen} onAsk={explain.onAsk} />
+            )}
+            <pre ref={log} className="log" onContextMenu={onNewTask && ((e) => {
+              const line = lineAt(e, lines);
+              if (line) (e.preventDefault(), setMenu({ x: e.clientX, y: e.clientY, source: { kind: "build", text: line } }));
+            })}>{lines.join("\n")}</pre>
+          </div>
         </div>
       )}
       {menu && onNewTask && <ContextMenu x={menu.x} y={menu.y} onClose={() => setMenu(undefined)} items={[{ label: t("newTask.menu"), onClick: () => onNewTask(menu.source) }]} />}

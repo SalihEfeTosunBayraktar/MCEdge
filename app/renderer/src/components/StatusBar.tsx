@@ -8,8 +8,8 @@ import { gameRunning, UpdateItem } from "./Updates.tsx";
 
 interface Props {
   problems: number;
-  elements?: number;
   builds: Record<string, EngineBuild>;
+  /** Shown only for a code (Gradle mod) project's JDK; a mod project's engine is in the header (Q260). */
   engineName: string;
   /** An AI agent working on the project over MCP (live co-editing). */
   agent?: { client?: string; active: boolean; recent: number };
@@ -22,7 +22,7 @@ interface Props {
 }
 
 /** Save state, problems, active engine and Gradle state; an update in progress shows with or without a project (Q207). */
-export function StatusBar({ problems, elements, builds, engineName, agent, onOpenPanel, onTogglePanel, panelOpen, open }: Props) {
+export function StatusBar({ problems, builds, engineName, agent, onOpenPanel, onTogglePanel, panelOpen, open }: Props) {
   const saving = useSaving();
   const entries = Object.entries(builds);
   const running = entries.find(([, b]) => b.status === "running" || b.status === "waiting");
@@ -43,29 +43,31 @@ export function StatusBar({ problems, elements, builds, engineName, agent, onOpe
   if (!open) return <footer className="status"><span className="sgrow" />{update}</footer>;
   return (
     <footer className="status">
-      <span className={`smsg ${saving ? "saving" : ""}`}>
+      <span className={`smsg ${saving ? "saving" : ""}`} role="status">
         <Icon name={saving ? "edit" : "check"} />
         {t(saving ? "editor.saving" : "editor.saved")}
-        {elements !== undefined && <span className="dim">{t("status.summary", { count: elements })}</span>}
       </span>
-      <span className={`sgrow toggle ${panelOpen ? "shown" : ""}`} title={t("status.togglePanel")} onDoubleClick={onTogglePanel}>
+      <button className={`sgrow toggle ${panelOpen ? "shown" : ""}`} title={t("status.togglePanel")} aria-label={t("status.togglePanel")}
+        aria-expanded={panelOpen} onClick={(e) => e.detail < 2 && onTogglePanel()}>
         <Icon name="up" />
-      </span>
+      </button>
       {update}
       {agent && (
         <button className={`sitem agent ${agent.active ? "on" : ""}`} onClick={() => onOpenPanel("activity")}
           title={t(agent.active ? "live.activeHint" : "live.idleHint")}>
-          <i className={`liveled ${agent.active ? "" : "off"}`} />
+          <i className={`liveled ${agent.active ? "" : "off"}`} aria-hidden="true" />
           {agent.active ? t("live.active", { client: agent.client ?? t("live.agent"), count: agent.recent }) : t("live.idle")}
         </button>
       )}
-      <button className={`sitem ${problems ? "warn" : ""}`} onClick={() => onOpenPanel("problems")}>
+      {/* No problems: the icon alone, named by its tooltip (Q260). */}
+      <button className={`sitem ${problems ? "warn" : ""}`} onClick={() => onOpenPanel("problems")}
+        title={problems ? undefined : t("status.noProblems")} aria-label={problems ? undefined : t("status.noProblems")}>
         <Icon name="warn" />
-        {problems ? t("status.problems", { count: problems }) : t("status.noProblems")}
+        {problems ? t("status.problems", { count: problems }) : null}
       </button>
-      <span className="sitem" title={t("top.engine")}>{engineName}</span>
+      {engineName && <span className="sitem" title={t("top.engine")}>{engineName}</span>}
       <button className="sitem gradle" onClick={() => onOpenPanel("build")}>
-        <i className={`led ${tone}`} />{gradle}
+        <i className={`led ${tone}`} aria-hidden="true" />{gradle}
       </button>
     </footer>
   );

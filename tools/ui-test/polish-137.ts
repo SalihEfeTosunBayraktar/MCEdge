@@ -3,7 +3,7 @@
  * and one screenshot per item on a copy of examples/hello. Args: suffix ("before" only shoots), theme, language.
  * Screenshots go to design/137/<item>-<theme>-<lang>-<suffix>.png.
  */
-import { assert, exampleProject, launchApp, run, type App } from "./cdp.ts";
+import { assert, exampleProject, launchApp, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
 const suffix = process.argv[2] ?? "after";
@@ -14,7 +14,7 @@ const before = suffix === "before";
 const project = exampleProject();
 addElement(project, "gui", "shop", { type: 1, width: 176, height: 166, components: [{ kind: "button", x: 10, y: 10, width: 60, height: 20, text: "Buy" }] });
 addElement(project, "living_entity", "goblin", { name: "Goblin" });
-const shot = (app: App, item: string) => app.shot(`design/137/${item}-${theme}-${lang}-${suffix}.png`);
+const shot = (app: App, item: string) => app.shot(evidence(`design/137/${item}-${theme}-${lang}-${suffix}.png`));
 const check = (ok: boolean, message: string) => before || assert(ok, message);
 const items = (app: App) => app.eval<string[]>(`[...document.querySelectorAll(".menulist button")].map((b) => b.textContent.replace(/Ctrl.*$|F\\d.*$|Alt.*$/, "").trim())`);
 const openTile = async (app: App, id: string) => {

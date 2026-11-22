@@ -84,6 +84,20 @@ const variableLabels = () => ({ local: t("proc.varsLocal"), global: t("proc.vars
 const personal = () => ({ favourites: t("proc.favourites"), favouritesEmpty: t("proc.favouritesEmpty"), recent: t("proc.recent"), recentEmpty: t("proc.recentEmpty") });
 
 /**
+ * Blockly makes an AudioContext for every workspace (this one and its flyout) even with `sounds: false`, ~30 ms each,
+ * and Chromium allows only a few at once. Sounds are off, so none is wanted: it runs `make` without the constructor (Q280).
+ */
+function withoutAudioContext<T>(make: () => T): T {
+  const audio = window.AudioContext;
+  (window as { AudioContext?: unknown }).AudioContext = undefined;
+  try {
+    return make();
+  } finally {
+    window.AudioContext = audio;
+  }
+}
+
+/**
  * Blockly canvas editing a procedure IR. The program is loaded once; edits are converted back to IR after a
  * short pause and reported with onChange, and warnings are placed on the blocks they concern.
  */
@@ -112,7 +126,7 @@ export function ProcedureWorkspace({ initial, onChange, check, onReady, hidden, 
     });
     const variableList = () => ({ locals: variables, globals: choicesRef.current?.allGlobals() ?? [], labels: variableLabels() });
     const theme = () => (document.documentElement.dataset.theme === "light" ? "light" : "dark");
-    const workspace = Blockly.inject(div, {
+    const workspace = withoutAudioContext(() => Blockly.inject(div, {
       toolbox: toolbox({ hidden, personal: personal(), variables: variableList() }),
       theme: workbenchTheme(theme()),
       renderer: "thrasos",
@@ -123,7 +137,7 @@ export function ProcedureWorkspace({ initial, onChange, check, onReady, hidden, 
       sounds: false,
       maxInstances: { start: 1 },
       oneBasedIndex: false,
-    });
+    }));
     const started = performance.now();
     const state = irToBlockly(initial);
     loadProgram(state, workspace);

@@ -1,0 +1,28 @@
+{
+  "$comment": "Q246: build errors explained in plain words. Each rule maps what a failed build printed to an explanation id; the texts are buildError.<id>.what / .plain / .fix in config/ui-strings (en, tr). kind javac: `match` is a regex on the compiler's message of one error; kind gradle: on the text of Gradle's 'What went wrong' block. Rules are tried in order, the first match wins. params: name -> regex on the message plus its detail lines, group 1 is the value the strings can use as {name}. A build error no rule matches keeps showing its raw lines only. Not tied to a project: the rules only look at the compiler's and Gradle's own wording.",
+  "rules": [
+    { "id": "syntaxUnclosedText", "kind": "javac", "match": "unclosed (string|character) literal" },
+    { "id": "syntaxEndOfFile", "kind": "javac", "match": "reached end of file while parsing|class, interface, enum, or record expected" },
+    { "id": "syntaxStatementEnd", "kind": "javac", "match": "^'.{1,2}' expected$", "params": { "token": "^'(.+)' expected" } },
+    { "id": "syntax", "kind": "javac", "match": "^(illegal start of (expression|type)|not a statement|<identifier> expected|extraneous semicolon|else without if|orphaned (case|default)|malformed floating-point literal|illegal character.*)$" },
+    { "id": "cannotFindSymbol", "kind": "javac", "match": "^cannot find symbol$", "params": { "symbol": "symbol:\\s+\\w+\\s+([^(\\s]+)" } },
+    { "id": "packageMissing", "kind": "javac", "match": "^package .+ does not exist$", "params": { "package": "^package (\\S+) does not exist" } },
+    { "id": "lossyConversion", "kind": "javac", "match": "^incompatible types: possible lossy conversion", "params": { "types": "possible lossy conversion from (.+)" } },
+    { "id": "incompatibleTypes", "kind": "javac", "match": "^incompatible types: ", "params": { "types": "^incompatible types: (.+)" } },
+    { "id": "wrongArguments", "kind": "javac", "match": "cannot be applied to given types|^no suitable (method|constructor) found|incorrect number of arguments", "params": { "target": "^(?:method|constructor) (\\S+)|^no suitable (?:method|constructor) found for (\\S+)" } },
+    { "id": "uncaughtException", "kind": "javac", "match": "^unreported exception ", "params": { "exception": "^unreported exception (\\S+?)[;,]" } },
+    { "id": "notInitialized", "kind": "javac", "match": "^variable \\S+ might not have been initialized$", "params": { "variable": "^variable (\\S+) might" } },
+    { "id": "alreadyDefined", "kind": "javac", "match": "^variable \\S+ is already defined", "params": { "variable": "^variable (\\S+) is already" } },
+    { "id": "noAccess", "kind": "javac", "match": "has private access in|is not public in .*cannot be accessed from outside package", "params": { "member": "^(\\S+) (?:has private|is not public)" } },
+    { "id": "staticContext", "kind": "javac", "match": "^non-static .+ cannot be referenced from a static context" },
+    { "id": "missingReturn", "kind": "javac", "match": "^(missing return statement|unreachable statement)$" },
+    { "id": "notImplemented", "kind": "javac", "match": "is not abstract and does not override abstract method" },
+    { "id": "gradlePluginMissing", "kind": "gradle", "match": "^Plugin \\[id: .+was not found", "params": { "plugin": "^Plugin \\[id: '([^']+)'" } },
+    { "id": "gradleNoDependency", "kind": "gradle", "match": "Could not (resolve|find|download) \\S+|No cached version of \\S+ available for offline mode", "params": { "dependency": "Could not (?:resolve|find|download) (\\S+)|No cached version of (\\S+)" } },
+    { "id": "gradleOutOfMemory", "kind": "gradle", "match": "Java heap space|OutOfMemoryError|GC overhead limit exceeded|Metaspace" },
+    { "id": "gradleNoJava", "kind": "gradle", "match": "No matching toolchains found|Cannot find a Java installation|Toolchain .* not found" },
+    { "id": "gradleJavaVersion", "kind": "gradle", "match": "Unsupported class file major version|Unsupported Java|invalid source release|Could not determine java version" },
+    { "id": "gradleOffline", "kind": "gradle", "match": "UnknownHostException|Connection (refused|timed out|reset)|Read timed out|Network is unreachable|PKIX path" },
+    { "id": "gradleFileLocked", "kind": "gradle", "match": "being used by another process|Timeout waiting to lock|Unable to delete (file|directory)" }
+  ]
+}

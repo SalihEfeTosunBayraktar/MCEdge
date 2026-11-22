@@ -9,13 +9,21 @@
  *   await app.close();
  */
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 
 export const REPO = resolve(import.meta.dirname, "..", "..");
-const ELECTRON = join(REPO, "node_modules", "electron", "dist", process.platform === "win32" ? "electron.exe" : "electron");
+/** Where tests write screenshots and reports: an untracked folder, unless UPDATE_EVIDENCE=1 asks for the tracked design/ files. */
+export const UI_OUT = ".ui-out";
+export const UPDATE_EVIDENCE = process.env.UPDATE_EVIDENCE === "1";
+/** Maps a tracked evidence path (design/N/x.png, docs/x.md) to the untracked output folder unless UPDATE_EVIDENCE=1. */
+export function evidence(path: string): string {
+  if (UPDATE_EVIDENCE || path.startsWith(`${UI_OUT}/`)) return path;
+  return /^(design|docs)\//.test(path) ? `${UI_OUT}/${path}` : path;
+}
+const ELECTRON =join(REPO, "node_modules", "electron", "dist", process.platform === "win32" ? "electron.exe" : "electron");
 
 export interface LaunchOptions {
   /** Project folder put at the top of the recent list and opened. */
@@ -28,6 +36,9 @@ export interface LaunchOptions {
   height?: number;
   /** Reuse this user data folder (keeps it on close), to restart the app on the same state. */
   userData?: string;
+  /** First-run setup answer (Q244): null starts like a first run (the setup shows); default "java". */
+  level?: "new" | "some" | "java" | null;
+  mode?: "simple" | "advanced";
 }
 
 export interface App {
@@ -42,7 +53,7 @@ export interface App {
   mockDialogs(dialogs: { open?: string[]; save?: string }): Promise<void>;
   /** Waits until the expression is truthy (polls). */
   waitFor(expression: string, timeoutMs?: number): Promise<void>;
-  /** Clicks the centre of the first element matching the selector whose text contains `text`. */
+  /** Clicks the centre of the first element matching the selector whose text contains `text` (text drawn on a canvas counts through its aria-label, as in the GUI editor's pixel font). */
   click(selector: string, text?: string, options?: { double?: boolean; button?: "left" | "right" }): Promise<void>;
   /** Mouse down at `from`, moves in steps, mouse up at `to` (page coordinates). */
   drag(from: [number, number], to: [number, number], steps?: number): Promise<void>;
@@ -63,6 +74,8 @@ export interface App {
   sleep(ms: number): Promise<void>;
   close(): Promise<void>;
   userData: string;
+  /** Q280: ms from the process spawn to the welcome list and from there to the opened project's element grid. */
+  timings: { welcomeMs: number; openMs: number };
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -82,7 +95,9 @@ export function copyProject(source: string, name = "project"): string {
   const dir = join(mkdtempSync(join(tmpdir(), "mcedge-ui-")), name);
   // A source reached through a junction or symlink (a worktree's ../ETREconomy-MCEdge) is resolved and copied, not
   // linked, so a test never writes into the real project.
-  cpSync(realpathSync(source), dir, { recursive: true, dereference: true, filter: (path) => !/[\\/](out|build|run|\.gradle|\.git)$/.test(path) });
+  cpSync(realpathSync(source), dir, { recursive: true, dereference: true,
+    // The source's own live state (an old presence file would pass for a fresh one) is not copied.
+    filter: (path) => !/[\\/](out|build|run|\.gradle|\.git)$/.test(path) && !/[\\/]\.mcedge[\\/]live[\\/](presence-[a-z]+|show)\.json$/.test(path) });
   return dir;
 }
 
@@ -142,7 +157,9 @@ async function session(wsUrl: string): Promise<Session> {
 export async function launchApp(options: LaunchOptions = {}): Promise<App> {
   if (!existsSync(join(REPO, "out", "main", "index.js"))) throw new Error("run npm run build:app first");
   const userData = options.userData ?? mkdtempSync(join(tmpdir(), "mcedge-ui-data-"));
-  const preferences = { language: options.language ?? "en", theme: options.theme ?? "dark", fontScale: 1, uiFont: "", codeFont: "" };
+  // Answered setup and Advanced mode unless a test asks for a first start (level: null) or a level (Q244).
+  const setup = options.level === null ? {} : { level: options.level ?? "java", mode: options.mode ?? "advanced" };
+  const preferences = { language: options.language ?? "en", theme: options.theme ?? "dark", fontScale: 1, uiFont: "", codeFont: "", ...setup };
   const recent = options.project ? [{ dir: options.project, name: "UI test", openedAt: new Date().toISOString(), ...(options.kind ? { kind: options.kind } : {}) }] : [];
   if (!options.userData || !existsSync(join(userData, "app-state.json"))) writeFileSync(join(userData, "app-state.json"), JSON.stringify({ exportFolders: {}, recent, preferences }, null, 2));
 
@@ -150,6 +167,7 @@ export async function launchApp(options: LaunchOptions = {}): Promise<App> {
   const inspectPort = await freePort();
   // MCEDGE_APP_EXE runs a packaged build (release/win-unpacked/MCEdge.exe) instead of this checkout.
   const packaged = process.env.MCEDGE_APP_EXE;
+  const spawned = Date.now();
   const child: ChildProcess = spawn(packaged ?? ELECTRON, [`--inspect=${inspectPort}`, ...(packaged ? [] : ["."]), `--remote-debugging-port=${port}`, `--user-data-dir=${userData}`,
     // The test window is often behind other windows; keep it painting (Monaco renders on animation frames).
     "--disable-features=CalculateNativeWinOcclusion", "--disable-renderer-backgrounding", "--disable-background-timer-throttling"], {
@@ -179,6 +197,9 @@ export async function launchApp(options: LaunchOptions = {}): Promise<App> {
   const main = await session(await target(inspectPort, "node"));
   const send = page.send;
 
+  // Nothing a test does may open a browser or a file manager on the user's screen: the OS openers do nothing unless a test
+  // replaces them to record what was asked (report-bug, open-folder).
+  await main.send("Runtime.evaluate", { expression: `(() => { const { shell } = (process.mainModule ? process.mainModule.require : require)("electron"); shell.openExternal = async () => {}; shell.openPath = async () => ""; shell.showItemInFolder = () => {}; })()` });
   await send("Emulation.setDeviceMetricsOverride", { width: options.width ?? 1440, height: options.height ?? 900, deviceScaleFactor: 1, mobile: false });
 
   const evaluate = async <T>(expression: string): Promise<T> => {
@@ -187,7 +208,7 @@ export async function launchApp(options: LaunchOptions = {}): Promise<App> {
     return result.result.value as T;
   };
   const find = (selector: string, text?: string) =>
-    `[...document.querySelectorAll(${JSON.stringify(selector)})].find((e) => ${text === undefined ? "true" : `e.textContent.includes(${JSON.stringify(text)})`})`;
+    `[...document.querySelectorAll(${JSON.stringify(selector)})].find((e) => ${text === undefined ? "true" : `(e.textContent + " " + [...e.querySelectorAll("canvas[aria-label]")].map((c) => c.getAttribute("aria-label")).join(" ")).includes(${JSON.stringify(text)})`})`;
   const rect = async (selector: string, text?: string) => {
     const r = await evaluate<{ x: number; y: number; width: number; height: number } | null>(
       `(() => { const e = ${find(selector, text)}; if (!e) return null; e.scrollIntoView({ block: "nearest" }); const r = e.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; })()`,
@@ -210,6 +231,7 @@ export async function launchApp(options: LaunchOptions = {}): Promise<App> {
 
   const app: App = {
     userData,
+    timings: { welcomeMs: 0, openMs: 0 },
     eval: evaluate,
     cdp: send,
     onCdp: page.on,
@@ -310,7 +332,8 @@ export async function launchApp(options: LaunchOptions = {}): Promise<App> {
         Backspace: { code: "Backspace", keyCode: 8 }, ArrowLeft: { code: "ArrowLeft", keyCode: 37 }, ArrowUp: { code: "ArrowUp", keyCode: 38 },
         ArrowRight: { code: "ArrowRight", keyCode: 39 }, ArrowDown: { code: "ArrowDown", keyCode: 40 }, Tab: { code: "Tab", keyCode: 9 },
         F2: { code: "F2", keyCode: 113 }, F5: { code: "F5", keyCode: 116 }, Home: { code: "Home", keyCode: 36 }, End: { code: "End", keyCode: 35 },
-        " ": { code: "Space", keyCode: 32 },
+        " ": { code: "Space", keyCode: 32 }, Alt: { code: "AltLeft", keyCode: 18 }, F10: { code: "F10", keyCode: 121 },
+        PageUp: { code: "PageUp", keyCode: 33 }, PageDown: { code: "PageDown", keyCode: 34 }, ",": { code: "Comma", keyCode: 188 },
       };
       const info = named[key] ?? { code: `Key${key.toUpperCase()}`, keyCode: key.toUpperCase().charCodeAt(0) };
       const base = { key, code: info.code, windowsVirtualKeyCode: info.keyCode, modifiers };
@@ -321,6 +344,7 @@ export async function launchApp(options: LaunchOptions = {}): Promise<App> {
       await sleep(50);
     },
     async shot(file) {
+      file = evidence(file);
       const path = resolve(REPO, file);
       mkdirSync(dirname(path), { recursive: true });
       await sleep(150);
@@ -350,10 +374,24 @@ export async function launchApp(options: LaunchOptions = {}): Promise<App> {
     },
   };
 
-  if (options.project) {
-    await app.waitFor(`document.querySelector(".grid tbody tr")`);
+  // A first start (level: null) shows the setup first; the test opens the project itself after answering it.
+  if (options.project && options.level !== null) {
+    await app.waitFor(`document.querySelector(".grid tbody tr")`, 60000);
+    app.timings.welcomeMs = Date.now() - spawned;
+    const opening = Date.now();
     await app.click(".grid tbody tr", undefined, { double: true });
-    await app.waitFor(`document.querySelector(".rail, .codeview")`);
+    await app.waitFor(`document.querySelector(".rail, .codeview")`, 60000);
+    app.timings.openMs = Date.now() - opening;
+    // The app tells the agent side what is open (presence-app.json) a moment after the project shows; a test that asks the
+    // app to show a screen (showInApp) needs it, so launchApp returns once the file is fresh.
+    const presence = join(options.project, ".mcedge", "live", "presence-app.json");
+    for (const end = Date.now() + 15000; Date.now() < end; await sleep(100)) {
+      try {
+        if (Date.parse(JSON.parse(readFileSync(presence, "utf8")).at) >= opening) break;
+      } catch {
+        // not written yet
+      }
+    }
   }
   return app;
 }
@@ -376,3 +414,16 @@ export async function run(body: (app: App) => Promise<void>, options: LaunchOpti
 export function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(`assertion failed: ${message}`);
 }
+
+/** Opens an inspector section of the GUI or texture editor (Q278) by its title; leaves an open one open. */
+export async function openSection(app: App, title: string): Promise<void> {
+  const open = await app.eval<boolean | null>(`(() => {
+    const b = [...document.querySelectorAll(".dk-sech > button")].find((e) => e.querySelector("span")?.textContent === ${JSON.stringify(title)});
+    return b ? b.getAttribute("aria-expanded") === "true" : null;
+  })()`);
+  if (open === null) throw new Error(`no inspector section ${title}`);
+  if (!open) await app.click(".dk-sech > button", title);
+}
+
+/** Page-side expression for the text of an element whose words are drawn on a canvas (GUI editor labels): textContent plus the canvases' aria-labels. */
+export const textOf = (variable: string): string => `(${variable}.textContent + [...${variable}.querySelectorAll("canvas[aria-label]")].map((c) => c.getAttribute("aria-label")).join("")).trim()`;

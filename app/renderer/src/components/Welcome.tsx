@@ -4,6 +4,7 @@ import { api } from "../api.ts";
 import { language, t } from "../strings.ts";
 import { LogoMark, Wordmark } from "./Brand.tsx";
 import { Icon } from "./Icon.tsx";
+import { TourOffer } from "./TourPanel.tsx";
 import { ActionBar, ActionButton, DataTable, Separator } from "./ui.tsx";
 
 interface Props {
@@ -13,12 +14,16 @@ interface Props {
   onOpen: () => void;
   /** Opens the New project dialog (KUYRUK 126). */
   onNew: () => void;
+  /** Opens the template gallery (Q252). */
+  onStarters: () => void;
   onOpenExample: () => void;
   onOpenRecent: (dir: string) => void;
+  /** The tour offer (Q245), for users who answered "new" in the setup; undefined once it was answered. */
+  tourOffer?: { onStart: () => void; onDecline: () => void };
 }
 
 /** Start screen: open a project (folder, example or a recent one); Preferences opens the dialog. */
-export function Welcome({ error, onPreferences, onOpen, onNew, onOpenExample, onOpenRecent }: Props) {
+export function Welcome({ error, onPreferences, onOpen, onNew, onStarters, onOpenExample, onOpenRecent, tourOffer }: Props) {
   const [recent, setRecent] = useState<RecentProject[]>([]);
   const [selected, setSelected] = useState<string>();
   useEffect(() => void api.recentProjects().then(setRecent), []);
@@ -41,22 +46,29 @@ export function Welcome({ error, onPreferences, onOpen, onNew, onOpenExample, on
         <div className="welcome-card">
           <div className="welcome-brand"><LogoMark px={5} /><Wordmark px={7} /></div>
           <p className="welcome-sub">{t("welcome.subtitle")}</p>
+          {tourOffer && <TourOffer {...tourOffer} />}
           <button className="welcome-main" onClick={onOpen}>
             <Icon name="folder" size={24} />
             <span>{t("welcome.open")}</span>
           </button>
-          <button className="welcome-link" data-testid="welcome-new" onClick={onNew}>
-            <Icon name="plus" />
-            <span>{t("menu.newProject")}</span>
-          </button>
-          <button className="welcome-link" onClick={onOpenExample}>
-            <Icon name="tiles" />
-            <span>{t("welcome.example")}</span>
-          </button>
-          <button className="welcome-link" onClick={onPreferences}>
-            <Icon name="gear" />
-            <span>{t("menu.preferences")}</span>
-          </button>
+          <div className="welcome-actions">
+            <button className="welcome-link" data-testid="welcome-new" onClick={onNew}>
+              <Icon name="plus" />
+              <span>{t("menu.newProject")}</span>
+            </button>
+            <button className="welcome-link" data-testid="welcome-starters" onClick={onStarters}>
+              <Icon name="tiles" />
+              <span>{t("starter.link")}</span>
+            </button>
+            <button className="welcome-link" onClick={onOpenExample}>
+              <Icon name="star" />
+              <span>{t("welcome.example")}</span>
+            </button>
+            <button className="welcome-link" onClick={onPreferences}>
+              <Icon name="gear" />
+              <span>{t("menu.preferences")}</span>
+            </button>
+          </div>
           {error && <p className="error-text">{t("welcome.notProject")}</p>}
           <div className="recent">
             <div className="gtitle">{t("welcome.recent")}</div>
@@ -66,7 +78,7 @@ export function Welcome({ error, onPreferences, onOpen, onNew, onOpenExample, on
               <Separator />
               <ActionButton icon="trash" label={t("welcome.removeRecent")} tone="danger" disabled={!current} onClick={remove} />
             </ActionBar>
-            <DataTable rows={recent} rowKey={(r) => r.dir} selected={selected} onSelect={setSelected} onActivate={open}
+            <DataTable label={t("welcome.recent")} rows={recent} rowKey={(r) => r.dir} selected={selected} onSelect={setSelected} onActivate={open}
               empty={t("welcome.noRecent")} columns={[
                 {
                   label: t("welcome.col.name"), width: "34%",

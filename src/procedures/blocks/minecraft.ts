@@ -135,6 +135,15 @@ const blockBlocks: BlockDef[] = [
   value("block_hardness", "blocks", "both", "number", { deps: W, inputs: xyz(), code: (c) => `${h(c, "hardness")}(${world(c)}, ${at(c)})` }),
   value("block_in_tag", "blocks", "both", "logic", { inputs: [state()], fields: [idField("tag", "tag", "minecraft:logs")], code: (c) => `${h(c, "blockInTag")}(${c.i.blockstate}, ${qtag(c, "tag")})` }),
   value("block_state_of", "blocks", "both", "blockstate", { fields: [idField("block", "block", "minecraft:stone")], code: (c) => `${h(c, "blockState")}(${qid(c, "block")})` }),
+  // Q265: read a structure template (.nbt) block by block. A structure without a namespace is this mod's (project structures/<name>.nbt).
+  value("structure_block_count", "blocks", "server", "number", { deps: W, inputs: [txt("structure", "")], fields: [check("air", false)], code: (c) => `${h(c, "structureBlockCount")}(${world(c)}, ${c.s(c.modId)}, ${c.i.structure}, ${c.f.air === true})` }),
+  value("structure_block_id", "blocks", "server", "text", { deps: W, inputs: [txt("structure", ""), num("index", 0)], fields: [check("air", false)], code: (c) => `${h(c, "structureBlockId")}(${world(c)}, ${c.s(c.modId)}, ${c.i.structure}, ${c.f.air === true}, ${c.i.index})` }),
+  value("structure_block_state", "blocks", "server", "blockstate", { deps: W, inputs: [txt("structure", ""), num("index", 0)], fields: [check("air", false)], code: (c) => `${h(c, "structureBlockState")}(${world(c)}, ${c.s(c.modId)}, ${c.i.structure}, ${c.f.air === true}, ${c.i.index})` }),
+  value("structure_block_pos", "blocks", "server", "number", {
+    deps: W, inputs: [txt("structure", ""), num("index", 0)], fields: [dropdown("axis", ["x", "y", "z"]), check("air", false)],
+    code: (c) => `${h(c, "structureBlockPos")}(${world(c)}, ${c.s(c.modId)}, ${c.i.structure}, ${c.f.air === true}, ${c.i.index}, ${c.f.axis === "y" ? 1 : c.f.axis === "z" ? 2 : 0})`,
+  }),
+  value("structure_size", "blocks", "server", "number", { deps: W, inputs: [txt("structure", "")], fields: [dropdown("axis", ["x", "y", "z"])], code: (c) => `${h(c, "structureSize")}(${world(c)}, ${c.s(c.modId)}, ${c.i.structure}, ${c.f.axis === "y" ? 1 : c.f.axis === "z" ? 2 : 0})` }),
   value("block_state_id", "blocks", "both", "text", { inputs: [state()], code: (c) => `${h(c, "blockId")}(${c.i.blockstate})` }),
   value("block_state_is", "blocks", "both", "logic", {
     inputs: [state()], fields: [idField("block", "block", "minecraft:stone")],
@@ -173,6 +182,12 @@ const entityBlocks: BlockDef[] = [
   value("entity_look_z", "entity", "both", "number", { inputs: [ent()], code: (c) => `${E(c)}.getLookAngle().z` }),
   value("entity_yaw", "entity", "both", "number", { inputs: [ent()], code: (c) => `${h(c, "yaw")}(${E(c)})` }),
   value("entity_pitch", "entity", "both", "number", { inputs: [ent()], code: (c) => `${h(c, "pitch")}(${E(c)})` }),
+  stmt("entity_navigate_to", "entity", "server", { inputs: [ent(), ...xyz(), num("speed", 1)], code: (c) => `${h(c, "navigateTo")}(${E(c)}, ${at(c)}, ${c.i.speed});` }),
+  value("entity_navigation_done", "entity", "both", "logic", { inputs: [ent()], code: (c) => `${h(c, "navigationDone")}(${E(c)})` }),
+  stmt("entity_swing_arm", "entity", "server", {
+    inputs: [ent()], fields: [dropdown("hand", ["main", "off"])],
+    code: (c) => `${h(c, "swingArm")}(${E(c)}, ${c.f.hand !== "off"});`,
+  }),
   stmt("entity_set_rotation", "entity", "both", { inputs: [ent(), num("yaw", 0), num("pitch", 0)], code: (c) => `${h(c, "setRotation")}(${E(c)}, ${c.i.yaw}, ${c.i.pitch});` }),
   value("entity_velocity_x", "entity", "both", "number", { inputs: [ent()], code: (c) => `${E(c)}.getDeltaMovement().x` }),
   value("entity_velocity_y", "entity", "both", "number", { inputs: [ent()], code: (c) => `${E(c)}.getDeltaMovement().y` }),
@@ -255,6 +270,16 @@ const entityBlocks: BlockDef[] = [
         const v = type === "number" ? `(int) (${c.i.value})` : c.i.value;
         return cls ? `if (${E(c)} instanceof ${cls}) ((${cls}) ${E(c)}).getEntityData().set(${cls}.DATA_${String(c.f.name)}, ${v});` : "";
       },
+    }),
+  ]),
+  // Values kept on any entity by a key, saved with the entity (see helpers entitySaved*): readable on both sides (a client
+  // reads the default), written on the server only.
+  ...(Object.keys(DATA_TYPES) as (keyof typeof DATA_TYPES)[]).flatMap((type) => [
+    value(`entity_saved_get_${type}`, "entity", "both", type, {
+      inputs: [ent(), txt("key", "")], code: (c) => `${h(c, `entitySaved${DATA_TYPES[type]}`)}(${E(c)}, ${c.i.key})`,
+    }),
+    stmt(`entity_saved_set_${type}`, "entity", "server", {
+      inputs: [ent(), txt("key", ""), dataValue(type)], code: (c) => `${h(c, `setEntitySaved${DATA_TYPES[type]}`)}(${E(c)}, ${c.i.key}, ${c.i.value});`,
     }),
   ]),
 ];

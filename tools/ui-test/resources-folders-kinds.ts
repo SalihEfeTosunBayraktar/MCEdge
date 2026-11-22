@@ -9,10 +9,10 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/211";
+const OUT = evidence("design/211");
 type Kind = "sounds" | "models" | "structures";
 interface Stored { folders: string[]; placement: Record<string, string>; colors?: Record<string, string>; resources?: Partial<Record<Kind, Stored>> }
 const stored = (project: string, kind: Kind): Stored => {

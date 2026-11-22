@@ -7,9 +7,9 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/175";
+const OUT = evidence("design/175");
 const project = exampleProject();
 writeFileSync(join(project, "folders.json"), JSON.stringify({ folders: ["Ores", "Tools", "Tools/Old"], placement: { "item/ruby": "Ores" } }, null, 2));
 const folders = () => (JSON.parse(readFileSync(join(project, "folders.json"), "utf8")) as { folders: string[] }).folders.sort().join();
@@ -74,7 +74,7 @@ for (const language of ["en", "tr"]) {
     // Toolbar Move with the folder selected.
     await app.click(".crumb .linkbtn");
     await app.waitFor(`document.querySelector(${JSON.stringify(tile("Old"))})`);
-    assert(await app.eval<boolean>(`document.querySelector(".movebtn .abtn").disabled`), "Move needs a selection");
+    assert(await app.eval<boolean>(`!document.querySelector(".movebtn .abtn")`), "Move needs a selection (Q279: it exists only with one)");
     await app.click(tile("Old"));
     await app.click(".movebtn .abtn");
     await app.waitFor(`document.querySelector(".menulist")`);

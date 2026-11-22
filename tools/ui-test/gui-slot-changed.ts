@@ -4,10 +4,10 @@
  */
 import { mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, REPO, run } from "./cdp.ts";
+import { assert, exampleProject, REPO, run, openSection, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/203";
+const OUT = evidence("design/203");
 mkdirSync(join(REPO, OUT), { recursive: true });
 const project = exampleProject();
 addElement(project, "gui", "trade", { title: "Trade", type: 1, components: [{ kind: "slot", x: 25, y: 30, id: 0 }, { kind: "slot", x: 61, y: 30, id: 1 }] });
@@ -20,7 +20,7 @@ await run(async (app) => {
   await app.waitFor(`document.querySelector(".tile")`);
   await app.click(".tile", "trade", { double: true });
   await app.waitFor(`document.querySelector(".guistage")`);
-  await app.click(".pagetabs .ltab", "Screen");
+  await openSection(app, "Screen");
   await app.waitFor(`!!${row}`);
   assert(await app.eval<boolean>(`!!${row}.querySelector(".procpicker") && !!${row}.querySelector(".procnew")`), "onSlotChanged is a procedure picker with New");
   const order = await app.eval<string[]>(`[...document.querySelectorAll(".frow")].map((r) => r.querySelector("label, .flabel")?.textContent?.trim() ?? "").filter((l) => /^When|^While/.test(l))`);

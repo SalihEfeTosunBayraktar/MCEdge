@@ -6,7 +6,7 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, copyProject, run, type App } from "./cdp.ts";
+import { assert, copyProject, run, type App, evidence } from "./cdp.ts";
 
 const theme = (process.argv[2] ?? "dark") as "dark" | "light";
 const project = copyProject("C:/MyProjects/AI-Assisted/ETREconomy-MCEdge", "etr");
@@ -37,7 +37,7 @@ await run(async (app) => {
   const tiles = await app.eval<number>(`document.querySelectorAll(".tile img.tmodel").length`);
   const first = await renders(app);
   assert(first > 0 && first <= tiles, `${tiles} model tiles, ${first} pictures rendered (one per model)`);
-  await app.shot(`design/176/after-${theme}.png`);
+  await app.shot(evidence(`design/176/after-${theme}.png`));
 
   // Open an element and come back: the pictures come from the cache.
   await app.eval(`${donate}.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }))`);

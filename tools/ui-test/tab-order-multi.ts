@@ -4,7 +4,7 @@
  * selected; a selected section takes its rows along, also folded (with row 163). Args: theme, language.
  * Screenshots go to design/164/.
  */
-import { assert, run, type App } from "./cdp.ts";
+import { assert, run, type App, evidence } from "./cdp.ts";
 import { openTab, savedOrder, tabOrderProject, visibleRows, waitSaved } from "./tabOrderFixture.ts";
 
 const theme = (process.argv[2] ?? "dark") as "dark" | "light";
@@ -29,7 +29,7 @@ await run(async (app) => {
   await click(app, "gem_c", { ctrl: true });
   assert(same(await selected(app), ["ruby_apple", "gem_c"]), `two rows selected: ${await selected(app)}`);
   assert((await app.eval<string>(`document.querySelector(".taborder .minibar .fmeta").textContent`)).includes("2"), "the bar counts the selection");
-  await app.shot(`design/164/tab-order-${theme}-${lang}-after.png`);
+  await app.shot(evidence(`design/164/tab-order-${theme}-${lang}-after.png`));
   await app.eval(`${mbtn("Up", "Yukarı")}.click()`);
   await waitSaved(app);
   assert(same(savedOrder(project), ["ruby_apple", "#Gems", "ruby", "gem_a", "gem_b", "ruby_block", "#Tools", "ruby_pickaxe", "_", "gem_c", "#Food"]),
@@ -67,6 +67,6 @@ await run(async (app) => {
     && same(order.slice(order.indexOf("#Tools"), order.indexOf("#Tools") + 7), ["#Tools", "gem_a", "gem_b", "ruby_block", "ruby_pickaxe", "_", "#Food"]),
     `both sections moved above Gems with their rows: ${order}`);
   assert(await app.eval<boolean>(`document.querySelector('${row("#Tools")}').classList.contains("folded")`), "Tools is still folded");
-  await app.shot(`design/164/tab-order-sections-${theme}-${lang}-after.png`);
+  await app.shot(evidence(`design/164/tab-order-sections-${theme}-${lang}-after.png`));
   console.log(`tab order multi-select OK (${theme}, ${lang})`);
 }, { project, theme, language: lang });

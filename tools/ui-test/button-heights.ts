@@ -14,7 +14,9 @@ addElement(project, "procedure", "main");
 const reportOnly = process.argv[2] === "report";
 
 /** Rows, tiles, tabs and menu entries are not command buttons; their height follows their content. */
-const NOT_COMMANDS = "[role=option], [role=menuitem], [role=tab], .tile, .rtab, .rtoggle, .menubar .menu, .texcell, .lrow, .quickrow, .torow, .procrow, .ptype, .linkbtn, .slot, .rslot, .colgrip, .gwidget, .blocklyWidgetDiv button, .blocklyToolboxDiv button, .etclose, .tofold, .swatch, .pswatch, .crumb button";
+const NOT_COMMANDS = "[role=option], [role=menuitem], [role=tab], .tile, .rtab, .rtoggle, .menubar .menu, .texcell, .lrow, .quickrow, .torow, .procrow, .ptype, .linkbtn, .slot, .rslot, .colgrip, .gwidget, .blocklyWidgetDiv button, .blocklyToolboxDiv button, .etclose, .tofold, .swatch, .pswatch, .crumb button, .sitem, .sgrow, .iconbtn, .gmore, .pact, .gact, .dk-sech, .fgtoggle";
+// Q284: status-bar readouts (.sitem, .sgrow), the glyph toggles of rows and headings (.iconbtn, .gmore, .pact, .gact) and the section
+// headers of the dock (.dk-sech, .fgtoggle: 30 px by design) are not command buttons either; what is left is 24 / 28 / 36 px.
 const MEASURE = `(() => {
   const out = {};
   for (const b of document.querySelectorAll("button")) {

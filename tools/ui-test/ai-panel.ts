@@ -12,9 +12,9 @@ import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/239";
+const OUT = evidence("design/239");
 const CTRL_SHIFT = 2 | 8;
 const PANEL = "[data-testid=ai-panel]";
 

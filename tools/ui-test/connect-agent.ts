@@ -9,10 +9,10 @@ import { join } from "node:path";
 import en from "../../config/ui-strings/en.json" with { type: "json" };
 import tr from "../../config/ui-strings/tr.json" with { type: "json" };
 import { assert } from "../mcp-test/client.ts";
-import { exampleProject, launchApp, REPO } from "./cdp.ts";
+import { exampleProject, launchApp, REPO, evidence } from "./cdp.ts";
 
 const project = exampleProject();
-const OUT = "design/201";
+const OUT = evidence("design/201");
 mkdirSync(join(REPO, OUT), { recursive: true });
 const exe = process.env.MCEDGE_APP_EXE ?? join(REPO, "node_modules", "electron", "dist", "electron.exe");
 const script = process.env.MCEDGE_APP_EXE ? join(exe, "..", "resources", "app.asar", "out", "cli", "index.js") : join(REPO, "out", "cli", "index.js");

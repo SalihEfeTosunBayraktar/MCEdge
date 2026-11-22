@@ -8,10 +8,10 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, openSection, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/170";
+const OUT = evidence("design/170");
 const project = exampleProject();
 addElement(project, "overlay", "screenhud", {
   components: [
@@ -91,14 +91,13 @@ await run(async (app) => {
   assert(saved().components[2].anchor === "bottom", `widget anchor saved: ${JSON.stringify(saved().components[2])}`);
   const midB = await at(app, "MID", u2);
   assert(midB.x === 467 && midB.y === 416, `MID anchored bottom: ${JSON.stringify(midB)}`);
-  await app.click(".procpanel [role=tab]", "Overlay");
+  await openSection(app, "Overlay");
   await app.setField("Size", "2", ".guiform"); // gui, fixed, fit
   await waitSaved(app);
   assert(saved().scaleMode === "fit", "scale mode saved");
-  await app.setField("Anchor", "2", ".guiform"); // top_left, top, top_right
+  await app.setField("Anchor", "2", '.dk-sec[data-section="gui.screen"]'); // top_left, top, top_right
   await waitSaved(app);
   assert(saved().anchor === "top_right", "overlay anchor saved");
-  await app.click(".procpanel [role=tab]", "Widget");
   await app.waitFor(`document.querySelector(".guiscreenmeta")?.textContent.includes("427 x 240")`);
   const fitU = await stageUnit(app, 427);
   const fitAt = await at(app, "TL", fitU);

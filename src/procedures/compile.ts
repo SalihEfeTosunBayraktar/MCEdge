@@ -1,5 +1,5 @@
 import { BLOCKS_BY_ID } from "./blocks/index.ts";
-import { codeFor, type BlockDef, type CodeArgs, type Loader } from "./blockTypes.ts";
+import { codeFor, javaCodeLoaderMatches, type BlockDef, type CodeArgs, type Loader } from "./blockTypes.ts";
 import { HELPERS } from "./helpers.ts";
 import { ImportSet, type Gen } from "./javaNames.ts";
 import {
@@ -521,6 +521,8 @@ ${body}
     // Java is written against one version's class names; elsewhere the block only logs, which the build must show.
     if (def.id === "java_code" && node.fields?.gen !== this.env.gen) {
       this.issue(path, "not_generated", `Java written for Minecraft ${String(node.fields?.gen)} does nothing on ${this.env.gen}`, node.block);
+    } else if (def.id === "java_code" && !javaCodeLoaderMatches(node.fields?.loader, this.env.loader)) {
+      this.issue(path, "not_generated", `Java written for ${String(node.fields?.loader)} does nothing on ${this.env.loader}`, node.block);
     }
     const inputs: Record<string, string> = {};
     for (const input of def.inputs ?? []) {

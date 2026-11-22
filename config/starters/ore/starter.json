@@ -1,0 +1,102 @@
+{
+  "id": "ore",
+  "params": {
+    "name": "ruby"
+  },
+  "elements": [
+    {
+      "type": "item",
+      "id": "{{name}}_gem",
+      "values": {
+        "texture": "textures/{{name}}_gem.png",
+        "name": "{{Name Words}}",
+        "creativeTabs": [
+          "MATERIALS"
+        ]
+      }
+    },
+    {
+      "type": "block",
+      "id": "{{name}}_ore",
+      "values": {
+        "texture": "textures/{{name}}_ore.png",
+        "name": "{{Name Words}} Ore",
+        "hardness": 3,
+        "resistance": 3,
+        "requiresCorrectTool": true,
+        "destroyTool": "pickaxe",
+        "vanillaToolTier": "IRON",
+        "customDrop": "{{name}}_gem",
+        "creativeTabs": [
+          "BUILDING_BLOCKS"
+        ],
+        "soundOnStep": "STONE",
+        "generateFeature": true,
+        "blocksToReplace": [
+          {
+            "block": "minecraft:stone"
+          }
+        ],
+        "restrictionBiomes": [],
+        "frequencyPerChunks": 8,
+        "frequencyOnChunk": 8,
+        "minGenerateHeight": -32,
+        "maxGenerateHeight": 64
+      }
+    }
+  ],
+  "textures": [
+    {
+      "from": "ore.png",
+      "to": "{{name}}_ore.png"
+    },
+    {
+      "from": "gem.png",
+      "to": "{{name}}_gem.png"
+    }
+  ],
+  "scenario": [
+    {
+      "op": "player",
+      "name": "Miner",
+      "pos": [
+        0.5,
+        101,
+        0.5
+      ]
+    },
+    {
+      "label": "place the ore",
+      "op": "setblock",
+      "pos": [
+        2,
+        100,
+        2
+      ],
+      "block": "{{mod}}:{{name}}_ore",
+      "expect": "{{mod}}:{{name}}_ore"
+    },
+    {
+      "label": "the ore stays",
+      "op": "read",
+      "what": "block",
+      "pos": [
+        2,
+        100,
+        2
+      ],
+      "expect": "{{mod}}:{{name}}_ore"
+    },
+    {
+      "label": "the gem can be given",
+      "op": "give",
+      "item": "{{mod}}:{{name}}_gem",
+      "count": 2,
+      "expect": 2
+    },
+    {
+      "op": "removePlayer",
+      "name": "Miner"
+    }
+  ]
+}

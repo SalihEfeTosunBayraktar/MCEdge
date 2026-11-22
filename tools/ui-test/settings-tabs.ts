@@ -5,9 +5,9 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/121";
+const OUT = evidence("design/121");
 const suffix = process.argv[2] ?? "after";
 const theme = (process.argv[3] ?? "dark") as "dark" | "light";
 const project = exampleProject();

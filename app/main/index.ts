@@ -43,7 +43,8 @@ function createWindow(): void {
     minWidth: 960,
     minHeight: 600,
     backgroundColor: "#1f1813",
-    autoHideMenuBar: true,
+    // Never shown: with auto-hide, a lone Alt would bring up the hidden native Edit/View menu instead of the app's own menu bar (Q248).
+    autoHideMenuBar: false,
     // UI tests (tools/ui-test/cdp.ts) set MCEDGE_TEST_HIDDEN=1: the window opens transparent, off screen, without focus
     // or a taskbar button. A hidden window would not paint, and CDP screenshots wait for a painted frame.
     ...(TEST_HIDDEN ? { show: false, x: -20000, y: -20000, opacity: 0, skipTaskbar: true, focusable: false } : {}),
@@ -53,6 +54,7 @@ function createWindow(): void {
       sandbox: true,
     },
   });
+  window.setMenuBarVisibility(false);
   if (TEST_HIDDEN) window.once("ready-to-show", () => window.showInactive());
   // Chromium resets the zoom when a page finishes loading, so the saved text size is applied after that.
   window.webContents.on("did-finish-load", () => window.webContents.setZoomFactor(readAppState().preferences?.fontScale ?? 1));

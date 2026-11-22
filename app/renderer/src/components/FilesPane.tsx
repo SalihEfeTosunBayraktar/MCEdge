@@ -6,7 +6,8 @@ import { allElements } from "../model.ts";
 import { useBlockbench } from "../models/Blockbench.tsx";
 import { ModelPreview } from "../models/ModelPreview.tsx";
 import { t } from "../strings.ts";
-import { ActionBar, ActionButton, DataTable, FindBar, FormGroup, FormRow, PanelEmpty, Separator, SidePanel } from "./ui.tsx";
+import { ActionButton, DataTable, FindBar, FormGroup, FormRow } from "./ui.tsx";
+import { InspectorToggle, TabsRow, ViewShell, type DockSection } from "../dock/Dock.tsx";
 import { useRevealQuery } from "../hooks/reveal.ts";
 import { groupRows, tableSections, useFolderDrop, useResourceFolders, useSelection } from "./ResourceFolders.tsx";
 
@@ -67,46 +68,7 @@ export function FilesPane({ snapshot, kind, onChanged, onImport, tabs }: Props) 
     setPlaying(true);
   };
 
-  return (
-    <>
-      <FindBar query={query} onQuery={setQuery} placeholder={t(`files.search.${kind}`)} meta={t("files.count", { count: files.length })} />
-      <ActionBar>
-        <ActionButton icon="import" label={t(`files.import.${kind}`)} tone="primary" onClick={() => onImport(kind)} />
-        {kind === "model" && (
-          <>
-            <Separator />
-            <ActionButton icon="cube" label={t("blockbench.edit")} disabled={!jsonModel} title={current && !jsonModel ? t("blockbench.jsonOnly") : undefined}
-              onClick={() => jsonModel && void blockbench.open(jsonModel)} />
-          </>
-        )}
-        {kind === "sound" && (
-          <>
-            <Separator />
-            <ActionButton icon={playing ? "stop" : "play"} label={t(playing ? "files.stop" : "files.play")} disabled={!current} onClick={() => void play()} />
-          </>
-        )}
-        {res.toolbar(sel.chosen)}
-        {res.moveButton(sel.chosen)}
-        <Separator />
-        <ActionButton icon="trash" label={t("resources.delete")} tone="danger" disabled={!sel.chosen.length} onClick={() => void remove()} />
-      </ActionBar>
-      {res.hint}
-      {tabs}
-      <audio ref={audio} onEnded={() => setPlaying(false)} hidden />
-      <div className="split">
-        <div className="scrollarea texarea" ref={sel.area} onMouseDown={sel.startBox}>
-          {sel.box && <div className="selbox" style={sel.box} />}
-          {res.folderError && <p className="ferr">{res.folderError}</p>}
-          <DataTable rows={shown} rowKey={(r) => r} selected={current} picked={sel.chosen} sections={sections}
-            onRowDragStart={(f, e) => drop.dragStart(e, f, sel)} onSelect={(r, e) => (sel.pick(r, e), setError(undefined))}
-            empty={files.length ? t("list.noMatch") : t(`files.empty.${kind}`)} columns={[
-              { label: t("files.col.name"), width: "34%", cell: (r) => <b>{baseName(r)}</b> },
-              { label: t("files.col.use"), cell: (r) => <code>{useAs(snapshot, kind, r)}</code> },
-              { label: t("files.col.type"), width: "18%", cell: (r) => <span className="dim">{r.slice(r.lastIndexOf(".") + 1).toUpperCase()}</span> },
-            ]} />
-          {res.dialogs}
-        </div>
-        <SidePanel title={t(`files.details.${kind}`)}>
+  const inspector: DockSection[] = [{ id: "files.details", icon: "info", title: t(`files.details.${kind}`), body: <>
           {sel.chosen.length > 1 ? (
             <FormGroup title={t("resources.selected")}>
               <p className="hint">{t("resources.selectedCount", { count: sel.chosen.length, items: t(`resources.item.${LIST[kind]}`) })}</p>
@@ -128,9 +90,42 @@ export function FilesPane({ snapshot, kind, onChanged, onImport, tabs }: Props) 
               {error && <p className="ferr">{error}</p>}
             </FormGroup>
             </>
-          ) : <PanelEmpty text={t(`files.selectHint.${kind}`)} />}
-        </SidePanel>
-      </div>
+          ) : <p className="hint">{t(`files.selectHint.${kind}`)}</p>}
+  </> }];
+
+  return (
+    <>
+      <FindBar query={query} onQuery={setQuery} placeholder={t(`files.search.${kind}`)} meta={t("files.count", { count: files.length })}
+        actions={<>
+          {res.toolbar(sel.chosen)}
+          <ActionButton icon="import" label={t(`files.import.${kind}`)} tone="primary" onClick={() => onImport(kind)} />
+          <InspectorToggle />
+        </>} />
+      {res.hint}
+      <TabsRow tabs={tabs} actions={sel.chosen.length > 0 && <>
+        {kind === "model" && (
+          <ActionButton icon="cube" label={t("blockbench.edit")} disabled={!jsonModel} title={current && !jsonModel ? t("blockbench.jsonOnly") : undefined}
+            onClick={() => jsonModel && void blockbench.open(jsonModel)} />
+        )}
+        {kind === "sound" && <ActionButton icon={playing ? "stop" : "play"} label={t(playing ? "files.stop" : "files.play")} disabled={!current} onClick={() => void play()} />}
+        {res.moveButton(sel.chosen)}
+        <ActionButton icon="trash" label={t("resources.delete")} tone="danger" onClick={() => void remove()} />
+      </>} />
+      <audio ref={audio} onEnded={() => setPlaying(false)} hidden />
+      <ViewShell sections={inspector} inspectorLabel={t("dock.inspector")} inspectorClass="resinsp">
+        <div className="scrollarea texarea" ref={sel.area} onMouseDown={sel.startBox}>
+          {sel.box && <div className="selbox" style={sel.box} />}
+          {res.folderError && <p className="ferr">{res.folderError}</p>}
+          <DataTable rows={shown} rowKey={(r) => r} selected={current} picked={sel.chosen} sections={sections}
+            onRowDragStart={(f, e) => drop.dragStart(e, f, sel)} onSelect={(r, e) => (sel.pick(r, e), setError(undefined))}
+            empty={files.length ? t("list.noMatch") : t(`files.empty.${kind}`)} columns={[
+              { label: t("files.col.name"), width: "34%", cell: (r) => <b>{baseName(r)}</b> },
+              { label: t("files.col.use"), cell: (r) => <code>{useAs(snapshot, kind, r)}</code> },
+              { label: t("files.col.type"), width: "18%", cell: (r) => <span className="dim">{r.slice(r.lastIndexOf(".") + 1).toUpperCase()}</span> },
+            ]} />
+          {res.dialogs}
+        </div>
+      </ViewShell>
     </>
   );
 }

@@ -10,6 +10,7 @@ import { t } from "../strings.ts";
 import { Icon } from "./Icon.tsx";
 import { Sprite } from "./Sprite.tsx";
 import { Texture } from "./Texture.tsx";
+import { TabList } from "./ui.tsx";
 
 /**
  * Item, block and entity fields (KUYRUK 127, MCreator's MCItemSelectorDialog): the field shows the chosen entry's icon and
@@ -144,13 +145,13 @@ export function RegistryPicker({ kind, value, onChange, snapshot, minecraft, all
                 else if (typed) pick(typed);
               }} />
           </div>
-          <div className="langtabs regtabs" role="tablist">
+          <TabList className="langtabs regtabs" label={t("picker.sources")}>
             {sources.map((s) => (
               <button key={s} type="button" role="tab" aria-selected={s === source} className={`ltab ${s === source ? "on" : ""}`} onClick={() => setSource(s)}>
                 {t(`picker.source.${s}`)}<span className="lpct">{counts[s]}</span>
               </button>
             ))}
-          </div>
+          </TabList>
           <div className="texgrid regcells" role="listbox">
             {allowNone && !q && (
               <button type="button" role="option" aria-selected={!value} className={`texcell${value ? "" : " sel"}`} onClick={() => pick("")}>

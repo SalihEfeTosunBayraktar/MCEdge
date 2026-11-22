@@ -5,10 +5,10 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/gui-editor";
+const OUT = evidence("design/gui-editor");
 const project = exampleProject();
 addElement(project, "gui", "source", {
   type: 1, width: 176, height: 166, gridSx: 18, gridSy: 18,

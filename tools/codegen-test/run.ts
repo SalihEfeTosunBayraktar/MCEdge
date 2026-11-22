@@ -177,4 +177,6 @@ for (const stream of [child.stdout, child.stderr]) createInterface({ input: stre
   if (!started && /Done \(|Minecraft finished loading|Created: .*minecraft:textures|Sound engine started/.test(line)) { started = true; flush(); void drive(); }
   if (/Failed to start the minecraft server|Crash report saved|Exception in server tick loop/.test(line)) { flush(); setTimeout(stop, 3000); }
 });
-child.on("close", (code) => { clearTimeout(timer); services?.close(); lines.push(`EXIT ${code}`); flush(); console.log("closed", code, lines.length, log); });
+// The game is gone, so the rest of the command file (an "@wait" the game outlived, commands for a dead RCON port)
+// has nothing to drive: exit now, which also frees the run's registry entry and lock.
+child.on("close", (code) => { clearTimeout(timer); services?.close(); lines.push(`EXIT ${code}`); flush(); console.log("closed", code, lines.length, log); process.exit(0); });

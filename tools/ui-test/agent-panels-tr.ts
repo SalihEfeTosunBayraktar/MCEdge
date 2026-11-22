@@ -7,7 +7,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { createTask } from "../../src/live/tasks.ts";
 import { connect } from "../mcp-test/client.ts";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const project = exampleProject();
 const rubyFile = join(project, "elements", "items", "ruby.json");
@@ -36,7 +36,7 @@ await run(async (app) => {
     await app.waitFor(`document.querySelector(".tlnotelist li.waiting")`);
     let text = await textOf(app, ".timeline");
     assert(text.includes("Adımı geri al") && text.includes("Adım 1") && text.includes("Ajana notlar") && !ENGLISH.test(text), `timeline is Turkish: ${text.match(ENGLISH)?.[0]}`);
-    await app.shot("design/144/144-timeline-tr-dark.png");
+    await app.shot(evidence("design/144/144-timeline-tr-dark.png"));
     // A conflict: the file changed after the agent wrote it.
     writeFileSync(rubyFile, JSON.stringify({ ...JSON.parse(readFileSync(rubyFile, "utf8")), stackSize: 20 }, null, 2) + "\n");
     await app.sleep(800);
@@ -44,10 +44,10 @@ await run(async (app) => {
     await app.waitFor(`document.querySelector(".tlconflictdlg")`, 10000);
     text = await textOf(app, ".tlconflictdlg");
     assert(text.includes("Geri alma durduruldu") && !ENGLISH.test(text), `conflict dialog is Turkish: ${text}`);
-    await app.shot("design/144/144-conflict-tr-dark.png");
+    await app.shot(evidence("design/144/144-conflict-tr-dark.png"));
     await app.key("Escape");
     await app.setTheme("light");
-    await app.shot("design/144/144-timeline-tr-light.png");
+    await app.shot(evidence("design/144/144-timeline-tr-light.png"));
     await app.setTheme("dark");
 
     // Tasks.
@@ -57,14 +57,14 @@ await run(async (app) => {
     await app.waitFor(`document.querySelector("[data-testid=task-result]")`);
     text = await textOf(app, ".tasksview");
     assert(text.includes("Bitti, incele") && text.includes("Henüz kimse") && !ENGLISH.test(text), `tasks panel is Turkish: ${text.match(ENGLISH)?.[0]}`);
-    await app.shot("design/146/146-tasks-tr-dark.png");
+    await app.shot(evidence("design/146/146-tasks-tr-dark.png"));
     await app.setTheme("light");
-    await app.shot("design/146/146-tasks-tr-light.png");
+    await app.shot(evidence("design/146/146-tasks-tr-light.png"));
     await app.click(".tasksview .abtn", "Yeni görev");
     await app.waitFor(`document.querySelector(".newtask")`);
     text = await textOf(app, ".dialog");
     assert(text.includes("Ajan için yeni görev") && !ENGLISH.test(text), `new task dialog is Turkish: ${text}`);
-    await app.shot("design/146/146-new-task-tr-light.png");
+    await app.shot(evidence("design/146/146-new-task-tr-light.png"));
   } finally {
     await mcp.close();
   }

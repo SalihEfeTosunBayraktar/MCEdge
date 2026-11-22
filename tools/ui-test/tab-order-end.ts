@@ -5,7 +5,7 @@
  * row it passes joins the section), a folded section hides its marker, and removing the marker puts the rows back in.
  * Args: theme, language. Screenshots go to design/172/.
  */
-import { assert, run, type App } from "./cdp.ts";
+import { assert, run, type App, evidence } from "./cdp.ts";
 import { openTab, savedOrder, tabOrderProject, waitSaved } from "./tabOrderFixture.ts";
 
 const theme = (process.argv[2] ?? "dark") as "dark" | "light";
@@ -40,7 +40,7 @@ await run(async (app) => {
   const endText = await app.eval<string>(`document.querySelector('${row("/")} .ltxt').textContent`);
   assert(endText === (tr ? "Gems sonu" : "end of Gems"), `marker names its section: ${endText}`);
   assert(await app.eval<boolean>(`document.querySelector(".taborder .listform .hint")?.textContent.includes(${JSON.stringify(tr ? "Üstteki bölümü bitirir" : "Ends the section above")})`), "the marker's hint shows when it is selected");
-  await app.shot(`design/172/tab-order-end-${theme}-${lang}.png`);
+  await app.shot(evidence(`design/172/tab-order-end-${theme}-${lang}.png`));
 
   // Dragging ruby_apple over ruby_block: it would land outside sections.
   const [gx, gy] = await app.center(`${row("ruby_apple")} .tograb`);
@@ -51,7 +51,7 @@ await run(async (app) => {
   await app.sleep(150);
   const line = await app.eval<{ cls: string; label: string } | null>(`(() => { const d = document.querySelector("[data-testid=drop-line]"); return d && { cls: d.className, label: d.textContent }; })()`);
   assert(!!line && line.cls.includes("outside") && line.label === (tr ? "bölümlerin dışına" : "outside sections"), `drop after the end is outside sections: ${JSON.stringify(line)}`);
-  await app.shot(`design/172/tab-order-end-drop-${theme}-${lang}.png`);
+  await app.shot(evidence(`design/172/tab-order-end-drop-${theme}-${lang}.png`));
   await app.mouse("mouseMoved", gx, gy, 1);
   await app.mouse("mouseReleased", gx, gy, 0);
   await app.sleep(200);

@@ -8,10 +8,10 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { writePng } from "../../src/generator/png.ts";
-import { assert, exampleProject, launchApp, run, type App } from "./cdp.ts";
+import { assert, exampleProject, launchApp, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/leftovers-73";
+const OUT = evidence("design/leftovers-73");
 const project = exampleProject();
 
 // An animated strip of two frames (red, blue) with its .mcmeta.

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { displayNameField, elementIdLookup, newElement, typeFields, typeForProject, validateElement, visibility, type FieldDef } from "../../../../src/elements/model.ts";
+import { hidden } from "../experience.ts";
 import type { Coverage, Element, EngineInfo, ProjectSnapshot, TaskSource } from "../../../shared/api.ts";
 import { GuiLayoutPage } from "../gui/GuiLayoutPage.tsx";
 import { ProcedurePage } from "../procedures/ProcedurePage.tsx";
@@ -11,16 +12,20 @@ import { duplicateElement } from "../elementActions.ts";
 import { useAutosave } from "../hooks/useAutosave.ts";
 import { elementName, elementTexture, findElement, freeId, issuePrefix, toRegistryId, type ElementRef } from "../model.ts";
 import { issueText, t } from "../strings.ts";
+import { usePerformance } from "../preferences.ts";
 import { typeGenerated, typeOf } from "../types.ts";
 import { FieldList, RefDatalists, type FormContext } from "./ElementFields.tsx";
 import { BubblePreview } from "./BubblePreview.tsx";
 import { RadialPreview } from "./RadialPreview.tsx";
 import { DeleteElementDialog } from "./DeleteElementDialog.tsx";
+import { InspectorToggle, ViewShell, type DockSection } from "../dock/Dock.tsx";
+import { Icon } from "./Icon.tsx";
+import { PageTabs } from "./PageTabs.tsx";
 import { FormPreview } from "./FormPreview.tsx";
 import { SeatPreview } from "../models/SeatPreview.tsx";
 import { Sprite } from "./Sprite.tsx";
 import { Texture } from "./Texture.tsx";
-import { ActionBar, ActionButton, ContextMenu, Dialog, FormGroup, MenuList, Problems, Separator } from "./ui.tsx";
+import { ActionBar, ActionButton, ContextMenu, Dialog, FormGroup, MenuList, Problems, Separator, TabList } from "./ui.tsx";
 
 interface Props {
   snapshot: ProjectSnapshot;
@@ -39,6 +44,8 @@ interface Props {
   agentFields?: string[];
   /** Right-click on a field > New task for the agent (KUYRUK 146). */
   onNewTask?: (source: TaskSource) => void;
+  /** A field to show (a build error points at it, Q246): its page opens, the row scrolls into view and is highlighted for a moment. */
+  reveal?: { field: string; n: number };
 }
 
 /** Last page shown per element type, so reopening an element of that type returns to it. */
@@ -49,7 +56,8 @@ const lastPage = new Map<string, string>();
  * active page is rendered. Every change is validated live and saved to the element's JSON file shortly after.
  * Mount it with a key per element: the draft is taken from the snapshot once.
  */
-export function ElementEditor({ snapshot, target, coverage, engineName, engine, onSaved, onClose, onOpen, backName, onDeleted, agentFields, onNewTask }: Props) {
+export function ElementEditor({ snapshot, target, coverage, engineName, engine, onSaved, onClose, onOpen, backName, onDeleted, agentFields, onNewTask, reveal }: Props) {
+  const { previews } = usePerformance();
   const baseType = typeOf(target.typeId);
   // Fields of optional mod integrations show only while the project uses them (mod settings > Integrations).
   const type = baseType && typeForProject(baseType, snapshot.project.mod.integrations);
@@ -81,6 +89,23 @@ export function ElementEditor({ snapshot, target, coverage, engineName, engine, 
   const [fieldMenu, setFieldMenu] = useState<{ x: number; y: number; field: string }>();
   /** Bumped when an outside change replaced the block program, so the Blockly canvas reloads it. */
   const [programRev, setProgramRev] = useState(0);
+
+  useEffect(() => {
+    if (!reveal || !type) return;
+    const key = reveal.field.split(/[.[]/)[0];
+    const page = type.pages.find((p) => p.groups.some((g) => g.fields.some((f) => f.key === key)));
+    if (page) (lastPage.set(type.id, page.id), setPageId(page.id));
+    // The page renders first; then its row is found.
+    const timer = setTimeout(() => {
+      const row = document.querySelector<HTMLElement>(`.form .frow[data-field="${CSS.escape(key)}"], .form .frow[data-field^="${CSS.escape(key)}["], .form .frow[data-field^="${CSS.escape(key)}."]`);
+      row?.scrollIntoView({ block: "center" });
+      row?.classList.add("revealed");
+      setTimeout(() => row?.classList.remove("revealed"), 3000);
+    }, 60);
+    return () => clearTimeout(timer);
+    // Runs when a new request arrives.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reveal?.n]);
 
   // Field changes go through refs so FieldList callbacks stay stable while typing.
   const draftRef = useRef(draft);
@@ -169,12 +194,14 @@ export function ElementEditor({ snapshot, target, coverage, engineName, engine, 
 
   if (!draft) return null;
   if (!type) return <p className="empty-note">{t("editor.unknownType", { type: target.typeId })}</p>;
-  const page = type.pages.find((p) => p.id === pageId) ?? type.pages[0];
   const fields = typeFields(type);
   const texture = elementTexture(snapshot, target.typeId, draft);
   const notGenerated = typeGenerated(coverage, type.id) === "no";
   const issuesOnPage = (fieldsOfPage: FieldDef[]) =>
     issues.filter((i) => fieldsOfPage.some((f) => i.path === f.key || i.path.startsWith(`${f.key}[`) || i.path.startsWith(`${f.key}.`))).length;
+  // Simple mode hides advanced pages (Q244); one with a problem stays, so the problem can be fixed.
+  const pages = type.pages.filter((p, i) => i === 0 || !hidden("pages", p.id) || issuesOnPage(p.groups.flatMap((g) => g.fields)) > 0);
+  const page = pages.find((p) => p.id === pageId) ?? pages[0];
   const hasNameField = !!displayNameField(type);
 
   const duplicate = async () => {
@@ -204,18 +231,23 @@ export function ElementEditor({ snapshot, target, coverage, engineName, engine, 
       <p className="hint">{t("editor.deletedOnDisk", { name: elementName(type.id, draft) })}</p>
     </Dialog>
   );
-  const head = (
-    <div className="findbar edhead">
-      {deletedDialog}{deleteDialog}
+  const identityParts = (description: boolean) => (
+    <>
       <span className="slot small">
         {texture ? <Texture dir={snapshot.dir} path={texture} size={24} /> : <Sprite name={spriteFor(type.id)} size={24} />}
       </span>
-      <span className="edname">{elementName(type.id, draft)}</span>
+      <span className="edname" title={description ? undefined : type.description}>{elementName(type.id, draft)}</span>
       <span className="ttype">{type.name}</span>
       {notGenerated && <span className="genbadge" title={t("editor.typeNotGenerated", { engine: engineName, type: type.name })}>{t("editor.notGenerated")}</span>}
       {live && <LiveChip live={live} />}
-      <span className="fmeta" title={type.description}>{type.description}</span>
+      {description && <span className="fmeta" title={type.description}>{type.description}</span>}
       <AgentFieldMarks fields={agentFields} />
+    </>
+  );
+  const head = (
+    <div className="findbar edhead">
+      {deletedDialog}{deleteDialog}
+      {identityParts(true)}
     </div>
   );
   // Duplicate and Delete of the whole element sit in one Element menu in every editor (KUYRUK 125): the GUI and
@@ -244,59 +276,41 @@ export function ElementEditor({ snapshot, target, coverage, engineName, engine, 
   if (layout) {
     return (
       <section className="view">
-        {head}
+        {/* The identity of the element sits in the editor's own top bar (Q278), not in a header row of its own. */}
+        {deletedDialog}{deleteDialog}
         <RefDatalists snapshot={snapshot} />
         <GuiLayoutPage snapshot={snapshot} typeId={type.id} draft={draft} ctx={ctx} layout={layout} groups={type.pages.flatMap((p) => p.groups)}
-          all={fields} onChange={setField} elementActions={elementActions} />
+          all={fields} onChange={setField} elementActions={elementActions} identity={identityParts(false)} />
       </section>
     );
   }
 
-  return (
-    <section className="view">
-      <div className="findbar edhead">
-        {deletedDialog}{deleteDialog}
-        <span className="slot small">
-          {texture ? <Texture dir={snapshot.dir} path={texture} size={24} /> : <Sprite name={spriteFor(type.id)} size={24} />}
-        </span>
-        <span className="edname">{elementName(type.id, draft)}</span>
-        <span className="ttype">{type.name}</span>
-        {notGenerated && <span className="genbadge" title={t("editor.typeNotGenerated", { engine: engineName, type: type.name })}>{t("editor.notGenerated")}</span>}
-        {live && <LiveChip live={live} />}
-        <span className="fmeta" title={type.description}>{type.description}</span>
-        <AgentFieldMarks fields={agentFields} />
-      </div>
-      {/* The same Element menu as the GUI and procedure editors (KUYRUK 125). */}
-      <ActionBar>{elementActions}</ActionBar>
-      {type.pages.length > 1 && (
-        <div className="langtabs pagetabs" role="tablist" aria-label={t("editor.pages")}>
-          {type.pages.map((p) => {
-            const count = issuesOnPage(p.groups.flatMap((g) => g.fields));
-            return (
-              <button key={p.id} role="tab" aria-selected={p.id === page.id} className={`ltab ${p.id === page.id ? "on" : ""}`} onClick={() => showPage(p.id)}>
-                {p.title}{count > 0 && <span className="pcount">{count}</span>}
-              </button>
-            );
-          })}
-        </div>
+  // The generic form page (Q279): one 40 px bar (back, identity, Element menu, inspector toggle), one row of page tabs, the
+  // form as sections and the inspector with the live preview and the problems of the element.
+  const generic = type.id !== "bubble" && type.id !== "radial_menu" && !(type.id === "block" && ((page.id === "seat" && draft.seatable === true) || (page.id === "bounding_boxes" && draft.multiBlock === true)));
+  const sections: DockSection[] = [
+    ...(previews && generic ? [{ id: "editor.preview", icon: "image" as const, title: t("dock.preview"), body: <FormPreview snapshot={snapshot} type={type} draft={draft} name={elementName(type.id, draft)} /> }] : []),
+    { id: "editor.problems", icon: "warn" as const, title: t("dock.problems"), badge: issues.length ? String(issues.length) : undefined, defaultOpen: issues.length > 0,
+      body: issues.length ? <ul className="gi-list probs">{issues.map((i, k) => <li key={k}><Icon name="warn" size={12} /><span title={i.path}>{issueText(i)}</span></li>)}</ul> : <p className="hint">{t("dock.noProblemsHere")}</p> },
+  ];
+  const formArea = (
+    <div className="formscroll" onContextMenu={onNewTask && ((e) => {
+      const row = (e.target as HTMLElement).closest<HTMLElement>(".frow[data-field]");
+      // Text fields keep their own menu (copy, paste); the label and the row around them offer the task.
+      if (!row || (e.target as HTMLElement).closest("input, textarea, select")) return;
+      e.preventDefault();
+      setFieldMenu({ x: e.clientX, y: e.clientY, field: row.dataset.field!.replace(/[.[].*$/, "") });
+    })}>
+      {fieldMenu && onNewTask && (
+        <ContextMenu x={fieldMenu.x} y={fieldMenu.y} onClose={() => setFieldMenu(undefined)}
+          items={[{ label: t("newTask.menu"), onClick: () => onNewTask({ kind: "field", target: `${target.typeId}/${target.id}`, field: fieldMenu.field }) }]} />
       )}
-      <div className="formscroll" onContextMenu={onNewTask && ((e) => {
-        const row = (e.target as HTMLElement).closest<HTMLElement>(".frow[data-field]");
-        // Text fields keep their own menu (copy, paste); the label and the row around them offer the task.
-        if (!row || (e.target as HTMLElement).closest("input, textarea, select")) return;
-        e.preventDefault();
-        setFieldMenu({ x: e.clientX, y: e.clientY, field: row.dataset.field!.replace(/[.[].*$/, "") });
-      })}>
-        {fieldMenu && onNewTask && (
-          <ContextMenu x={fieldMenu.x} y={fieldMenu.y} onClose={() => setFieldMenu(undefined)}
-            items={[{ label: t("newTask.menu"), onClick: () => onNewTask({ kind: "field", target: `${target.typeId}/${target.id}`, field: fieldMenu.field }) }]} />
-        )}
-        <RefDatalists snapshot={snapshot} />
-        <div className="formcols">
+      <RefDatalists snapshot={snapshot} />
+      <div className={`formcols${generic ? "" : " beside"}`}>
         <div className="form wide-labels" key={`${page.id}:${programRev}`}>
           {notGenerated && <p className="notice">{t("editor.typeNotGenerated", { engine: engineName, type: type.name })}</p>}
           {page.id === type.pages[0].id && (
-            <FormGroup title={t("group.element")}>
+            <FormGroup title={t("group.element")} collapsible>
               <div className="frow efrow">
                 <label>{t("field.id")}</label>
                 <div className="fval"><code>{snapshot.project.mod.id}:{draft.id}</code></div>
@@ -317,17 +331,41 @@ export function ElementEditor({ snapshot, target, coverage, engineName, engine, 
           ))}
           <Problems issues={issues.map((i) => ({ path: `${issuePrefix(target)}.${i.path}`, message: issueText(i) }))} />
         </div>
-        {/* Bubbles are designed on a canvas like a small overlay (Q216); other types show their textures. */}
+        {/* Bubbles are designed on a canvas like a small overlay (Q216) and radial menus show their wheel (Q227); seats and
+            multi-block cells sit on the block's model (Q225, Q226). Those stay beside the form; the other types show their
+            textures in the inspector. */}
         {type.id === "bubble" ? <BubblePreview snapshot={snapshot} draft={draft} onChange={setField} />
-          // Radial menus show their wheel (Q227).
-          : type.id === "radial_menu" ? <RadialPreview snapshot={snapshot} draft={draft} />
-          // Seats are placed on the block's model (Q225).
+          : type.id === "radial_menu" ? (previews ? <RadialPreview snapshot={snapshot} draft={draft} /> : null)
           : type.id === "block" && page.id === "seat" && draft.seatable === true ? <SeatPreview snapshot={snapshot} draft={draft} onChange={setField} />
-          // A block spanning several cells shows them over its model (Q226).
           : type.id === "block" && page.id === "bounding_boxes" && draft.multiBlock === true ? <SeatPreview snapshot={snapshot} draft={draft} onChange={setField} cellsOnly />
-          : <FormPreview snapshot={snapshot} type={type} draft={draft} name={elementName(type.id, draft)} />}
-        </div>
+          : null}
       </div>
+    </div>
+  );
+  return (
+    <section className="view">
+      <div className="findbar edhead dk-bar actions">
+        {deletedDialog}{deleteDialog}
+        <ActionButton hideLabel icon="back" label={backName ? t("editor.backTo", { name: backName }) : t("editor.back")} onClick={onClose} />
+        <span className="slot small">
+          {texture ? <Texture dir={snapshot.dir} path={texture} size={24} /> : <Sprite name={spriteFor(type.id)} size={24} />}
+        </span>
+        <span className="edname">{elementName(type.id, draft)}</span>
+        <span className="ttype" title={type.description}>{type.name}</span>
+        {notGenerated && <span className="genbadge" title={t("editor.typeNotGenerated", { engine: engineName, type: type.name })}>{t("editor.notGenerated")}</span>}
+        {live && <LiveChip live={live} />}
+        <AgentFieldMarks fields={agentFields} />
+        <Separator />
+        {/* The same Element menu as the GUI and procedure editors (KUYRUK 125). */}
+        <ElementMenu onDuplicate={duplicate} onDelete={remove} />
+        <span className="dk-grow" />
+        {generic && <InspectorToggle />}
+      </div>
+      {pages.length > 1 && (
+        <PageTabs label={t("editor.pages")} active={page.id} onShow={showPage}
+          pages={pages.map((p) => ({ id: p.id, title: p.title, count: issuesOnPage(p.groups.flatMap((g) => g.fields)) }))} />
+      )}
+      {generic ? <ViewShell sections={sections} inspectorLabel={t("dock.inspector")}>{formArea}</ViewShell> : formArea}
     </section>
   );
 }
@@ -337,7 +375,7 @@ function ElementMenu({ onDuplicate, onDelete }: { onDuplicate: () => void; onDel
   const [open, setOpen] = useState(false);
   return (
     <div className="menuwrap elementmenu">
-      <ActionButton icon="more" label={t("editor.elementMenu")} title={t("editor.elementMenuTip")} pressed={open} onClick={() => setOpen(!open)} />
+      <ActionButton icon="more" popup label={t("editor.elementMenu")} title={t("editor.elementMenuTip")} pressed={open} onClick={() => setOpen(!open)} />
       {open && (
         <MenuList onClose={() => setOpen(false)} items={[
           { label: t("action.duplicate"), onClick: onDuplicate },
@@ -363,7 +401,7 @@ function GroupView({ title, fields, all, draft, ctx, onChange }: {
   const visible = visibility(scope);
   if (!fields.some((f) => visible(f.key))) return null;
   return (
-    <FormGroup title={title} titleLang="en">
+    <FormGroup title={title} titleLang="en" collapsible>
       <FieldList fields={fields} scope={scope} ctx={ctx} prefix="" coveragePrefix="" onChange={onChange} />
     </FormGroup>
   );

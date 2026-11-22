@@ -7,7 +7,7 @@
  */
 import { copyFileSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, REPO, run, type App } from "./cdp.ts";
+import { assert, exampleProject, REPO, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
 const theme = (process.argv[2] ?? "dark") as "dark" | "light";
@@ -64,7 +64,7 @@ await run(async (app) => {
   await waitSaved(app);
   let w = saved("guis", "meter")[0];
   assert(w.stateProcedure === "meter_level" && w.stateValue === "percent" && w.updateTicks === 10, `state procedure, percentage, interval saved: ${JSON.stringify(w)}`);
-  await app.shot(`design/186/states-${theme}-${lang}.png`);
+  await app.shot(evidence(`design/186/states-${theme}-${lang}.png`));
 
   // Split the still strip into one state per frame.
   await app.click(".statelist .stateitem", S["gui.state.n"].replace("{n}", "2"));
@@ -79,7 +79,7 @@ await run(async (app) => {
   shown = (await app.eval<string[]>(`[...document.querySelectorAll(".statelist .stateitem .statesub")].map((s) => s.textContent)`)).join("|");
   assert(shown === `||${[0, 1, 2].map((n) => S["gui.state.frame"].replace("{n}", String(n))).join("|")}`, `frame notes: ${shown}`);
   assert(await app.eval<boolean>(`document.querySelector(".statestrip .mbtn").disabled`), "a fixed frame is not split again");
-  await app.shot(`design/186/split-${theme}-${lang}.png`);
+  await app.shot(evidence(`design/186/split-${theme}-${lang}.png`));
 
   // Add widget > State image: a new one with a picture.
   await app.click(".abtn", S["gui.add"]);
@@ -100,5 +100,5 @@ await run(async (app) => {
   await app.key("Escape");
   await app.click(".guilist .lrow", S["gui.kind.state_image"]);
   await app.waitFor(`document.querySelectorAll(".statelist .stateitem").length === 2`);
-  await app.shot(`design/186/overlay-${theme}-${lang}.png`);
+  await app.shot(evidence(`design/186/overlay-${theme}-${lang}.png`));
 }, { project, theme, language: lang });

@@ -4,10 +4,10 @@
  * design/texture-editor/.
  */
 import { connect } from "../mcp-test/client.ts";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const project = exampleProject();
-const OUT = "design/texture-editor";
+const OUT = evidence("design/texture-editor");
 const PATH = "textures/item/shapes.png";
 
 async function cell(app: App, x: number, y: number): Promise<[number, number]> {

@@ -5,9 +5,9 @@
  * toolbar (no action column).
  * Screenshots go to design/collapsible-ui/.
  */
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/collapsible-ui";
+const OUT = evidence("design/collapsible-ui");
 const width = (app: App, selector: string) => app.eval<number>(`document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect().width`);
 /** Rendered width of the text of the first matching button (0 when it is clipped away). */
 const labelWidth = (app: App, selector: string) => app.eval<number>(`document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect().width`);
@@ -20,8 +20,9 @@ await run(async (app) => {
   assert(await width(app, ".rail") <= 40, `slim rail: ${await width(app, ".rail")}`);
   assert(!(await app.eval<boolean>(`!!document.querySelector(".acol")`)), "no action column");
   assert((await labelWidth(app, ".rtab .rlabel")) <= 1, "rail names are hidden");
-  const buttons = await app.eval<string[]>(`[...document.querySelectorAll(".view .actions .abtn")].map((b) => b.textContent)`);
-  assert(buttons.length === 6 && !buttons.some((b) => /Rename|Usages|Move/.test(b)), `fewer buttons: ${buttons.join(", ")}`);
+  const buttons = await app.eval<string[]>(`[...document.querySelectorAll(".view .actions .abtn:not(.compact)")].map((b) => b.textContent)`);
+  // Q279: New in the bar, New folder and Unused in the path strip; Edit, Duplicate, Move and Delete selected only with a selection.
+  assert(buttons.length === 3 && !buttons.some((b) => /Rename|Usages|Move/.test(b)), `fewer buttons: ${buttons.join(", ")}`);
   assert(await app.eval<boolean>(`[...document.querySelectorAll(".rtab")].every((b) => b.title)`), "every tab has a tooltip");
   await app.shot(`${OUT}/slim.png`);
 

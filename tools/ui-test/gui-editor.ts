@@ -9,14 +9,14 @@ import { join } from "node:path";
 import { generateTarget } from "../../src/generator/generate.ts";
 import { listEngines } from "../../src/engines/registry.ts";
 import { loadProject } from "../../src/ir/storage.ts";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, openSection, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
 const project = exampleProject();
 addElement(project, "gui", "machine", { type: 1, width: 176, height: 166 });
 addElement(project, "overlay", "mana_hud");
 addElement(project, "procedure", "on_press");
-const OUT = "design/gui-editor";
+const OUT = evidence("design/gui-editor");
 const guiFile = join(project, "elements", "guis", "machine.json");
 const saved = () => JSON.parse(readFileSync(guiFile, "utf8")).components as Record<string, unknown>[];
 const waitSaved = async (app: App) => {
@@ -118,7 +118,7 @@ await run(async (app) => {
   await app.shot(`${OUT}/gui-dark.png`);
   await app.setTheme("light");
   await app.shot(`${OUT}/gui-light.png`);
-  await app.click(".ltab", "Screen");
+  await openSection(app, "Screen");
   await app.shot(`${OUT}/gui-screen-tab-light.png`);
   await app.setTheme("dark");
 

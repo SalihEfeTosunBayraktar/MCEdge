@@ -1,3 +1,4 @@
+import { hidden } from "../experience.ts";
 import { useStoredFlag } from "../hooks/useStoredFlag.ts";
 import { t } from "../strings.ts";
 import { Icon, type IconName } from "./Icon.tsx";
@@ -18,12 +19,13 @@ const DISABLED: Section[] = [];
 const SECONDARY: Section[] = ["git", "settings"];
 
 /** Section rail: icons only, or icons with their names (the toggle on top); the settings sections sit apart at the bottom. */
-export function Rail({ active, onSelect, sections = SECTIONS }: { active: Section; onSelect: (section: Section) => void; sections?: readonly Section[] }) {
+export function Rail({ active, onSelect, sections: all = SECTIONS }: { active: Section; onSelect: (section: Section) => void; sections?: readonly Section[] }) {
   const [wide, setWide] = useStoredFlag("rail.wide", false);
+  const sections = all.filter((section) => !hidden("sections", section));
   const tab = (section: Section) => {
     const disabled = DISABLED.includes(section);
     return (
-      <button key={section} className={`rtab ${section === active ? "on" : ""}`} disabled={disabled}
+      <button key={section} data-section={section} className={`rtab ${section === active ? "on" : ""}`} disabled={disabled}
         title={disabled ? t("rail.soon") : t(`section.${section}`)} onClick={() => onSelect(section)}>
         <Icon name={ICONS[section]} />
         <span className="rlabel">{t(`section.${section}`)}</span>

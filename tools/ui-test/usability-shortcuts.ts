@@ -3,10 +3,10 @@
  * their shortcuts; the texture editor's old hint ("saved as you paint", missing Ctrl+S and the shape keys) is
  * gone. Runs in English and Turkish. Screenshots go to design/usability/.
  */
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/usability";
+const OUT = evidence("design/usability");
 const project = exampleProject();
 addElement(project, "gui", "shop", { type: 1, width: 176, height: 166 });
 addElement(project, "procedure", "main");

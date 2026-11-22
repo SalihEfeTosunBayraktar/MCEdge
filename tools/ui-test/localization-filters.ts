@@ -13,7 +13,7 @@ import { listEngines } from "../../src/engines/registry.ts";
 import { generatedLangKeys } from "../../src/generator/langKeys.ts";
 import { loadProject } from "../../src/ir/storage.ts";
 import { connect } from "../mcp-test/client.ts";
-import { assert, copyProject, REPO, run } from "./cdp.ts";
+import { assert, copyProject, REPO, run, evidence } from "./cdp.ts";
 
 const language = process.argv[2] ?? "en";
 const etr = [resolve(REPO, "..", "ETREconomy-MCEdge"), resolve(REPO, "..", "..", "ETREconomy-MCEdge")].find(existsSync)!;
@@ -87,10 +87,10 @@ await run(async (app) => {
 
   await app.setValue(".findbar .fsel select", "missing:tr_tr");
   await app.sleep(200);
-  await app.shot(`design/localization/114-missing-tr_tr-${language}.png`);
+  await app.shot(evidence(`design/localization/114-missing-tr_tr-${language}.png`));
   await app.setValue(".findbar .fsel select", "sourceEmpty");
   await app.sleep(200);
-  await app.shot(`design/localization/114-source-empty-${language}.png`);
+  await app.shot(evidence(`design/localization/114-source-empty-${language}.png`));
 
   // New keys: upper case or no dots blocks Add; no mod id part only warns.
   await app.click(".actions .abtn.primary");
@@ -98,7 +98,7 @@ await run(async (app) => {
   const okEnabled = () => app.eval<boolean>(`!document.querySelector(".dialog button[type=submit]").disabled`);
   await app.setValue(".dialog input.mono", "AdminBookBonus");
   assert(!(await okEnabled()) && await app.eval<boolean>(`!!document.querySelector(".dialog .error-text")`), "an upper case key without dots is refused");
-  await app.shot(`design/localization/114-key-format-${language}.png`);
+  await app.shot(evidence(`design/localization/114-key-format-${language}.png`));
   await app.setValue(".dialog input.mono", "gui.othermod.title");
   assert(await okEnabled() && await app.eval<boolean>(`!!document.querySelector(".dialog .warn-text")`), "a key without the mod id is allowed with a warning");
   await app.setValue(".dialog input.mono", `gui.${mod.id}.new_title`);

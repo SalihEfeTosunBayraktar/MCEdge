@@ -5,6 +5,7 @@ import { agentFocus, type Session, type Step } from "../live/timeline.ts";
 import { t } from "../strings.ts";
 import { Modal } from "./HelpDialogs.tsx";
 import { Icon } from "./Icon.tsx";
+import { ManualPath } from "./ManualPath.tsx";
 import { ActionBar, ActionButton, FindBar, Separator } from "./ui.tsx";
 
 interface Props {
@@ -94,6 +95,7 @@ export function AgentTimeline({ dir, live, now, session, undone, latest, onOpenT
                       {c.target && <button className="linkbtn" onClick={() => onOpenTarget(c.target!)}>{c.target}</button>}
                       {c.error && <span className="tlbadge bad">{t("timeline.failed")}</span>}
                       {c.call && undone.has(c.call) && <span className="tlbadge">{t("timeline.undone")}</span>}
+                      {!c.read && !c.error && <ManualPath call={c} />}
                       {c.changes?.map((ch) => (
                         <div key={ch.path} className="tldiff">
                           <span className={`tlkind ${ch.kind}`}>{t(`timeline.kind.${ch.kind}`)}</span> <code>{ch.path}</code>

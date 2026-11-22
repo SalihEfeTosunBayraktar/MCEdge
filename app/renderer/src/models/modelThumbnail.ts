@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { resolveModel, type BlockModelJson, type ResolvedModel } from "../../../../src/resources/blockModel.ts";
 import vanillaModels from "../../../../config/vanilla-block-models.json" with { type: "json" };
 import { api } from "../api.ts";
+import { usePerformance } from "../preferences.ts";
 import { buildModel, loadImages } from "./ModelPreview.tsx";
 
 /**
@@ -84,7 +85,8 @@ async function render(dir: string, modId: string, model: string, textures: strin
  * cannot be read): the tile shows its texture meanwhile.
  */
 export function useModelThumbnail(dir: string, modId: string, model: string | undefined, textures: string[], overrides: Record<string, string> = {}): string | undefined {
-  const key = model ? `${dir}|${model}|${JSON.stringify(overrides)}` : "";
+  // Light mode with 3D off: no renderer, the tile keeps its texture (Q250).
+  const key = model && usePerformance().render3d ? `${dir}|${model}|${JSON.stringify(overrides)}` : "";
   const [url, setUrl] = useState(key ? cache.get(key) : undefined);
   const [rev, setRev] = useState(0);
   useEffect(() => {

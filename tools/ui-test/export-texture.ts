@@ -7,7 +7,7 @@ import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { connect } from "../mcp-test/client.ts";
-import { assert, copyProject, run } from "./cdp.ts";
+import { assert, copyProject, run, evidence } from "./cdp.ts";
 
 const project = copyProject("C:/MyProjects/AI-Assisted/ETREconomy-MCEdge", "etr");
 const target = join(mkdtempSync(join(tmpdir(), "mcedge-export-")), "sub", "connector");
@@ -18,7 +18,7 @@ await run(async (app) => {
   const name = "portalconnector";
   await app.eval(`[...document.querySelectorAll("button")].find((b) => (b.title + b.textContent).includes(${JSON.stringify(name)}))?.click()`);
   await app.waitFor(`[...document.querySelectorAll(".abtn")].some((b) => b.textContent === "Export texture...")`, 10000);
-  await app.shot("design/folders/export-texture.png");
+  await app.shot(evidence("design/folders/export-texture.png"));
 
   const mcp = await connect(project);
   try {

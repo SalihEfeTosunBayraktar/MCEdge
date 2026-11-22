@@ -4,11 +4,11 @@
  */
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, copyProject, exampleProject, run, type App } from "./cdp.ts";
+import { assert, copyProject, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const project = copyProject(exampleProject(), "hello");
 writeFileSync(join(project, "folders.json"), JSON.stringify({ folders: ["Box"], placement: {} }, null, 2));
-const OUT = "design/selected-label";
+const OUT = evidence("design/selected-label");
 const label = (app: App) => app.eval<string>(`document.querySelector(".selinfo").textContent`);
 
 await run(async (app) => {
@@ -22,6 +22,7 @@ await run(async (app) => {
   await app.click(".foldertile", "Box", { double: true });
   await app.waitFor(`document.querySelector(".crumb").textContent.includes("Box")`);
   assert((await label(app)).includes("nothing"), `nothing is selected inside the folder: ${await label(app)}`);
-  assert(await app.eval<boolean>(`[...document.querySelectorAll(".view .actions .abtn")].find((b) => b.textContent === "Edit").disabled`), "Edit is disabled with nothing selected");
+  // Since Q279 the actions of a selection (Edit, Duplicate, Move, Delete) are offered only while something is selected.
+  assert(!(await app.eval<boolean>(`[...document.querySelectorAll(".view .abtn")].some((b) => b.textContent.trim() === "Edit")`)), "Edit is not offered with nothing selected");
   await app.shot(`${OUT}/in-folder.png`);
 }, { project });

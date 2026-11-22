@@ -5,7 +5,7 @@
  * Args: language (en|tr), theme, suffix ("before" records and fails at the end). Screenshots go to design/123/.
  */
 import { typeRegistry } from "../../src/elements/registry.ts";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
 const lang = (process.argv[2] ?? "en") as "en" | "tr";
@@ -42,7 +42,7 @@ await run(async (app) => {
     const m = await app.eval<{ widths: number[]; cut: string[] }>(MEASURE);
     m.widths.forEach((w) => widths.has(w) || widths.set(w, where));
     m.cut.forEach((label) => cut.add(`${where}: ${label}`));
-    if (m.cut.length && shots.size < 2 && !shots.has(where)) (shots.add(where), await app.shot(`design/123/cut-${shots.size}-${lang}-${theme}-${suffix}.png`));
+    if (m.cut.length && shots.size < 2 && !shots.has(where)) (shots.add(where), await app.shot(evidence(`design/123/cut-${shots.size}-${lang}-${theme}-${suffix}.png`)));
   };
   const home = async () => {
     await app.key("Escape");
@@ -64,7 +64,7 @@ await run(async (app) => {
         await app.sleep(200);
       }
       await measure(`${name} p${p + 1}`);
-      if (SHOOT.has(`${name} p${p + 1}`)) await app.shot(`design/123/${name.replace("label_", "")}-p${p + 1}-${lang}-${theme}-${suffix}.png`);
+      if (SHOOT.has(`${name} p${p + 1}`)) await app.shot(evidence(`design/123/${name.replace("label_", "")}-p${p + 1}-${lang}-${theme}-${suffix}.png`));
     }
   }
 
@@ -112,7 +112,7 @@ await run(async (app) => {
   await app.eval(`[...document.querySelectorAll(".menulist [role=menuitem]")].find((b) => /Preferences|Tercihler/.test(b.textContent)).click()`);
   await app.waitFor(`document.querySelector(".prefsdialog")`);
   await measure("preferences");
-  await app.shot(`design/123/preferences-${lang}-${theme}-${suffix}.png`);
+  await app.shot(evidence(`design/123/preferences-${lang}-${theme}-${suffix}.png`));
   await app.key("Escape");
 
   const list = [...widths].map(([w, where]) => `${w}px (${where})`);

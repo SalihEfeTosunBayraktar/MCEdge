@@ -7,9 +7,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { showInApp } from "../../src/live/show.ts";
-import { assert, copyProject, run } from "./cdp.ts";
+import { assert, copyProject, run, evidence } from "./cdp.ts";
 
-const OUT = "design/167";
+const OUT = evidence("design/167");
 const project = copyProject("C:/MyProjects/AI-Assisted/ETREconomy-MCEdge", "etr");
 const file = join(project, "elements/guis/recyclergui.json");
 const COIN = "textures/screens/atlas/imagebutton_coin_get.png";

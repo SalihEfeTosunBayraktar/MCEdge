@@ -9,9 +9,9 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect } from "../mcp-test/client.ts";
 import { showInApp } from "../../src/live/show.ts";
-import { assert, copyProject, run, type App } from "./cdp.ts";
+import { assert, copyProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/161";
+const OUT = evidence("design/161");
 const project = copyProject("C:/MyProjects/AI-Assisted/ETREconomy-MCEdge", "etr");
 const file = join(project, "elements/blocks/battery_recharger.json");
 const stored = () => JSON.parse(readFileSync(file, "utf8")) as { customModelTextures?: Record<string, string> };
@@ -39,11 +39,11 @@ await run(async (app) => {
   // Map slot 0 to the charger's static texture.
   await app.click(".mtrow[data-slot='0'] .texpicked");
   await app.waitFor(`document.querySelector(".texpop input")`);
-  await app.type("blocks/rechargertexture");
+  await app.type("blocks/recharger_particle");
   await app.key("Enter");
-  await app.waitFor(`document.querySelector(".mtrow[data-slot='0'] .texpicker .texpickedname")?.textContent === "rechargertexture"`);
-  for (let i = 0; i < 50 && stored().customModelTextures?.["0"] !== "textures/blocks/rechargertexture.png"; i++) await app.sleep(200);
-  assert(JSON.stringify(stored().customModelTextures) === JSON.stringify({ 0: "textures/blocks/rechargertexture.png" }), `saved ${JSON.stringify(stored().customModelTextures)}`);
+  await app.waitFor(`document.querySelector(".mtrow[data-slot='0'] .texpicker .texpickedname")?.textContent === "recharger_particle"`);
+  for (let i = 0; i < 50 && stored().customModelTextures?.["0"] !== "textures/blocks/recharger_particle.png"; i++) await app.sleep(200);
+  assert(JSON.stringify(stored().customModelTextures) === JSON.stringify({ 0: "textures/blocks/recharger_particle.png" }), `saved ${JSON.stringify(stored().customModelTextures)}`);
   await app.sleep(1500);
   assert(await canvas(app, ".form") !== formBefore, "form model preview redrawn with the mapped texture");
   assert(await canvas(app, ".pvmodel") !== sideBefore, "side preview redrawn with the mapped texture");
@@ -69,12 +69,12 @@ await run(async (app) => {
     const info = await mcp.call<Slots>("model_textures", { block: "battery_recharger" });
     assert(info.kind === "json" && info.slots.map((s) => s.slot).join(",") === "0,all", `mcp slots ${JSON.stringify(info)}`);
     assert(info.slots[0].modelFile === "textures/blocks/solarcharger_texture_animated.png", `mcp model file ${info.slots[0].modelFile}`);
-    const set = await mcp.call<Slots>("model_textures", { block: "battery_recharger", set: { all: "textures/blocks/rechargerpartic.png" } });
-    assert(set.slots.find((s) => s.slot === "all")?.mappedTo === "textures/blocks/rechargerpartic.png", "mcp maps a slot");
-    assert(stored().customModelTextures?.all === "textures/blocks/rechargerpartic.png", "mcp mapping saved");
+    const set = await mcp.call<Slots>("model_textures", { block: "battery_recharger", set: { all: "textures/blocks/donation_box_particle.png" } });
+    assert(set.slots.find((s) => s.slot === "all")?.mappedTo === "textures/blocks/donation_box_particle.png", "mcp maps a slot");
+    assert(stored().customModelTextures?.all === "textures/blocks/donation_box_particle.png", "mcp mapping saved");
     let refused = "";
     try {
-      await mcp.call("model_textures", { block: "battery_recharger", set: { nope: "textures/blocks/rechargerpartic.png" } });
+      await mcp.call("model_textures", { block: "battery_recharger", set: { nope: "textures/blocks/donation_box_particle.png" } });
     } catch (e) {
       refused = (e as Error).message;
     }

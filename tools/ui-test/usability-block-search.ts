@@ -3,10 +3,10 @@
  * adds the first result under the selected block (else at the end of the start stack), clears the search and closes
  * the flyout; the block lands in Recently used. Screenshots go to design/usability/.
  */
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/usability";
+const OUT = evidence("design/usability");
 const project = exampleProject();
 addElement(project, "procedure", "main", {
   program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [{ block: "start" }, { block: "call_procedure", fields: { procedure: "main" } }, { block: "player_add_xp" }] }] },

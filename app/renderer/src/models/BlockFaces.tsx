@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { disposeStage } from "./disposeStage.ts";
 import { FACES, type FaceName, type ResolvedModel } from "../../../../src/resources/blockModel.ts";
 import { api } from "../api.ts";
 import { Icon } from "../components/Icon.tsx";
 import { drawFrame, onAnimationTick } from "../textures/animatedTexture.ts";
 import { t, type StringKey } from "../strings.ts";
 import { buildModel, loadImages } from "./ModelPreview.tsx";
+import { LightNote } from "../components/LightNote.tsx";
+import { usePerformance } from "../preferences.ts";
 
 /**
  * Whose texture each face of a block draws, as the generator builds the block's model (src/generator/types/block.ts):
@@ -35,7 +38,7 @@ const NORMALS: Record<FaceName, [number, number, number]> = {
  * on a face calls onPick with that face. `textures` maps a face to the project texture drawn on it (empty: missing).
  * `active` faces are outlined (the face under the mouse, or the faces of the focused field in the form).
  */
-export function BlockFacesCube({ dir, files, textures, active, names, onPick, onHover }: {
+function BlockFacesCubeLive({ dir, files, textures, active, names, onPick, onHover }: {
   dir: string;
   /** Project textures (snapshot.textures); also re-read when this list changes. */
   files: string[];
@@ -242,14 +245,17 @@ function createCubeStage(node: HTMLDivElement, labels: Partial<Record<FaceName, 
     dispose() {
       observer.disconnect();
       stopAnimation?.();
-      controls.dispose();
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointerup", onUp);
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("pointerleave", onLeave);
       disposables.forEach((d) => d.dispose());
-      renderer.dispose();
-      canvas.remove();
+      disposeStage([controls], renderer);
     },
   };
+}
+
+/** The 3D view, or a note while light mode has 3D off (Q250). */
+export function BlockFacesCube(props: Parameters<typeof BlockFacesCubeLive>[0]) {
+  return usePerformance().render3d ? <BlockFacesCubeLive {...props} /> : <LightNote />;
 }

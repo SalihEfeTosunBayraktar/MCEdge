@@ -5,10 +5,10 @@
  */
 import { copyFileSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/usability";
+const OUT = evidence("design/usability");
 const project = exampleProject();
 copyFileSync(join(project, "textures/ruby_block.png"), join(project, "textures/ruby_apple_hover.png"));
 addElement(project, "gui", "shop", { type: 0, width: 176, height: 166 });

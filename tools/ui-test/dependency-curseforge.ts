@@ -5,9 +5,9 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/184";
+const OUT = evidence("design/184");
 const until = async (app: App, check: () => boolean, message: string) => {
   for (let i = 0; i < 50 && !check(); i++) await app.sleep(100);
   assert(check(), message);

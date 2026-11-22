@@ -1,0 +1,24 @@
+{
+  "$comment": "First-run setup and Simple mode (Q244). levels: the answers of the setup, each with the mode it turns on and a line the AI panel and outside agents get so they explain at that level. simple: what Simple mode hides; Advanced shows everything. A hidden element page still shows while it has a problem. Ids: rail sections (app/renderer/src/components/Rail.tsx), bottom panel tabs, menu items by their string key, element type page ids, element type ids in New element.",
+  "levels": [
+    { "id": "new", "mode": "simple", "agentHint": "The user is new to modding: explain in plain words, avoid Java and Gradle terms, say where in the MCEdge UI each change can be seen." },
+    { "id": "some", "mode": "advanced", "agentHint": "The user has made some mods: short explanations, name MCEdge fields and Minecraft concepts." },
+    { "id": "java", "mode": "advanced", "agentHint": "The user writes Java mods: be brief and technical; Java, Gradle and loader details are fine." }
+  ],
+  "simple": {
+    "sections": ["variables", "git"],
+    "panels": ["gradle", "scenarios"],
+    "menu": [
+      "menu.importZip", "menu.exportWorkspace", "menu.runAnotherClient", "menu.joinServer", "top.buildAll", "menu.regenerate",
+      "menu.debugClient", "menu.runServer", "menu.stopServer", "menu.runGradleTask", "menu.cancelTask", "menu.clearCaches",
+      "menu.gradleConsole", "menu.reloadGradle", "menu.developerDocs", "menu.connectAgent"
+    ],
+    "pages": [
+      "advanced", "tile_entity", "energy_fluid", "state_properties", "bounding_boxes", "seat", "entity_data", "model_layers",
+      "vibration", "attribute_modifiers", "jigsaw"
+    ],
+    "elementTypes": [
+      "custom_element", "item_extension", "special_entity", "damage_type", "attribute", "game_rule", "feature", "function"
+    ]
+  }
+}

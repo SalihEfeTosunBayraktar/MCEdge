@@ -4,9 +4,9 @@
  * (until the server is up, then Stop server). Heavy: downloads and starts Minecraft. Do not run while the user
  * is playing. Screenshots go to design/menu-commands/.
  */
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/menu-commands";
+const OUT = evidence("design/menu-commands");
 const menu = async (app: App, top: string, item: string) => {
   await app.click(".menu", top);
   await app.click(".menulist button", item);

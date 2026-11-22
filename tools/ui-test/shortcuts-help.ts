@@ -6,16 +6,21 @@
  * stub in the main process); File > Open recent lists the recent projects. Runs on a copy of examples/hello.
  * Args: theme (dark/light), language (en/tr). Screenshots go to design/128/.
  */
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { readdirSync } from "node:fs";
+import { join } from "node:path";
+import { assert, exampleProject, REPO, run, type App, evidence } from "./cdp.ts";
 
 const theme = (process.argv[2] ?? "dark") as "dark" | "light";
 const lang = process.argv[3] ?? "en";
 const tr = lang === "tr";
 const project = exampleProject();
 const CTRL = 2;
+// The guide has one page per file of docs/guide/<language>, English where a language has no guide.
+const guideDir = join(REPO, "docs", "guide", tr ? "tr" : "en");
+const guidePages = readdirSync(guideDir).filter((f) => f.endsWith(".md")).length;
 
 const L = (en: string, trText: string) => (tr ? trText : en);
-const shot = (app: App, name: string) => app.shot(`design/128/${name}-${theme}-${lang}-after.png`);
+const shot = (app: App, name: string) => app.shot(evidence(`design/128/${name}-${theme}-${lang}-after.png`));
 const menu = async (app: App, top: string) => {
   await app.click(".menubar .menu", top);
   await app.waitFor(`document.querySelector(".menulist")`);
@@ -39,7 +44,7 @@ await run(async (app) => {
   }
   await shot(app, "menu-help");
   await app.click(".menulist button", L("User guide", "Kullanım kılavuzu"));
-  await app.waitFor(`document.querySelectorAll(".docslist .lrow").length === 4`);
+  await app.waitFor(`document.querySelectorAll(".docslist .lrow").length === ${guidePages}`);
   const pages = await app.eval<string[]>(`[...document.querySelectorAll(".docslist .lrow")].map((r) => r.textContent)`);
   assert(pages[0] === L("Getting started", "Başlarken") && !pages.some((p) => /MCP|Roadmap|ETR|element type/i.test(p)), `guide pages, no developer docs: ${pages.join(" | ")}`);
   await app.click(".docslist .lrow", pages[1]);
@@ -125,16 +130,16 @@ await run(async (app) => {
   assert(await app.eval<boolean>(`[...document.querySelectorAll(".dialog input")].some((i) => i.value === "ruby_apple")`), "F2 opens Rename for the selected element");
   await app.key("Escape");
   await app.waitFor(`!document.querySelector(".dialog")`);
-  await app.eval(`window.__asked = []; window.confirm = (text) => (window.__asked.push(text), false)`);
+  // Delete asks first in a dialog (DeleteElementDialog), not with window.confirm.
   await app.eval(`${tile("ruby_apple")}.click()`);
   await app.key("Delete");
-  await app.sleep(200);
-  const asked = await app.eval<string[]>(`window.__asked`);
-  assert(asked.length === 1 && asked[0].includes("Ruby Apple"), `Delete asks once to delete the selected element: ${JSON.stringify(asked)}`);
+  await app.waitFor(`document.querySelector(".dialog")?.textContent.includes("Ruby Apple")`, 10000).catch(() => { throw new Error("Delete asks once to delete the selected element"); });
+  await app.key("Escape");
+  await app.waitFor(`!document.querySelector(".dialog")`);
   // Keys typed in a field stay in the field.
   await app.eval(`document.querySelector(".view .findbar input").focus()`);
   await app.key("Delete");
   await app.key("Enter");
-  assert(!(await app.eval<boolean>(`!!document.querySelector(".edhead")`)) && (await app.eval<string[]>(`window.__asked`)).length === 1, "Enter and Delete in the search box do nothing to the selection");
+  assert(!(await app.eval<boolean>(`!!document.querySelector(".edhead")`)) && !(await app.eval<boolean>(`!!document.querySelector(".dialog")`)), "Enter and Delete in the search box do nothing to the selection");
   console.log(`shortcuts and Help OK (${theme}, ${lang})`);
 }, { project, theme, language: lang });

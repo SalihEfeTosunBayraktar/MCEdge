@@ -4,10 +4,10 @@
  * by a click. The Game HUD box in the side panel turns it off, and the app remembers that when the editor opens again.
  * BEFORE=1 only takes the before screenshot. Screenshots go to design/169/ (en and tr, dark and light).
  */
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence, textOf } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/169";
+const OUT = evidence("design/169");
 const project = exampleProject();
 addElement(project, "overlay", "moneyhud", {
   components: [
@@ -48,7 +48,7 @@ for (const language of ["en", "tr"]) {
 
     // Widgets stay on top and pickable over the HUD.
     await app.click(".gwidget", "Over hunger");
-    await app.waitFor(`document.querySelector(".gwidget.sel")?.textContent.includes("Over hunger")`);
+    await app.waitFor(`(() => { const e = document.querySelector(".gwidget.sel"); return !!e && ${textOf("e")}.includes("Over hunger"); })()`);
     await app.key("Escape");
     await app.shot(`${OUT}/after-${language}-dark.png`);
     await app.setTheme("light");

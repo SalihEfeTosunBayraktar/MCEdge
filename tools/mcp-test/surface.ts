@@ -76,17 +76,41 @@ try {
   const byName = playerBlocks.find((b) => b.id === "player_by_name");
   assert(loop?.fields.some((f) => f.name === "scope" && f.options?.join() === "dimension,server" && f.default === "dimension") && byName?.engines.length === 5,
     "procedure_blocks lists for_each_player's scope field and player_by_name on 5 engines");
+  // Q256: the full item stack comparison (item + data, count ignored) in the block catalog.
+  const stackBlocks = (await mcp.call("procedure_blocks", { query: "compare_itemstacks" })).blocks as { id: string; engines: string[] }[];
+  assert(stackBlocks.find((b) => b.id === "compare_itemstacks_full")?.engines.length === 5, "procedure_blocks lists compare_itemstacks_full on 5 engines");
+  // Q261: walk an entity to a position and ask whether it finished.
+  const navBlocks = (await mcp.call("procedure_blocks", { query: "entity_navigat" })).blocks as { id: string; engines: string[] }[];
+  assert(navBlocks.find((b) => b.id === "entity_navigate_to")?.engines.length === 5 && navBlocks.find((b) => b.id === "entity_navigation_done")?.engines.length === 5,
+    "procedure_blocks lists entity_navigate_to and entity_navigation_done on 5 engines");
+  const workBlocks = (await mcp.call("procedure_blocks", { query: "ai_work" })).blocks as { id: string; category: string; engines: string[] }[];
+  assert(workBlocks.find((b) => b.id === "ai_work")?.category === "ai" && workBlocks.find((b) => b.id === "ai_work")?.engines.length === 5, "procedure_blocks lists the ai_work goal on 5 engines");
+  // Q263: number, text and logic values kept on any entity by a key, saved with it.
+  const savedBlocks = (await mcp.call("procedure_blocks", { query: "entity_saved" })).blocks as { id: string; engines: string[] }[];
+  const savedIds = ["number", "logic", "text"].flatMap((t) => [`entity_saved_get_${t}`, `entity_saved_set_${t}`]);
+  assert(savedIds.every((id) => savedBlocks.find((b) => b.id === id)?.engines.length === 5), "procedure_blocks lists the six entity_saved blocks on 5 engines");
+  // Q264: arm swing for living entities; the held item is set by the existing player_set_hand_item (it works on mobs).
+  const holdBlocks = (await mcp.call("procedure_blocks", { query: "hand" })).blocks as { id: string; engines: string[] }[];
+  const swingBlocks = (await mcp.call("procedure_blocks", { query: "entity_swing_arm" })).blocks as { id: string; engines: string[] }[];
+  assert(swingBlocks.find((b) => b.id === "entity_swing_arm")?.engines.length === 5 && holdBlocks.find((b) => b.id === "player_set_hand_item")?.engines.length === 5, "procedure_blocks lists entity_swing_arm and player_set_hand_item on 5 engines");
+  // Q265: read a structure template block by block.
+  const structBlocks = (await mcp.call("procedure_blocks", { query: "structure_" })).blocks as { id: string; engines: string[] }[];
+  const structIds = ["structure_block_count", "structure_block_id", "structure_block_state", "structure_block_pos", "structure_size"];
+  assert(structIds.every((id) => structBlocks.find((b) => b.id === id)?.engines.length === 5), "procedure_blocks lists the five structure_* blocks on 5 engines");
   await mcp.call("create_element", { type: "gui", id: "forge_gui", values: { type: 1 } });
   await mcp.call("write_gui_layout", {
     type: "gui", id: "forge_gui", widgets: [
       { kind: "label", x: 8, y: 6, text: "Forge", color: "#404040" },
-      { kind: "slot", x: 26, y: 26, id: 0 }, { kind: "slot", x: 116, y: 26, id: 1, output: true },
+      { kind: "slot", x: 26, y: 26, id: 0, allowed: [{ item: "forge_gui:ticket" }, { item: "#forge:batteries" }] }, { kind: "slot", x: 116, y: 26, id: 1, output: true },
       { kind: "button", x: 60, y: 50, width: 50, height: 20, text: "Craft", procedure: "on_craft" },
       { kind: "image", x: 80, y: 26, image: "textures/item/sapphire.png", z: 2 },
     ],
   });
   const layout = await mcp.call("read_gui_layout", { type: "gui", id: "forge_gui" });
   assert(layout.widgets.length === 5 && layout.inventory.y === 83 && layout.width === 176, "write_gui_layout / read_gui_layout with inventory frame");
+  assert(JSON.stringify(layout.widgets[1].allowed) === JSON.stringify([{ item: "forge_gui:ticket" }, { item: "#forge:batteries" }]), "a slot's place filter (allowed) is written and read (Q257)");
+  const badAllowed = await mcp.call("write_gui_layout", { type: "gui", id: "forge_gui", widgets: [{ kind: "slot", x: 0, y: 0, id: 0, allowed: [{ item: "Not An Id" }] }, { kind: "button", x: 0, y: 30, width: 20, height: 20, text: "B", allowed: [{ item: "minecraft:stick" }] }] }, true);
+  assert(JSON.stringify(badAllowed).includes("not an item id") && JSON.stringify(badAllowed).includes("allowed is for slot only"), "write_gui_layout rejects a malformed allowed entry and allowed on a non-slot");
   assert(layout.widgets[4].z === 2, "a widget's z is written and read (KUYRUK 103)");
   const badZ = await mcp.call("write_gui_layout", { type: "gui", id: "forge_gui", widgets: [{ kind: "image", x: 0, y: 0, image: "textures/item/sapphire.png", z: 1.5 }] }, true);
   assert(String(badZ).toLowerCase().includes("int"), "z must be an integer");

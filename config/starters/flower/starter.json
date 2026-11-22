@@ -1,0 +1,77 @@
+{
+  "id": "flower",
+  "params": {
+    "name": "ruby"
+  },
+  "elements": [
+    {
+      "type": "plant",
+      "id": "{{name}}_flower",
+      "values": {
+        "texture": "textures/{{name}}_flower.png",
+        "name": "{{Name Words}} Flower",
+        "creativeTabs": [
+          "DECORATIONS"
+        ],
+        "canBePlacedOn": [
+          {
+            "item": "minecraft:grass_block"
+          },
+          {
+            "item": "minecraft:dirt"
+          }
+        ],
+        "generateFeature": true,
+        "frequencyOnChunks": 2,
+        "patchSize": 24,
+        "restrictionBiomes": [
+          {
+            "biome": "minecraft:plains"
+          }
+        ]
+      }
+    }
+  ],
+  "textures": [
+    {
+      "from": "flower.png",
+      "to": "{{name}}_flower.png"
+    }
+  ],
+  "scenario": [
+    {
+      "op": "player",
+      "name": "Gardener",
+      "pos": [
+        0.5,
+        101,
+        0.5
+      ]
+    },
+    {
+      "label": "place grass",
+      "op": "setblock",
+      "pos": [
+        2,
+        99,
+        2
+      ],
+      "block": "minecraft:grass_block"
+    },
+    {
+      "label": "place the flower",
+      "op": "setblock",
+      "pos": [
+        2,
+        100,
+        2
+      ],
+      "block": "{{mod}}:{{name}}_flower",
+      "expect": "{{mod}}:{{name}}_flower"
+    },
+    {
+      "op": "removePlayer",
+      "name": "Gardener"
+    }
+  ]
+}

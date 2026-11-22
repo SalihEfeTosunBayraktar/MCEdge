@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AppInfo, McpCommand } from "../../../shared/api.ts";
 import { api } from "../api.ts";
 import { language, t } from "../strings.ts";
 import { LogoMark, Wordmark } from "./Brand.tsx";
 import { Icon } from "./Icon.tsx";
-import { FormGroup, FormRow, ShortcutsDialog, type Shortcut } from "./ui.tsx";
+import { FormGroup, FormRow, ShortcutsDialog, useDialogFocus, type Shortcut } from "./ui.tsx";
 
 const HOMEPAGE = "https://github.com/SalihEfeTosunBayraktar/MCEdge";
 const DEVELOPER_DOCS = `${HOMEPAGE}/tree/main/docs`;
@@ -27,6 +27,8 @@ export function Modal({ title, className = "", onClose, closeLabel, buttons, chi
   buttons?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  const box = useRef<HTMLDivElement>(null);
+  useDialogFocus(box);
   useEffect(() => {
     const key = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", key);
@@ -34,7 +36,7 @@ export function Modal({ title, className = "", onClose, closeLabel, buttons, chi
   }, [onClose]);
   return (
     <div className="backdrop" onMouseDown={onClose}>
-      <div className={`dialog ${className}`} role="dialog" aria-label={title} onMouseDown={(e) => e.stopPropagation()}>
+      <div ref={box} className={`dialog ${className}`} role="dialog" aria-label={title} onMouseDown={(e) => e.stopPropagation()}>
         <div className="ptitle">{title}</div>
         {children}
         <div className="dlg-buttons">
@@ -131,8 +133,12 @@ export const globalShortcuts = (): Shortcut[] => [
   ["Ctrl+Shift+B", t("top.buildAll")],
   ["Ctrl+E", t("export.title")],
   ["Ctrl+Shift+A", t("keys.aiPanel")],
+  ["Ctrl+,", t("keys.preferences")],
   ["F5", t("top.run")],
   ["Shift+F5", t("top.stop")],
+  ["F10 / Alt", t("keys.menubar")],
+  ["Tab / Shift+Tab", t("keys.tab")],
+  ["Arrows / Home / End", t("keys.arrows")],
   ["?", t("keys.editorKeys")],
   ["Escape", t("keys.escape")],
 ];

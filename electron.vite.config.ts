@@ -35,7 +35,9 @@ export default defineConfig({
   },
   renderer: {
     root: resolve(__dirname, "app/renderer"),
-    build: { rollupOptions: { input: { index: resolve(__dirname, "app/renderer/index.html") } } },
+    // electron-vite builds the renderer unminified (11 MB of script to parse at every start); Q280 minifies it.
+    // MCEDGE_PERF_BUILD=1 keeps the names readable for the CPU profiles of tools/ui-test/perf-suite.ts --diag.
+    build: { rollupOptions: { input: { index: resolve(__dirname, "app/renderer/index.html") } }, minify: process.env.MCEDGE_PERF_BUILD ? false : "esbuild" },
     plugins: [dropCostlyMonacoRule(), react()],
   },
 });

@@ -4,6 +4,7 @@ import { procedureBuild, procedureCall, procedureCallById } from "../procedures.
 import { modClassName } from "../registries.ts";
 import type { ElementContext, GenEnv, TypeModule } from "../typeModule.ts";
 import { textureAnimationsSource } from "../textureAnimations.ts";
+import { imageFilterOf } from "../../resources/imageFilter.ts";
 import { imageStates, labelText, stateDraw, stateExpression, stateMembers, stateTextures, zOf, type GuiWidget } from "./gui.ts";
 import SCREENS from "../data/screens.json" with { type: "json" };
 import { anchorParts, fixedScaleOf, scaleModeOf, widgetAnchor } from "../../elements/overlayLayout.ts";
@@ -37,7 +38,9 @@ function element(overlay: Element, env: GenEnv): ElementContext {
   const ordered = list<GuiWidget>(overlay.components).map((w, i) => ({ w, i })).sort((a, b) => zOf(a.w) - zOf(b.w) || a.i - b.i);
   ordered.forEach(({ w, i }) => {
     if (w.kind === "label" && str(w.text)) lang[`gui.${env.modId}.${overlay.id}.${str(w.name) || `label_${i}`}`] = str(w.text);
-    if (w.kind === "image" && str(w.image)) textures.push({ from: str(w.image), to: `screens/${overlay.id}_${i}` });
+    // Q273: opacity and tint on the visible pixels, baked into the copy (legacy drawing blends already).
+    const filter = imageFilterOf(w);
+    if (w.kind === "image" && str(w.image)) textures.push({ from: str(w.image), to: `screens/${overlay.id}_${i}`, ...(filter ? { filter } : {}) });
     if (w.kind === "state_image") textures.push(...stateTextures(env.projectDir, w, String(overlay.id), i).copies);
   });
   return { lang, textures };

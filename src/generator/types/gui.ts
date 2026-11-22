@@ -1,13 +1,14 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Element } from "../../elements/model.ts";
-import { idExpr, jstr, list, pascal, str } from "../java.ts";
+import { idExpr, itemTagExpr, jstr, list, pascal, qualify, str } from "../java.ts";
 import { readPng } from "../png.ts";
 import { GUI_SESSION_SEGMENT, GUI_TEXT_SEGMENT, guiServerTexts, guiTextRead, procEnv, procedureBuild, procedureCall, procedureCallById } from "../procedures.ts";
 import { modClassName } from "../registries.ts";
 import { frameIndexExpr, imageKey, textureAnimationsClass, textureAnimationsSource } from "../textureAnimations.ts";
 import type { AnimationSchedule } from "../../resources/textureAnimation.ts";
 import { widgetSchedule } from "../../resources/widgetAnimation.ts";
+import { imageFilterOf, type ImageFilter } from "../../resources/imageFilter.ts";
 import { guiSessionsClass, guiSessionsSource, isSessionGui, sessionSize } from "../guiSessions.ts";
 import type { ElementContext, GenEnv, JavaSourceFile, TypeModule } from "../typeModule.ts";
 
@@ -37,9 +38,11 @@ import type { ElementContext, GenEnv, JavaSourceFile, TypeModule } from "../type
  *     Q229: an animated image plays its texture's playback mode from animationStart: "open" (default, when the screen
  *     opens), "always" (the game clock, every screen in step) or "procedure" (the "restart GUI image animation" block;
  *     the first frame until then). Toggle buttons play on the game clock, state images as restartAnimation says.
- *   { kind: "slot", x, y (18x18 frame), id (inventory slot), output (no placing), limit (only this item),
+ *   { kind: "slot", x, y (18x18 frame), id (inventory slot), output (no placing), limit (only this item), allowed ([{ item }]: items or #tags it accepts),
  *     locked (no placing or taking), lockCondition (logic procedure: locked while it is true),
  *     keepOnClose (an unbound GUI does not give its item back when it closes: display slots) }
+ * Q273: image, image_button, toggle_button and state_image take opacity (0-100), tint ("#rrggbb", multiplied) and
+ * tintStrength (0-100), baked into their copied textures on visible pixels only (src/resources/imageFilter.ts).
  * `name` (optional) names the widget's lang key. `condition` and `textProcedure` run on the client with the world, the
  * GUI's x, y, z and the player; a widget whose condition fails is not drawn and takes no clicks. A textProcedure with a
  * server-side block runs on the server instead: the menu computes it every tick and sends it when it changes.
@@ -65,6 +68,12 @@ export interface GuiWidget {
   onImage?: string;
   onHoverImage?: string;
   /**
+   * Q275: image_button, toggle_button (off): texture shown for PRESSED_MS after a click; toggle_button onPressedImage
+   * (on; default pressedImage). Modern engines only, 1.16.5 ignores them.
+   */
+  pressedImage?: string;
+  onPressedImage?: string;
+  /**
    * toggle_button: logic procedure read every frame on the client; the button shows its on textures while true.
    * state_image (KUYRUK 186): number procedure choosing the state shown (its index, or a percentage, `stateValue`).
    */
@@ -77,6 +86,8 @@ export interface GuiWidget {
   id?: number;
   output?: boolean;
   limit?: string;
+  /** slot (Q257): items ("id") and item tags ("#tag") the slot accepts, as rows `{ item }`; with `limit`, any of them; none: anything. */
+  allowed?: unknown;
   locked?: boolean;
   lockCondition?: string;
   keepOnClose?: boolean;
@@ -107,6 +118,11 @@ export interface GuiWidget {
   /** label (KUYRUK 183): where x is on the text, "left" (default), "center" or "right"; it stays there as the text changes. */
   align?: string;
   layer?: string;
+  /** image, image_button, toggle_button, state_image (Q273): alpha of the visible pixels, 0 to 100 (default 100). */
+  opacity?: number;
+  /** Same widgets: "#rrggbb" multiplied into the visible pixels ("" none), mixed in by tintStrength 0 to 100 (default 100). */
+  tint?: string;
+  tintStrength?: number;
 }
 
 /** The .png.mcmeta text beside a project PNG, or undefined. */
@@ -119,8 +135,21 @@ export function toggleTextures(w: GuiWidget): string[] {
   const off = str(w.image), on = str(w.onImage) || off;
   return [off, str(w.hoverImage) || off, on, str(w.onHoverImage) || on];
 }
-/** Suffix of each toggle state's copied texture: screens/<gui>_<index><suffix>.png. */
-export const TOGGLE_SUFFIXES = ["", "_hover", "_on", "_on_hover"];
+/** Suffix of each toggle state's copied texture: screens/<gui>_<index><suffix>.png; the pressed two only with pressedImage (Q275). */
+export const TOGGLE_SUFFIXES = ["", "_hover", "_on", "_on_hover", "_pressed", "_on_pressed"];
+/** Q275: the pressed textures of a toggle button, off and on (empty without pressedImage). */
+export function togglePressedTextures(w: GuiWidget): string[] {
+  const off = str(w.pressedImage);
+  return off ? [off, str(w.onPressedImage) || off] : [];
+}
+/** Q275: how long a pressed texture shows after a click, in milliseconds. */
+const PRESSED_MS = 120;
+/**
+ * Q275: whether a modern button looks hovered. Vanilla uses isHoveredOrFocused(), and a click leaves the button
+ * focused (the screen focuses the clicked child after onPress), so a button that keeps the screen open stayed lit;
+ * keyboard focus still shows.
+ */
+const LIT = "this.isHovered() || (this.isFocused() && net.minecraft.client.Minecraft.getInstance().getLastInputType().isKeyboard())";
 
 /** One texture a widget draws: copied file, its size and, when it has a .mcmeta animation, square frames. */
 interface DrawnTexture {
@@ -149,6 +178,10 @@ function drawnTexture(projectDir: string, from: string, path: string): DrawnText
   if (!animation) return { path, tw, th, fw: tw, fh: th };
   return { path, tw, th, fw: tw, fh: tw, animation };
 }
+
+/** Q273: whether the widget's image is drawn see-through (opacity below 100), which 1.16.5 must blend. */
+const translucent = (w: GuiWidget) => (imageFilterOf(w)?.opacity ?? 100) < 100;
+const LEGACY_BLEND = "com.mojang.blaze3d.systems.RenderSystem.enableBlend(); com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();";
 
 /** A widget's drawing order (`z`): an integer from -99 to 99; 0 when unset, 1 for an old `overlay: true` image. */
 export const zOf = (w: { z?: unknown; overlay?: unknown }): number => {
@@ -251,12 +284,13 @@ export const imageStates = (w: GuiWidget): ImageState[] => list<ImageState>(w.st
 export const stateTexturePath = (owner: string, index: number, k: number) => `screens/${owner}_${index}_s${k}`;
 
 /** The textures a state image draws, each state its own copied file, with its size and frame (empty for a state without an image). */
-export function stateTextures(projectDir: string, w: GuiWidget, owner: string, index: number): { copies: { from: string; to: string }[]; drawn: (StateTexture | undefined)[] } {
-  const copies: { from: string; to: string }[] = [];
+export function stateTextures(projectDir: string, w: GuiWidget, owner: string, index: number): { copies: { from: string; to: string; filter?: ImageFilter }[]; drawn: (StateTexture | undefined)[] } {
+  const copies: { from: string; to: string; filter?: ImageFilter }[] = [];
+  const filter = imageFilterOf(w);
   const drawn = imageStates(w).map((s, k) => {
     if (!str(s.image)) return undefined;
     const to = stateTexturePath(owner, index, k);
-    copies.push({ from: str(s.image), to });
+    copies.push({ from: str(s.image), to, ...(filter ? { filter } : {}) });
     const tex = drawnTexture(projectDir, str(s.image), to);
     const frames = Math.floor(tex.th / Math.max(1, tex.tw));
     const frame = Number(s.frame);
@@ -392,6 +426,8 @@ function element(gui: Element, env: GenEnv): ElementContext {
     if (["label", "button", "text_field", "checkbox"].includes(w.kind) && str(w.text)) lang[key] = str(w.text);
     let size = { w: int(w.width, 16), h: int(w.height, 16) };
     let animation: AnimationSchedule | undefined = undefined;
+    const filter = imageFilterOf(w);
+    const filtered = filter ? { filter } : {};
     if ((w.kind === "image" || w.kind === "image_button") && str(w.image)) {
       const file = join(env.projectDir, str(w.image));
       // An image button with a hover texture has its two states in two files; without one, or with the same file as
@@ -399,15 +435,16 @@ function element(gui: Element, env: GenEnv): ElementContext {
       const hover = w.kind === "image_button" && str(w.hoverImage) !== str(w.image) ? str(w.hoverImage) : "";
       const modern = w.kind === "image_button" && env.mc !== "1.16.5";
       // 1.16.5 draws both states from one texture, so two files are stacked into it.
-      textures.push({ from: str(w.image), to: `screens/${gui.id}_${i}`, ...(hover ? { below: hover } : {}) });
+      textures.push({ from: str(w.image), to: `screens/${gui.id}_${i}`, ...(hover ? { below: hover } : {}), ...filtered });
       // From 1.20.2 an image button draws two GUI sprites (gui/sprites/...), normal and highlighted, not one texture.
       if (modern && hover) {
-        textures.push({ from: str(w.image), to: `gui/sprites/screens/${gui.id}_${i}` });
-        textures.push({ from: hover, to: `gui/sprites/screens/${gui.id}_${i}_highlighted` });
+        textures.push({ from: str(w.image), to: `gui/sprites/screens/${gui.id}_${i}`, ...filtered });
+        textures.push({ from: hover, to: `gui/sprites/screens/${gui.id}_${i}_highlighted`, ...filtered });
       } else if (modern) {
-        textures.push({ from: str(w.image), to: `gui/sprites/screens/${gui.id}_${i}`, half: "top" });
-        textures.push({ from: str(w.image), to: `gui/sprites/screens/${gui.id}_${i}_highlighted`, half: "bottom" });
+        textures.push({ from: str(w.image), to: `gui/sprites/screens/${gui.id}_${i}`, half: "top", ...filtered });
+        textures.push({ from: str(w.image), to: `gui/sprites/screens/${gui.id}_${i}_highlighted`, half: "bottom", ...filtered });
       }
+      if (modern && str(w.pressedImage)) textures.push({ from: str(w.pressedImage), to: `gui/sprites/screens/${gui.id}_${i}_pressed`, ...filtered });
       if (existsSync(file)) {
         try {
           const png = readPng(readFileSync(file));
@@ -428,9 +465,10 @@ function element(gui: Element, env: GenEnv): ElementContext {
     // A toggle button's four states, each its own copied file (one per state, even when two states share a PNG).
     let toggle: DrawnTexture[] | undefined;
     if (w.kind === "toggle_button" && str(w.image)) {
-      toggle = toggleTextures(w).map((from, state) => {
+      const pressed = env.mc === "1.16.5" ? [] : togglePressedTextures(w);
+      toggle = [...toggleTextures(w), ...pressed].map((from, state) => {
         const to = `screens/${gui.id}_${i}${TOGGLE_SUFFIXES[state]}`;
-        textures.push({ from, to });
+        textures.push({ from, to, ...filtered });
         return drawnTexture(env.projectDir, from, to);
       });
     }
@@ -493,19 +531,25 @@ function menuSource(env: GenEnv, gui: ElementContext): JavaSourceFile {
   const slotLines = slots.map((s) => {
     const members: string[] = [];
     const lock = str(s.lockCondition) ? procedureCallById(env, s.lockCondition, deps("this.entity"), `gui/${gui.id}`, "logic")?.replaceAll("this.", `${cls}.this.`) : undefined;
+    // The place filter (Q257): `limit` and the `allowed` rows, any of them matches; no entry: anything fits.
+    const key = legacy ? "net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(stack.getItem())" : "net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem())";
+    const entries = [str(s.limit), ...list<Record<string, unknown>>(s.allowed).map((r) => str(r?.item))].filter(Boolean).map((ref) => qualify(env, ref));
+    const accepts = entries.map((ref) => ref.startsWith("#")
+      ? (legacy ? `stack.getItem().is(${itemTagExpr(env, ref)})` : `stack.is(${itemTagExpr(env, ref)})`)
+      : `${jstr(ref)}.equals(String.valueOf(${key}))`);
+    const filter = accepts.length ? `(${accepts.join(" || ")})` : undefined;
+    // Locks and the filter add up: a locked slot takes nothing, an unlocked one only what the filter lets in.
     if (s.locked === true) members.push(`@Override public boolean mayPlace(${N.Stack} stack) { return false; }`, `@Override public boolean mayPickup(${N.Player} player) { return false; }`);
-    else if (lock) members.push(`@Override public boolean mayPlace(${N.Stack} stack) { return !${lock}; }`, `@Override public boolean mayPickup(${N.Player} player) { return !${lock}; }`);
+    else if (lock) members.push(`@Override public boolean mayPlace(${N.Stack} stack) { return !${lock}${filter ? ` && ${filter}` : ""}; }`, `@Override public boolean mayPickup(${N.Player} player) { return !${lock}; }`);
     else if (s.output === true) members.push(`@Override public boolean mayPlace(${N.Stack} stack) { return false; }`);
-    else if (str(s.limit)) {
-      const item = legacy ? "net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(stack.getItem())" : "net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem())";
-      const id = str(s.limit).includes(":") ? str(s.limit) : `${env.modId}:${str(s.limit)}`;
-      members.push(`@Override public boolean mayPlace(${N.Stack} stack) { return ${jstr(id)}.equals(String.valueOf(${item})); }`);
-    }
+    else if (filter) members.push(`@Override public boolean mayPlace(${N.Stack} stack) { return ${filter}; }`);
     // An item with an inventory does not accept itself (MCreator's item handler rule); other containers accept anything.
     if (!members.length && itemBound) members.push(`@Override public boolean mayPlace(${N.Stack} stack) { return !(this.container instanceof ${menusClass(env)}.ItemContainer) || ((${menusClass(env)}.ItemContainer) this.container).accepts(stack); }`);
     // A session records who put each item in, so it can go back to that player when the session ends.
     if (session) members.push(`@Override public void set(${N.Stack} stack) { super.set(stack); ${cls}.this.noteSlot(${int(s.id, 0)}); }`, `@Override public void setChanged() { super.setChanged(); ${cls}.this.noteSlot(${int(s.id, 0)}); }`);
-    const slot = `new ${N.Slot}(container, ${int(s.id, 0)}, ${int(s.x, 0) + 1}, ${int(s.y, 0) + 1})${members.length ? ` {\n            ${members.join("\n            ")}\n        }` : ""}`;
+    // A slot with a place filter is a FilterSlot, so shift click can offer it the matching stacks first (Q258).
+    const filtered = filter && s.locked !== true && s.output !== true;
+    const slot = `new ${filtered ? "FilterSlot" : N.Slot}(container, ${int(s.id, 0)}, ${int(s.x, 0) + 1}, ${int(s.y, 0) + 1})${members.length ? ` {\n            ${members.join("\n            ")}\n        }` : ""}`;
     return `        this.customSlots.put(${int(s.id, 0)}, this.addSlot(${slot}));`;
   });
   const invLines = withInventory
@@ -547,33 +591,40 @@ function menuSource(env: GenEnv, gui: ElementContext): JavaSourceFile {
   const sameItem = legacy ? "consideredTheSameItem(stack, item)" : `${N.Stack}.isSameItemSameComponents(stack, item)`;
   const mergeMax = legacy ? "Math.min(slot.getMaxStackSize(), stack.getMaxStackSize())" : "slot.getMaxStackSize(item)";
   const place = legacy ? "slot.set(stack.split(Math.min(stack.getCount(), slot.getMaxStackSize())))" : "slot.setByPlayer(stack.split(Math.min(stack.getCount(), slot.getMaxStackSize(stack))))";
+  // With filtered slots the stack is offered to the slots whose filter matches it first, then to the rest (Q258): an
+  // unfiltered slot with a lower index no longer takes what a filtered slot is meant for. Index order holds in each pass.
+  const hasFilter = slotLines.some((l) => l.includes("new FilterSlot("));
+  const body = (ind: string, pass: boolean) => `${ind}if (stack.isStackable()) {
+${ind}    for (int i = reverse ? end - 1 : start; !stack.isEmpty() && (reverse ? i >= start : i < end); i += reverse ? -1 : 1) {
+${ind}        ${N.Slot} slot = this.slots.get(i);
+${ind}        ${N.Stack} item = slot.getItem();
+${ind}        if (${pass ? "preferred != (slot instanceof FilterSlot) || " : ""}item.isEmpty() || !${sameItem} || !slot.mayPlace(stack)) continue;
+${ind}        int max = ${mergeMax};
+${ind}        if (item.getCount() >= max) continue;
+${ind}        int add = Math.min(stack.getCount(), max - item.getCount());
+${ind}        stack.shrink(add);
+${ind}        item.grow(add);
+${ind}        slot.setChanged();
+${ind}        moved = true;
+${ind}    }
+${ind}}
+${ind}if (!stack.isEmpty()) {
+${ind}    for (int i = reverse ? end - 1 : start; reverse ? i >= start : i < end; i += reverse ? -1 : 1) {
+${ind}        ${N.Slot} slot = this.slots.get(i);
+${ind}        if (${pass ? "preferred != (slot instanceof FilterSlot) || " : ""}!slot.getItem().isEmpty() || !slot.mayPlace(stack)) continue;
+${ind}        ${place};
+${ind}        slot.setChanged();
+${ind}        moved = true;
+${ind}        break;
+${ind}    }
+${ind}}`;
   const moveTo = `    @Override
     protected boolean moveItemStackTo(${N.Stack} stack, int start, int end, boolean reverse) {
         boolean moved = false;
-        if (stack.isStackable()) {
-            for (int i = reverse ? end - 1 : start; !stack.isEmpty() && (reverse ? i >= start : i < end); i += reverse ? -1 : 1) {
-                ${N.Slot} slot = this.slots.get(i);
-                ${N.Stack} item = slot.getItem();
-                if (item.isEmpty() || !${sameItem} || !slot.mayPlace(stack)) continue;
-                int max = ${mergeMax};
-                if (item.getCount() >= max) continue;
-                int add = Math.min(stack.getCount(), max - item.getCount());
-                stack.shrink(add);
-                item.grow(add);
-                slot.setChanged();
-                moved = true;
-            }
-        }
-        if (!stack.isEmpty()) {
-            for (int i = reverse ? end - 1 : start; reverse ? i >= start : i < end; i += reverse ? -1 : 1) {
-                ${N.Slot} slot = this.slots.get(i);
-                if (!slot.getItem().isEmpty() || !slot.mayPlace(stack)) continue;
-                ${place};
-                slot.setChanged();
-                moved = true;
-                break;
-            }
-        }
+${hasFilter ? `        for (boolean preferred : new boolean[] {true, false}) {
+${body("            ", true)}
+            if (stack.isEmpty()) break;
+        }` : body("        ", false)}
         return moved;
     }`;
   // A session menu runs onOpen on its first tick as the player's open menu (1.21.5 ticks it inside openMenu, before), so it can read the session id.
@@ -595,7 +646,11 @@ function menuSource(env: GenEnv, gui: ElementContext): JavaSourceFile {
 
 /** Generated by MCEdge: menu of GUI "${gui.id}". */
 public class ${cls} extends ${N.Menu} implements java.util.function.Supplier<java.util.Map<Integer, ${N.Slot}>>${session ? `, ${sessions}.View` : ""} {
-    private final java.util.Map<Integer, ${N.Slot}> customSlots = new java.util.HashMap<>();
+    private final java.util.Map<Integer, ${N.Slot}> customSlots = new java.util.HashMap<>();${hasFilter ? `
+    // A slot with a place filter: shift click offers it the stacks it accepts before the unfiltered slots.
+    private static class FilterSlot extends ${N.Slot} {
+        FilterSlot(${N.Container} container, int index, int x, int y) { super(container, index, x, y); }
+    }` : ""}
     public final ${N.Level} world;
     public final ${N.Player} entity;
     public final int x, y, z;
@@ -812,9 +867,22 @@ function screenSource(env: GenEnv, gui: ElementContext): JavaSourceFile {
       const highlighted = idExpr(env, `${spriteId}_highlighted`);
       const type = legacy ? "net.minecraft.client.gui.widget.button.ImageButton" : "net.minecraft.client.gui.components.ImageButton";
       fields.push(`    private ${type} ${name};`);
+      // Q273: 1.16.5's ImageButton draws without blending; a translucent one turns it on first.
+      const blendButton = translucent(w) ? ` {\n            @Override\n            public void renderButton(com.mojang.blaze3d.matrix.MatrixStack matrix, int mouseX, int mouseY, float partial) {\n                ${LEGACY_BLEND}\n                super.renderButton(matrix, mouseX, mouseY, partial);\n            }\n        }` : "";
+      // Q275: modern buttons draw their own sprite: hovered only under the mouse or with keyboard focus (LIT), and the
+      // pressed sprite for PRESSED_MS after a click when there is one.
+      const pressed = !legacy && str(w.pressedImage) ? idExpr(env, `${spriteId}_pressed`) : "";
+      if (pressed) fields.push(`    private long ${name}Pressed;`);
+      const onPress = pressed ? `button -> { this.${name}Pressed = System.currentTimeMillis() + ${PRESSED_MS}L; this.press(${w.index}); }` : `button -> this.press(${w.index})`;
+      const spriteRender = v26 ? "public void extractContents(net.minecraft.client.gui.GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partial)"
+        : "public void renderWidget(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partial)";
+      const spritePipeline = v26 ? "net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED" : "net.minecraft.client.renderer.RenderType::guiTextured";
+      const shown = `this.sprites.get(this.isActive(), ${LIT})`;
+      const pick = pressed ? `System.currentTimeMillis() < ${cls}.this.${name}Pressed ? ${pressed} : ${shown}` : shown;
+      const spriteBody = ` {\n            @Override\n            ${spriteRender} {\n                graphics.blitSprite(${spritePipeline}, ${pick}, this.getX(), this.getY(), this.width, this.height);\n            }\n        }`;
       init.push(legacy
-        ? `this.${name} = this.addButton(new ${type}(${at(w)}, ${width}, ${height}, 0, 0, ${height}, ${id}, ${width}, ${height * 2}, button -> this.press(${w.index})));`
-        : `this.${name} = this.addRenderableWidget(new ${type}(${at(w)}, ${width}, ${height}, new net.minecraft.client.gui.components.WidgetSprites(${sprite}, ${highlighted}), button -> this.press(${w.index})));`);
+        ? `this.${name} = this.addButton(new ${type}(${at(w)}, ${width}, ${height}, 0, 0, ${height}, ${id}, ${width}, ${height * 2}, button -> this.press(${w.index}))${blendButton});`
+        : `this.${name} = this.addRenderableWidget(new ${type}(${at(w)}, ${width}, ${height}, new net.minecraft.client.gui.components.WidgetSprites(${sprite}, ${highlighted}), ${onPress})${spriteBody});`);
       shownField(w, name);
     } else if (w.kind === "toggle_button" && w.toggle) {
       // KUYRUK 96: a button that draws one of four textures (off / on, each plain or under the mouse); the state
@@ -833,15 +901,20 @@ function screenSource(env: GenEnv, gui: ElementContext): JavaSourceFile {
         const pipeline = v26 ? "net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED" : "net.minecraft.client.renderer.RenderType::guiTextured";
         return `graphics.blit(${pipeline}, ${id}, this.getX(), this.getY(), 0.0F, ${v}, ${width}, ${height}, ${tex.fw}, ${tex.fh}, ${tex.tw}, ${tex.th});`;
       };
-      const body = `int state = (${state ? `${cls}.this.${name}On()` : "false"} ? 2 : 0) + (this.isHovered() ? 1 : 0);
-                ${w.toggle.map((tex, s) => `${s ? "else " : ""}if (state == ${s}) {\n                    ${draw(tex).replaceAll("\n                ", "\n                    ")}\n                }`).join("\n                ")}`;
+      // Q275: with pressed textures, the pressed one of the current state shows for PRESSED_MS after a click.
+      const pressedTex = w.toggle.length > 4;
+      if (pressedTex) fields.push(`    private long ${name}Pressed;`);
+      const onPress = pressedTex ? `button -> { this.${name}Pressed = System.currentTimeMillis() + ${PRESSED_MS}L; this.press(${w.index}); }` : `button -> this.press(${w.index})`;
+      const body = `boolean on = ${state ? `${cls}.this.${name}On()` : "false"};
+                int state = (on ? 2 : 0) + (this.isHovered() ? 1 : 0);
+                ${pressedTex ? `if (System.currentTimeMillis() < ${cls}.this.${name}Pressed) state = on ? 5 : 4;\n                ` : ""}${w.toggle.map((tex, s) => `${s ? "else " : ""}if (state == ${s}) {\n                    ${draw(tex).replaceAll("\n                ", "\n                    ")}\n                }`).join("\n                ")}`;
       const render = legacy ? "public void renderButton(com.mojang.blaze3d.matrix.MatrixStack matrix, int mouseX, int mouseY, float partial)"
         : v26 ? "protected void extractContents(net.minecraft.client.gui.GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partial)"
         : "protected void renderWidget(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partial)";
       const empty = legacy ? "net.minecraft.util.text.StringTextComponent.EMPTY" : "net.minecraft.network.chat.Component.empty()";
       const made = legacy
-        ? `new ${type}(${at(w)}, ${width}, ${height}, ${empty}, button -> this.press(${w.index}))`
-        : `new ${type}(${at(w)}, ${width}, ${height}, ${empty}, button -> this.press(${w.index}), java.util.function.Supplier::get)`;
+        ? `new ${type}(${at(w)}, ${width}, ${height}, ${empty}, ${onPress})`
+        : `new ${type}(${at(w)}, ${width}, ${height}, ${empty}, ${onPress}, java.util.function.Supplier::get)`;
       init.push(`this.${name} = this.${legacy ? "addButton" : "addRenderableWidget"}(${made} {\n            @Override\n            ${render} {\n                ${body}\n            }\n        });`);
       shownField(w, name);
     } else if (w.kind === "text_field") {
@@ -863,10 +936,12 @@ function screenSource(env: GenEnv, gui: ElementContext): JavaSourceFile {
   const inFront = (w: Widget) => zOf(w) > 0;
   /** `rel`: drawn relative to the GUI's corner (renderLabels and the front pass have leftPos/topPos applied). */
   const drawImage = (w: Widget, rel: boolean) => {
+    // Q273: 1.16.5 draws the background without blending; a translucent image turns it on first.
+    const blend = legacy && translucent(w) ? `${LEGACY_BLEND}\n        ` : "";
     if (w.kind === "state_image") {
       const prefix = `this.widget${w.index}`;
       const pos = rel ? [String(int(w.x, 0)), String(int(w.y, 0))] : [`this.leftPos + ${int(w.x, 0)}`, `this.topPos + ${int(w.y, 0)}`];
-      return conditional(w, stateDraw(env, w, w.stateTex ?? [], prefix, pos[0], pos[1], (id) => `this.minecraft.getTextureManager().bind(${id});`));
+      return conditional(w, stateDraw(env, w, w.stateTex ?? [], prefix, pos[0], pos[1], (id) => `${blend}this.minecraft.getTextureManager().bind(${id});`));
     }
     const id = idExpr(env, `${env.modId}:textures/screens/${gui.id}_${w.index}.png`);
     const { w: iw, h: ih } = w.size;
@@ -876,7 +951,7 @@ function screenSource(env: GenEnv, gui: ElementContext): JavaSourceFile {
     const th = anim ? ih * anim.frameCount : ih;
     const vOffset = anim ? `(float) (${frameIndexExpr(env, anim, imageClock(w))} * ${ih})` : "0.0F";
     const pos = rel ? `${int(w.x, 0)}, ${int(w.y, 0)}` : at(w);
-    if (legacy) return conditional(w, `this.minecraft.getTextureManager().bind(${id});\n        blit(g, ${pos}, 0.0F, ${vOffset}, ${iw}, ${ih}, ${tw}, ${th});`);
+    if (legacy) return conditional(w, `${blend}this.minecraft.getTextureManager().bind(${id});\n        blit(g, ${pos}, 0.0F, ${vOffset}, ${iw}, ${ih}, ${tw}, ${th});`);
     const pipeline = v26 ? "net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED" : "net.minecraft.client.renderer.RenderType::guiTextured";
     return conditional(w, `g.blit(${pipeline}, ${id}, ${pos}, 0.0F, ${vOffset}, ${iw}, ${ih}, ${tw}, ${th});`);
   };

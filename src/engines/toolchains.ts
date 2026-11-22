@@ -82,7 +82,7 @@ export async function ensureToolchain(kind: ToolchainKind, version: string | num
     const target = entry.flat ? join(toolchainsDir(), `${entry.folder}.partial`) : toolchainsDir();
     if (entry.flat) rmSync(target, { recursive: true, force: true });
     mkdirSync(target, { recursive: true });
-    const result = spawnSync(tarCommand(), ["-xf", archive, "-C", target], { encoding: "utf8" });
+    const result = spawnSync(tarCommand(), ["-xf", archive, "-C", target], { encoding: "utf8", windowsHide: true });
     if (result.status !== 0) throw new Error(`extracting ${kind} ${version} failed: ${result.stderr}`);
     if (entry.flat) renameSync(target, join(toolchainsDir(), entry.folder));
   } finally {

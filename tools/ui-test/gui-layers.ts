@@ -5,12 +5,12 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
 const project = exampleProject();
 addElement(project, "gui", "machine", { type: 1, width: 176, height: 166 });
-const OUT = "design/gui-layers";
+const OUT = evidence("design/gui-layers");
 const guiFile = join(project, "elements", "guis", "machine.json");
 const file = () => JSON.parse(readFileSync(guiFile, "utf8")) as { components: Record<string, unknown>[]; layers?: { name: string; hidden?: boolean; locked?: boolean }[] };
 const saved = () => file().components;
@@ -56,7 +56,8 @@ await run(async (app) => {
 
   // "Controls" is the active layer (new): a button goes on it. Then the first layer takes a label and a slot.
   await add(app, "Button");
-  await app.eval(`${rowOf(0)}.click()`);
+  // A press on the blank part of the row (Q248: the row takes mousedown, its name field takes the focus).
+  await app.eval(`${rowOf(0)}.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }))`);
   await add(app, "Label");
   await add(app, "Slot");
   await waitSaved(app);

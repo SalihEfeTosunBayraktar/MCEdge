@@ -49,6 +49,7 @@ Window > AI assistant or Ctrl+Shift+A opens the Agents panel on that node with t
 - Input box: Enter sends, Shift+Enter makes a new line. Send turns into Stop while a reply runs.
 - "Undo this reply" on an AI reply calls `api.liveUndo` with the call ids of that reply. On a conflict the panel lists
   the conflicts and does not overwrite anything.
+- Other parts of the app can put a message into the input box without sending it (Ask the AI on an explained build error, Q246: `draft` of the `ai` props); the user reads it and presses Enter.
 - With no provider set, the node shows one line with a button to Preferences > AI.
 - The conversation lives in memory, per project. "New conversation" clears it.
 - All text is in `config/ui-strings` (en, tr).

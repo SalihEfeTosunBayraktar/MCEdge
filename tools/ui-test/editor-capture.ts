@@ -9,9 +9,9 @@ import { join } from "node:path";
 import { readPng } from "../../src/generator/png.ts";
 import { readPresence } from "../../src/live/activity.ts";
 import { connect } from "../mcp-test/client.ts";
-import { assert, exampleProject, launchApp } from "./cdp.ts";
+import { assert, exampleProject, launchApp, evidence } from "./cdp.ts";
 
-const OUT = "design/158";
+const OUT = evidence("design/158");
 mkdirSync(OUT, { recursive: true });
 const a = exampleProject(), b = exampleProject(), none = exampleProject();
 

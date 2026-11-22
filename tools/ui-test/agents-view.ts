@@ -12,10 +12,10 @@ import { dateRangeOf } from "../../app/renderer/src/live/agents.ts";
 import { readActivity, type ActivityEntry } from "../../src/live/activity.ts";
 import { createTask } from "../../src/live/tasks.ts";
 import { connect } from "../mcp-test/client.ts";
-import { assert, exampleProject, launchApp, type App } from "./cdp.ts";
+import { assert, exampleProject, launchApp, type App, evidence } from "./cdp.ts";
 
 const project = exampleProject();
-const OUT = "design/195";
+const OUT = evidence("design/195");
 const DAY = 24 * 60 * 60_000;
 const at = (daysAgo: number, hour: number) => {
   const d = new Date(Date.now() - daysAgo * DAY);

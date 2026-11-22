@@ -4,7 +4,7 @@
  * with "into <section>", or flush with "outside sections"; a dragged section shows a flush line without a label.
  * Args: theme, language. Screenshots go to design/165/.
  */
-import { assert, run, type App } from "./cdp.ts";
+import { assert, run, type App, evidence } from "./cdp.ts";
 import { openTab, savedOrder, tabOrderProject, waitSaved } from "./tabOrderFixture.ts";
 
 const theme = (process.argv[2] ?? "dark") as "dark" | "light";
@@ -32,7 +32,7 @@ await run(async (app) => {
   assert(JSON.stringify(indented) === JSON.stringify(["ruby", "gem_a", "gem_b", "ruby_block", "ruby_pickaxe", "_", "gem_c"]), `rows inside sections: ${indented}`);
   assert((await app.eval<number>(`document.querySelectorAll(".taborder .torow .toindent").length`)) === 7, "each has a guide line");
   assert((await textX(app, "gem_a")) > (await textX(app, "ruby_apple")) + 8, "rows in a section start further right than rows outside");
-  await app.shot(`design/165/tab-order-${theme}-${lang}-after.png`);
+  await app.shot(evidence(`design/165/tab-order-${theme}-${lang}-after.png`));
 
   // 2. Dragging ruby_apple: the line says where it lands.
   const [gx, gy] = await app.center(`${row("ruby_apple")} .tograb`);
@@ -41,7 +41,7 @@ await run(async (app) => {
   await over(app, gx, "ruby_block", "top");
   let line = await dropLine(app);
   assert(!!line && line.cls.includes("inside") && line.label.includes("Gems") && line.left > 10, `inside Gems: ${JSON.stringify(line)}`);
-  await app.shot(`design/165/tab-order-drop-inside-${theme}-${lang}-after.png`);
+  await app.shot(evidence(`design/165/tab-order-drop-inside-${theme}-${lang}-after.png`));
   await over(app, gx, "#Tools", "top");
   line = await dropLine(app);
   assert(!!line && line.label.includes("Gems"), `before the Tools header the row still lands at the end of Gems: ${JSON.stringify(line)}`);
@@ -61,7 +61,7 @@ await run(async (app) => {
   await over(app, ax, "#Gems", "top");
   line = await dropLine(app);
   assert(!!line && line.cls.includes("outside") && line.label === (tr ? "bölümlerin dışına" : "outside sections") && line.left < 4, `outside: ${JSON.stringify(line)}`);
-  await app.shot(`design/165/tab-order-drop-outside-${theme}-${lang}-after.png`);
+  await app.shot(evidence(`design/165/tab-order-drop-outside-${theme}-${lang}-after.png`));
   await app.mouse("mouseReleased", ax, ay, 0);
   await waitSaved(app);
   assert(savedOrder(project)[0] === "gem_a" && !(await app.eval<boolean>(`document.querySelector('${row("gem_a")}').classList.contains("insection")`)), "gem_a outside, not indented");

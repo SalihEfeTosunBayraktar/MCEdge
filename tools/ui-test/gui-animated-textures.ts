@@ -10,9 +10,9 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { widgetSchedule } from "../../src/resources/widgetAnimation.ts";
 import { showInApp } from "../../src/live/show.ts";
-import { assert, copyProject, run, type App } from "./cdp.ts";
+import { assert, copyProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/160";
+const OUT = evidence("design/160");
 
 // ---- the rule, as src/generator/types/gui.ts plays it
 const mcmeta = JSON.stringify({ animation: { frametime: 4, interpolate: true } });
@@ -31,6 +31,8 @@ const project = copyProject("C:/MyProjects/AI-Assisted/ETREconomy-MCEdge", "etr"
 const file = join(project, "elements/guis/recyclergui.json");
 const gui = JSON.parse(readFileSync(file, "utf8"));
 gui.components.push(
+  // The old one-file image button (18 x 36: normal above, hover below); the project's own GUI no longer has one.
+  { kind: "image_button", x: 100, y: 60, width: 18, height: 18, image: "textures/screens/atlas/imagebutton_unlockbutton.png", procedure: "", name: "test_lock" },
   { kind: "toggle_button", x: 120, y: 20, width: 16, height: 16, image: "textures/screens/fire_animation.png", onImage: "textures/screens/booster_animated.png", procedure: "", name: "test_toggle" },
   { kind: "image_button", x: 140, y: 40, width: 16, height: 16, image: "textures/screens/atlas/imagebutton_coin_get.png", hoverImage: "textures/screens/discount_animated.png", procedure: "", name: "test_hover" },
 );

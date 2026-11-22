@@ -4,15 +4,16 @@
  * - sub-tabs (Resources, Version control) sit below the toolbar and keep their counts (KUYRUK 120).
  * With a suffix argument ("before"/"after") screenshots go to design/<row>/ (args: suffix, theme).
  */
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const suffix = process.argv[2];
 const theme = (process.argv[3] ?? "dark") as "dark" | "light";
-const shot = (app: App, file: string) => (suffix ? app.shot(`design/${file}-${theme}-${suffix}.png`) : Promise.resolve());
+const shot = (app: App, file: string) => (suffix ? app.shot(evidence(`design/${file}-${theme}-${suffix}.png`)) : Promise.resolve());
 const FIND_Y = 34;
-const TOOLBAR_Y = 76;
+// The find bar is 40 px since Q279, so the toolbar row sits at y=74; the element grid has no row of its own (its main action is in the bar).
+const TOOLBAR_Y = 74;
 
-interface Metrics { find: number | null; toolbar: number | null; horizontal: boolean | null; columns: number; tabs: number | null; counts: string[] }
+interface Metrics { find: number | null; toolbar: number | null; horizontal: boolean | null; columns: number; tabs: number | null; counts: string[]; inbar?: boolean; empty?: boolean }
 /** Find bar, toolbar and sub-tabs of the shown section. */
 const MEASURE = `(() => {
   const view = document.querySelector(".content > .view, .content > section");
@@ -20,12 +21,13 @@ const MEASURE = `(() => {
   const bar = [...(view?.querySelectorAll("[role=toolbar]") ?? [])].find((e) => e.offsetParent);
   const r = bar?.getBoundingClientRect();
   const tabs = view?.querySelector("[role=tablist]");
-  return { find: top(view?.querySelector(".findbar")), toolbar: top(bar), horizontal: r ? r.width > r.height : null,
+  return { find: top(view?.querySelector(".findbar")), toolbar: top(bar), horizontal: r ? r.width > r.height : null, inbar: !!bar?.closest(".findbar"), empty: !!view?.querySelector(".emptystate"),
     columns: document.querySelectorAll(".acol").length, tabs: top(tabs), counts: [...(tabs?.querySelectorAll(".lpct") ?? [])].map((c) => c.textContent) };
 })()`;
 const measure = (app: App) => app.eval<Metrics>(MEASURE);
-const offPattern = (m: Metrics) => m.find !== FIND_Y || m.toolbar !== TOOLBAR_Y || !m.horizontal || m.columns > 0
-  || (m.tabs !== null && m.tabs <= TOOLBAR_Y) || m.counts.some((c) => !/^\d+$/.test(c ?? ""));
+// Q284: the tabs sit right under the 40 px bar (y = 74), and a view that shows the shared empty state has no toolbar to measure.
+const offPattern = (m: Metrics) => m.find !== FIND_Y || (m.toolbar !== TOOLBAR_Y && !m.inbar && !m.empty) || (!m.horizontal && !m.empty) || m.columns > 0
+  || (m.tabs !== null && m.tabs < (m.inbar ? FIND_Y + 40 : TOOLBAR_Y)) || m.counts.some((c) => !/^\d+$/.test(c ?? ""));
 
 await run(async (app) => {
   await app.setTheme(theme);
@@ -53,7 +55,7 @@ await run(async (app) => {
     }
     if (name === "Version control") {
       // A new repository shows the Changes / History tabs: under the toolbar too.
-      await app.click(".view .actions .abtn.primary");
+      await app.click(".emptystate .abtn.primary");
       await app.waitFor(`document.querySelector(".view [role=tablist]")`, 15000);
       check("Version control (repository)", await measure(app));
       await shot(app, "120/git");

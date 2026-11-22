@@ -1,6 +1,9 @@
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { app, BrowserWindow, dialog, ipcMain, shell, type WebContents } from "electron";
+import { explainBuild } from "../../src/mcp/buildErrors.ts";
+import { explainGradleFailures, explainJavac } from "../../src/build/explain.ts";
+import { parseJavacDiagnostics } from "../../src/build/javacErrors.ts";
 import { buildTarget, engineSetup, logPath, runGradle, type GradleRun } from "../../src/build/gradle.ts";
 import { listEngines, toolchainNeeds } from "../../src/engines/registry.ts";
 import { ensureToolchains } from "../../src/engines/toolchains.ts";
@@ -21,6 +24,7 @@ import { loadReferenceInput } from "../../src/ir/referenceInput.ts";
 import { changeModIdentity, type IdentityChange } from "../../src/ir/modIdentity.ts";
 import { renameElement, renameSummary } from "../../src/ir/rename.ts";
 import { createProject, type NewProject } from "../../src/ir/createProject.ts";
+import { applyStarter, listStarters } from "../../src/ir/starters.ts";
 import { generatedLangKeys } from "../../src/generator/langKeys.ts";
 import { applyDelete, planDelete, type DeletePlan, type DeleteSelection } from "../../src/ir/deleteCascade.ts";
 import { projectUnusedTranslations, removeUnusedTranslations } from "../../src/ir/unusedTranslations.ts";
@@ -42,10 +46,12 @@ import { isGradleModProject } from "../../src/projects/gradleMod.ts";
 import { listDrafts, readAppState, rememberProject, saveDraft, updateAppState } from "./appState.ts";
 import { codeProjectInfo } from "./codeProject.ts";
 import { markOwn, ownWrite, watchedDir, watchProject } from "./watch.ts";
+import { machineInfo, suggestLight } from "../../src/performance.ts";
 import {
   clientRunKey,
   type ClientRunOptions,
   type BuildEvent,
+  type BuildExplained,
   type Element,
   type EngineInfo,
   type ExportResult,
@@ -91,6 +97,17 @@ export function registerIpc(): void {
   // File > New project (KUYRUK 126): the suggested parent folder, and the project made and opened.
   ipcMain.handle("project:newFolder", () => join(app.getPath("documents"), "MCEdge"));
   ipcMain.handle("project:create", (event, options: NewProject) => opened(event.sender, createProject(options)));
+  // Template gallery (Q252): the verified starters, and one added to the open project.
+  ipcMain.handle("starter:list", () => listStarters().map(({ id, type, params, elements }) => ({ id, type, params, elements })));
+  ipcMain.handle("starter:add", (_e, dir: string, id: string, params: Record<string, string>) => {
+    const result = applyStarter(dir, id, params);
+    if (!result.applied) throw new Error([...result.errors.map((e) => e.message), ...result.newProblems.map((p) => `${p.path}: ${p.message}`)].join("; ") || "the starter was not added");
+    markOwn([...result.changes.map((c) => { const [type, ...rest] = c.element.split("/"); return elementFile(dir, type, rest.join("/")); }), ...result.textures.map((t) => join(dir, t))]);
+    // The element the card stands for opens first (the ore block, not its gem).
+    const type = listStarters().find((s) => s.id === id)?.type;
+    const [typeId, ...rest] = (result.changes.find((c) => c.element.startsWith(`${type}/`)) ?? result.changes[0]).element.split("/");
+    return { snapshot: snapshot(dir), first: { typeId, id: rest.join("/") } };
+  });
   // File > Import project from ZIP (KUYRUK 135): the zip extracted into a new folder under `parent`, then opened.
   ipcMain.handle("project:importZip", (event, zip: string, parent: string) => opened(event.sender, importWorkspace(zip, parent)));
   ipcMain.handle("dialog:zip", async (event) => {
@@ -108,6 +125,7 @@ export function registerIpc(): void {
     updateAppState((state) => (state.preferences = preferences));
     event.sender.setZoomFactor(preferences.fontScale);
   });
+  ipcMain.handle("system:info", () => ({ ...machineInfo(), suggestLight: suggestLight(machineInfo()) }));
   ipcMain.handle("recent:list", () => recentProjects());
   ipcMain.handle("recent:remove", (_e, dir: string) => {
     updateAppState((state) => (state.recent = state.recent.filter((r) => r.dir !== dir)));
@@ -218,6 +236,12 @@ export function registerIpc(): void {
     listEngines().map((engine) => ({ id: engine.id, name: engine.name, minecraft: engine.minecraft, loader: engine.loader, coverage: engineCoverage(engine) })),
   );
   ipcMain.handle("build:run", (event, dir: string, engineIds: string[]) => build(event.sender, dir, engineIds));
+  // Q246: the errors of a failed build in plain words; an engine maps them back to elements (a code project has none).
+  ipcMain.handle("build:explain", (_e, dir: string, engineId: string | undefined, lines: string[]): BuildExplained => {
+    if (engineId) return explainBuild(dir, engineId, lines);
+    const diagnostics = parseJavacDiagnostics(lines).filter((d) => d.severity === "error").map((d) => ({ ...d, explain: explainJavac(d.message, d.detail) }));
+    return { diagnostics, failures: explainGradleFailures(lines) };
+  });
   // Locked generated code per element and Build > Regenerate code (KUYRUK 131).
   ipcMain.handle("code:lock", (_e, dir: string, typeId: string, id: string) => (lockElementCode(loadProject(dir), dir, typeId, id), snapshot(dir)));
   ipcMain.handle("code:unlock", (_e, dir: string, typeId: string, id: string, force = false) => {
@@ -393,10 +417,12 @@ function snapshotWithElement(dir: string, typeId: string, id: string): ProjectSn
 function listPngs(dir: string): string[] {
   const found: string[] = [];
   const walk = (folder: string) => {
-    for (const name of readdirSync(folder)) {
+    // withFileTypes: the listing already says what is a folder, so only links are stat'ed, not 680 PNGs (Q280).
+    for (const entry of readdirSync(folder, { withFileTypes: true })) {
+      const name = entry.name;
       if (name === "out" || name === "schemas" || name === LOCK_DIR || name.startsWith(".")) continue;
       const path = join(folder, name);
-      if (statSync(path).isDirectory()) walk(path);
+      if (entry.isDirectory() || (entry.isSymbolicLink() && statSync(path).isDirectory())) walk(path);
       else if (name.endsWith(".png")) found.push(relative(dir, path).replaceAll("\\", "/"));
     }
   };

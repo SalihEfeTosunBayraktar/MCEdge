@@ -7,9 +7,9 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/177";
+const OUT = evidence("design/177");
 const placement = (project: string) => existsSync(join(project, "texture-folders.json"))
   ? (JSON.parse(readFileSync(join(project, "texture-folders.json"), "utf8")) as { folders: string[]; placement: Record<string, string> }) : { folders: [], placement: {} };
 const cell = (path: string) => `.texcell[data-path="${path}"]`;

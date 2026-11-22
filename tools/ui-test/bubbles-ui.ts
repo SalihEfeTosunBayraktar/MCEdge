@@ -6,10 +6,10 @@
  */
 import { copyFileSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, launchApp, type App } from "./cdp.ts";
+import { assert, exampleProject, launchApp, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/212";
+const OUT = evidence("design/212");
 mkdirSync(OUT, { recursive: true });
 const en = JSON.parse(readFileSync("config/ui-strings/en.json", "utf8")) as Record<string, string>;
 const tr = JSON.parse(readFileSync("config/ui-strings/tr.json", "utf8")) as Record<string, string>;

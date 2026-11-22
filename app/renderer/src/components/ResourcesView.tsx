@@ -10,8 +10,9 @@ import { t } from "../strings.ts";
 import { typeOf } from "../types.ts";
 import { newDraftPaths } from "../textures/drafts.ts";
 import { ImportAnimatedDialog } from "../textures/ImportAnimatedDialog.tsx";
-import { Texture } from "./Texture.tsx";
-import { ActionBar, ActionButton, FindBar, FindSelect, FormGroup, FormRow, MenuList, PanelEmpty, Separator, SidePanel } from "./ui.tsx";
+import { LazyTexture, Texture } from "./Texture.tsx";
+import { ActionButton, FindBar, FindSelect, FormRow, MenuList, TabList } from "./ui.tsx";
+import { InspectorToggle, TabsRow, ViewShell, type DockSection } from "../dock/Dock.tsx";
 import { byFolderPath, folderName } from "../../../../src/ir/folders.ts";
 import { OWN, useFolderDrop, useResourceFolders, useSelection } from "./ResourceFolders.tsx";
 
@@ -45,13 +46,13 @@ export function ResourcesView(props: Props) {
     : k === "animations" ? snapshot.animations.flatMap((s) => s.animations) : snapshot[k]).length;
   // The kind tabs sit under the pane's find bar and toolbar, so those stay where every section has them (KUYRUK 120).
   const tabs = (
-    <div className="langtabs pagetabs" role="tablist" aria-label={t("section.resources")}>
+    <TabList className="langtabs pagetabs" label={t("section.resources")}>
       {TABS.map((k) => (
         <button key={k} role="tab" aria-selected={k === tab} className={`ltab ${k === tab ? "on" : ""}`} onClick={() => onTab(k)}>
           {t(`resources.tab.${k}`)}<span className="lpct">{count(k)}</span>
         </button>
       ))}
-    </div>
+    </TabList>
   );
   return (
     <section className="view">
@@ -104,10 +105,48 @@ function TexturesPane({ snapshot, onChanged, onSearchUsages, onCreate, onEdit, t
     sel.clear();
   };
 
+  /** The selection, in the inspector (Q284). */
+  const hint = (text: string) => <p className="hint">{text}</p>;
+  const sections: DockSection[] = [
+    { id: "res.texture", icon: "image", title: t("group.texture"), body: chosen.length > 1 ? (
+      <>
+        <p className="hint">{t("resources.selectedCount", { count: chosen.length, items: t("resources.item.textures") })}</p>
+        <ul className="plain">{chosen.map((p) => <li key={p}>{fileName(p)}</li>)}</ul>
+      </>
+    ) : current ? (
+      <div className="form">
+        <FormRow label={t("resources.preview")}>
+          <span className="slot big"><Texture dir={snapshot.dir} path={current} size={64} /></span>
+        </FormRow>
+        <FormRow label={t("resources.file")}><div className="fval"><code>{fileName(current)}</code></div></FormRow>
+        <FormRow label={t("resources.path")}><input value={current} readOnly /></FormRow>
+        <button type="button" className="abtn" onClick={async () => setExported(await api.exportTexture(snapshot.dir, current))}>{t("resources.export")}</button>
+        {exported && <p className="hint">{t("resources.exported", { file: exported })}</p>}
+      </div>
+    ) : hint(t("resources.selectHint")) },
+    { id: "res.usedBy", icon: "usages", title: t("group.usedBy"), badge: current && users.length ? String(users.length) : undefined, body: current && chosen.length === 1 ? (
+      users.length ? <ul className="plain">{users.map((name, i) => <li key={i}>{name}</li>)}</ul> : hint(t("resources.unused"))
+    ) : hint(t("resources.selectHint")), defaultOpen: false },
+  ];
+
   return (
     <>
       <FindBar query={query} onQuery={setQuery} placeholder={t("resources.search")}
-        meta={t("resources.count", { count: snapshot.textures.length })}>
+        meta={t("resources.count", { count: snapshot.textures.length })}
+        actions={<>
+          <div className="menuwrap">
+            <ActionButton icon="import" popup pressed={importing} label={t("resources.import")} onClick={() => setImporting(!importing)} />
+            {importing && (
+              <MenuList onClose={() => setImporting(false)}
+                items={[...folders.map((f) => ({ label: t("resources.importInto", { folder: `textures/${f}` }), onClick: () => importInto(f) })),
+                  { label: t("resources.addBubble"), onClick: () => importInto(BUBBLES) },
+                  { label: t("paint.importAnimMenu"), onClick: () => setImportingAnimated(true) }]} />
+            )}
+          </div>
+          {res.toolbar(chosen)}
+          <ActionButton icon="plus" label={t("resources.create")} tone="primary" onClick={onCreate} />
+          <InspectorToggle />
+        </>}>
         <FindSelect icon="filter" label={t("find.show")} value={activeFilter} onChange={setFolderFilter} options={[
           { value: "all", label: t("resources.allFolders") },
           // Only folders that hold textures, so a filter never empties the list; "item" and "items" read the same title.
@@ -115,34 +154,20 @@ function TexturesPane({ snapshot, onChanged, onSearchUsages, onCreate, onEdit, t
             .map(([f, paths]) => ({ value: f, label: f.startsWith(OWN) ? `${f.slice(OWN.length)} (${paths.length})` : `${groupTitle(f)} · ${f ? `textures/${f}` : "textures"} (${paths.length})` })),
         ]} />
       </FindBar>
-      <ActionBar>
-        <ActionButton icon="plus" label={t("resources.create")} tone="primary" onClick={onCreate} />
-        <div className="menuwrap">
-          <ActionButton icon="import" label={t("resources.import")} onClick={() => setImporting(!importing)} />
-          {importing && (
-            <MenuList onClose={() => setImporting(false)}
-              items={[...folders.map((f) => ({ label: t("resources.importInto", { folder: `textures/${f}` }), onClick: () => importInto(f) })),
-                { label: t("resources.addBubble"), onClick: () => importInto(BUBBLES) },
-                { label: t("paint.importAnimMenu"), onClick: () => setImportingAnimated(true) }]} />
-          )}
-        </div>
-        {res.toolbar(chosen)}
-        {importingAnimated && (
-          <ImportAnimatedDialog snapshot={snapshot} folders={folders} onCancel={() => setImportingAnimated(false)}
-            onImported={(next) => (setImportingAnimated(false), onChanged(next))} />
-        )}
-        <Separator />
+      {res.hint}
+      {importingAnimated && (
+        <ImportAnimatedDialog snapshot={snapshot} folders={folders} onCancel={() => setImportingAnimated(false)}
+          onImported={(next) => (setImportingAnimated(false), onChanged(next))} />
+      )}
+      <TabsRow tabs={tabs} actions={chosen.length > 0 && <>
         <ActionButton icon="edit" label={t("resources.edit")} disabled={!current} onClick={() => current && onEdit(current)} />
         <ActionButton icon="usages" label={t("resources.searchUsages")} disabled={!current || users.length === 0}
           onClick={() => current && onSearchUsages(current)} />
         {res.moveButton(chosen)}
-        <Separator />
-        <ActionButton icon="trash" label={t("resources.delete")} tone="danger" disabled={!chosen.length || inUse}
+        <ActionButton icon="trash" label={t("resources.delete")} tone="danger" disabled={inUse}
           title={inUse ? t("resources.inUse") : undefined} onClick={remove} />
-      </ActionBar>
-      {res.hint}
-      {tabs}
-      <div className="split">
+      </>} />
+      <ViewShell sections={sections} inspectorLabel={t("dock.inspector")} inspectorClass="resinsp">
         <div className="scrollarea texarea" ref={sel.area} onMouseDown={sel.startBox}>
           {sel.box && <div className="selbox" style={sel.box} />}
           {snapshot.textures.length === 0 && <p className="empty-note">{t("resources.empty")}</p>}
@@ -169,14 +194,14 @@ function TexturesPane({ snapshot, onChanged, onSearchUsages, onCreate, onEdit, t
                 style={mine ? { marginLeft: (mine.split("/").length - 1) * 16 } : undefined} {...drop.bind(folder, mine ?? "")}>
                 {heading}
                 {folder === BUBBLES && <p className="hint nomargin">{t("resources.bubblesHint")}</p>}
-                <div className="texgrid" role="listbox" aria-multiselectable>
+                <div className="texgrid" role="listbox" aria-multiselectable aria-label={t("resources.tab.textures")}>
                   {paths.length === 0 && folder !== BUBBLES && <p className="hint nomargin">{t("resources.folderEmpty")}</p>}
                   {paths.map((path) => (
                     <button key={path} role="option" aria-selected={chosen.includes(path)} draggable data-path={path}
                       onDragStart={(e) => drop.dragStart(e, path, sel)}
                       className={`texcell ${chosen.includes(path) ? "sel" : ""}`} onClick={(e) => sel.pick(path, e)} onDoubleClick={() => onEdit(path)}
                       title={path}>
-                      <span className="slot"><Texture dir={snapshot.dir} path={path} size={48} /></span>
+                      <span className="slot"><LazyTexture dir={snapshot.dir} path={path} size={48} /></span>
                       <span className="texname">{fileName(path)}</span>
                     </button>
                   ))}
@@ -186,32 +211,7 @@ function TexturesPane({ snapshot, onChanged, onSearchUsages, onCreate, onEdit, t
           })}
           {res.dialogs}
         </div>
-        <SidePanel title={t("resources.details")}>
-          {chosen.length > 1 ? (
-            <FormGroup title={t("resources.selected")}>
-              <p className="hint">{t("resources.selectedCount", { count: chosen.length, items: t("resources.item.textures") })}</p>
-              <ul className="plain">{chosen.map((p) => <li key={p}>{fileName(p)}</li>)}</ul>
-            </FormGroup>
-          ) : current ? (
-            <>
-              <FormGroup title={t("group.texture")}>
-                <FormRow label={t("resources.preview")}>
-                  <span className="slot big"><Texture dir={snapshot.dir} path={current} size={64} /></span>
-                </FormRow>
-                <FormRow label={t("resources.file")}><div className="fval"><code>{fileName(current)}</code></div></FormRow>
-                <FormRow label={t("resources.path")}><input value={current} readOnly /></FormRow>
-                <button type="button" className="abtn" onClick={async () => setExported(await api.exportTexture(snapshot.dir, current))}>{t("resources.export")}</button>
-                {exported && <p className="hint">{t("resources.exported", { file: exported })}</p>}
-              </FormGroup>
-              <FormGroup title={t("group.usedBy")}>
-                {users.length ? (
-                  <ul className="plain">{users.map((name, i) => <li key={i}>{name}</li>)}</ul>
-                ) : <p className="hint">{t("resources.unused")}</p>}
-              </FormGroup>
-            </>
-          ) : <PanelEmpty text={t("resources.selectHint")} />}
-        </SidePanel>
-      </div>
+      </ViewShell>
     </>
   );
 }

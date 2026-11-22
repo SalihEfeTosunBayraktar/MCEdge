@@ -67,6 +67,11 @@ export interface Presence {
   shown?: { id: string; error?: string };
   /** App: its main process id, so editor_screenshot captures the window of this project's app, not another MCEdge (KUYRUK 158). */
   pid?: number;
+  /** App: the user's modding experience from the first-run setup and the UI mode (Q244), so agents explain at that level. */
+  level?: "new" | "some" | "java";
+  mode?: "simple" | "advanced";
+  /** App: whether agent runs (build, run_client, ...) wait for the user's confirmation (default) or go ahead (Q255). */
+  agentRuns?: "ask" | "allow";
 }
 
 const liveDir = (dir: string) => {

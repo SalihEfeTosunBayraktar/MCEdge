@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { disposeStage } from "./disposeStage.ts";
 import { blockCells, type Cell } from "../../../../src/elements/multiBlock.ts";
 import { autoHeight, footprint, LIE_HALF, LIE_LIFT, resolvedSeats, round, seatBoxes, SIT_DROP, spreadSeats, storedSeats, surfaceAt, type Seat } from "../../../../src/elements/seats.ts";
 import { FACES, type ModelElement, type ResolvedModel } from "../../../../src/resources/blockModel.ts";
@@ -12,6 +13,8 @@ import { elementTexture } from "../model.ts";
 import { t } from "../strings.ts";
 import type { PreviewTexture } from "../textures/animatedTexture.ts";
 import { buildModel, loadImages, loadProjectModel } from "./ModelPreview.tsx";
+import { LightNote } from "../components/LightNote.tsx";
+import { usePerformance } from "../preferences.ts";
 
 /**
  * Seat page preview of a block (Q225): the block's model (its custom JSON model, else its boxes with its texture), its
@@ -39,7 +42,7 @@ interface Props {
 const editable = (draft: Element): Seat[] => (storedSeats(draft).length ? storedSeats(draft) : spreadSeats(draft, 1));
 const yawOf = (degrees: number) => round(((degrees % 360) + 360) % 360);
 
-export function SeatPreview({ snapshot, draft, onChange, cellsOnly = false }: Props) {
+function SeatPreviewLive({ snapshot, draft, onChange, cellsOnly = false }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const stage = useRef<SeatStage>(undefined);
   const [selected, setSelected] = useState(-1);
@@ -485,13 +488,16 @@ function createStage(node: HTMLDivElement, cellsOnly: boolean, events: StageEven
       node.removeEventListener("pointerdown", down, true);
       node.removeEventListener("pointermove", move);
       node.removeEventListener("pointerup", up);
-      controls.dispose();
       modelParts.forEach((d) => d.dispose());
       disposeTree(seats);
       disposeTree(boxes);
       disposeTree(bounds);
-      renderer.dispose();
-      renderer.domElement.remove();
+      disposeStage([controls], renderer);
     },
   };
+}
+
+/** The 3D view, or a note while light mode has 3D off (Q250). */
+export function SeatPreview(props: Parameters<typeof SeatPreviewLive>[0]) {
+  return usePerformance().render3d ? <SeatPreviewLive {...props} /> : <LightNote />;
 }

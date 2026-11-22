@@ -6,7 +6,7 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, REPO, run } from "./cdp.ts";
+import { assert, REPO, run, evidence } from "./cdp.ts";
 
 const lang = process.argv[2] ?? "en";
 const theme = (process.argv[3] ?? "dark") as "dark" | "light";
@@ -26,7 +26,7 @@ await run(async (app) => {
   await app.setField(strings["prefs.curseforgeKey"], "  my-cf-key  ", ".prefsdialog");
   await app.sleep(300);
   assert(saved() === "my-cf-key", `the key is saved in the app's preferences, trimmed: ${saved()}`);
-  await app.shot(`design/173/preferences-${lang}-${theme}.png`);
+  await app.shot(evidence(`design/173/preferences-${lang}-${theme}.png`));
   await app.setField(strings["prefs.curseforgeKey"], "", ".prefsdialog");
   await app.sleep(300);
   assert(saved() === undefined, "clearing the field removes the key");

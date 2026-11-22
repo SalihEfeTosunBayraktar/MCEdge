@@ -6,10 +6,10 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const project = exampleProject();
-const OUT = "design/texture-editor";
+const OUT = evidence("design/texture-editor");
 
 /** Pixel [r, g, b, a, width] of a project texture, decoded in the page. */
 const pixel = (app: App, path: string, x: number, y: number) =>

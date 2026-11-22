@@ -7,9 +7,9 @@
  */
 import { showInApp } from "../../src/live/show.ts";
 import { animationSchedule, frameAt } from "../../src/resources/textureAnimation.ts";
-import { assert, copyProject, run, type App } from "./cdp.ts";
+import { assert, copyProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/166";
+const OUT = evidence("design/166");
 
 // ---- the schedule
 const solar = animationSchedule(JSON.stringify({ animation: { frametime: 4, interpolate: true } }), 256, 2304)!;

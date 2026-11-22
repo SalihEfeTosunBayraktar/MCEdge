@@ -7,11 +7,11 @@
 import { spawnSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, REPO, run, type App } from "./cdp.ts";
+import { assert, exampleProject, REPO, run, type App, evidence, textOf } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 import { registerGuiTools } from "../../src/mcp/gui.ts";
 
-const OUT = "design/gui-editor";
+const OUT = evidence("design/gui-editor");
 const project = exampleProject();
 addElement(project, "gui", "groupgui", {
   type: 0, width: 176, height: 166, snapOnGrid: false,
@@ -30,8 +30,8 @@ const waitSaved = async (app: App) => {
   await app.waitFor(`!document.querySelector(".smsg.saving")`);
 };
 const CTRL = 2, SHIFT = 8;
-const selectedTexts = (app: App) => app.eval<string[]>(`[...document.querySelectorAll(".gwidget.sel")].map((e) => e.textContent.trim()).sort()`);
-const widget = (text: string) => `[...document.querySelectorAll(".gwidget")].find((e) => e.textContent.trim() === ${JSON.stringify(text)})`;
+const selectedTexts = (app: App) => app.eval<string[]>(`[...document.querySelectorAll(".gwidget.sel")].map((e) => ${textOf("e")}).sort()`);
+const widget = (text: string) => `[...document.querySelectorAll(".gwidget")].find((e) => ${textOf("e")} === ${JSON.stringify(text)})`;
 const centre = async (app: App, text: string): Promise<[number, number]> => {
   const r = await app.eval<{ x: number; y: number; w: number; h: number }>(`(() => { const r = ${widget(text)}.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; })()`);
   return [r.x + r.w / 2, r.y + r.h / 2];

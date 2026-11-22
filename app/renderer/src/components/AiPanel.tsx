@@ -5,6 +5,7 @@ import { api } from "../api.ts";
 import type { AiPart, AiTurn, useAiPanel } from "../hooks/useAiPanel.ts";
 import { t } from "../strings.ts";
 import { Icon } from "./Icon.tsx";
+import { ManualPath } from "./ManualPath.tsx";
 
 interface Props {
   dir: string;
@@ -15,6 +16,8 @@ interface Props {
   onPreferences: () => void;
   /** Changes when Ctrl+Shift+A asks for the input box. */
   focusRequest: number;
+  /** A message to put in the input box (not sent); a new `n` replaces what is typed. */
+  draft?: { text: string; n: number };
 }
 
 /** What a tool call is about, for its row: "item/ruby" for an element, else its id, path or name. */
@@ -23,6 +26,8 @@ function targetOf(args: Record<string, unknown>): string {
   if (text(args.type) && text(args.id)) return `${text(args.type)}/${text(args.id)}`;
   return text(args.id) || text(args.path) || text(args.name);
 }
+
+const isValues = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 
 function ToolRow({ part }: { part: Extract<AiPart, { kind: "tool" }> }) {
   const [open, setOpen] = useState(false);
@@ -36,6 +41,7 @@ function ToolRow({ part }: { part: Extract<AiPart, { kind: "tool" }> }) {
         {target && <span className="aitooltarget">{target}</span>}
         <span className="aitoolstatus">{status}</span>
       </button>
+      {part.status === "ok" && <ManualPath call={{ tool: part.name, target, fields: isValues(part.args.values) ? Object.keys(part.args.values) : undefined }} />}
       {open && (
         <div className="aitoolbody">
           <p className="aihead">{t("ai.toolArguments")}</p>
@@ -93,7 +99,7 @@ function Reply({ dir, turn, live }: { dir: string; turn: AiTurn; live: LiveState
  * through the project's own MCP server, so what it changes shows in the Agents view and "Undo this reply" is the
  * per-call undo of the calls that reply made.
  */
-export function AiPanel({ dir, chat, live, preferencesRev, onPreferences, focusRequest }: Props) {
+export function AiPanel({ dir, chat, live, preferencesRev, onPreferences, focusRequest, draft }: Props) {
   const [configured, setConfigured] = useState<boolean>();
   const [text, setText] = useState("");
   const input = useRef<HTMLTextAreaElement>(null);
@@ -105,6 +111,9 @@ export function AiPanel({ dir, chat, live, preferencesRev, onPreferences, focusR
   useEffect(() => {
     input.current?.focus();
   }, [configured, focusRequest]);
+  useEffect(() => {
+    if (draft) setText(draft.text);
+  }, [draft?.n]);
   useEffect(() => {
     log.current?.scrollTo({ top: log.current.scrollHeight });
   }, [chat.turns]);

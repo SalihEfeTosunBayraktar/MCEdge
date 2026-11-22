@@ -6,13 +6,13 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, REPO, run, type App } from "./cdp.ts";
+import { assert, exampleProject, REPO, run, type App, evidence } from "./cdp.ts";
 
 const lang = (process.argv[2] ?? "en") as "en" | "tr";
 const theme = (process.argv[3] ?? "dark") as "dark" | "light";
 const suffix = process.argv[4] ?? "after";
 const strings = JSON.parse(readFileSync(join(REPO, "config", "ui-strings", `${lang}.json`), "utf8")) as Record<string, string>;
-const OUT = `design/122`;
+const OUT = evidence(`design/122`);
 const shot = (app: App, name: string) => app.shot(`${OUT}/${name}-${lang}-${theme}-${suffix}.png`);
 const menu = async (app: App, index: number, item: string) => {
   await app.eval(`document.querySelectorAll(".menubar .menus .menu")[${index}].click()`);

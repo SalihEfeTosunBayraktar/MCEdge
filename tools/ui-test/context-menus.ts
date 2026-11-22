@@ -6,11 +6,11 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect } from "../mcp-test/client.ts";
-import { assert, copyProject, exampleProject, run, type App } from "./cdp.ts";
+import { assert, copyProject, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const project = copyProject(exampleProject(), "hello");
 writeFileSync(join(project, "folders.json"), JSON.stringify({ folders: ["Box", "Other"], placement: {} }, null, 2));
-const OUT = "design/context-menus";
+const OUT = evidence("design/context-menus");
 const folders = () => JSON.parse(readFileSync(join(project, "folders.json"), "utf8")) as { folders: string[]; placement: Record<string, string>; colors?: Record<string, string> };
 const tileId = (app: App, name: string) => app.eval(`document.getElementById("target")?.removeAttribute("id"); [...document.querySelectorAll(".tile")].find((t) => t.querySelector(".tname").textContent === ${JSON.stringify(name)})?.setAttribute("id", "target")`);
 const menu = (app: App) => app.eval<string[]>(`[...document.querySelectorAll(".menulist.ctx [role=menuitem]")].map((b) => b.textContent)`);
@@ -23,8 +23,8 @@ const rightClick = async (app: App, name: string) => {
 await run(async (app) => {
   await app.click(".rtab", "Mod elements");
   await app.waitFor(`document.querySelectorAll(".tile").length > 2`);
-  // Move is on the toolbar again since KUYRUK 175, as an action on the selection: disabled while nothing is selected.
-  assert(await app.eval<boolean>(`[...document.querySelectorAll(".view .actions .abtn")].find((b) => b.textContent === "Move")?.disabled === true`), "Move needs a selection");
+  // Move is an action on the selection (KUYRUK 175); since Q279 the actions of a selection exist only while something is selected.
+  assert(await app.eval<boolean>(`[...document.querySelectorAll(".view .actions .abtn")].find((b) => b.textContent === "Move") === undefined`), "Move needs a selection");
 
   // Folder menu and colour.
   await rightClick(app, "Box");

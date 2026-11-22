@@ -1,18 +1,19 @@
 import en from "../../../config/ui-strings/en.json" with { type: "json" };
-import tr from "../../../config/ui-strings/tr.json" with { type: "json" };
 
 export type StringKey = keyof typeof en;
 /** Catalog entry ids that have a "catalog.<id>" label. */
 export type CatalogId = StringKey extends infer K ? (K extends `catalog.${infer I}` ? I : never) : never;
 
 /**
- * UI languages, one file per locale in config/ui-strings/. English is complete; other languages may leave keys
- * out and fall back to it.
+ * UI languages: every file in config/ui-strings/ is one (the file name is the code, "language.name" its own name).
+ * English is complete; other languages may leave keys out and fall back to it.
  */
-export const LANGUAGES: Record<string, { name: string; strings: Partial<Record<StringKey, string>> }> = {
-  en: { name: "English", strings: en },
-  tr: { name: "Türkçe", strings: tr },
-};
+const files = (import.meta as unknown as { glob(pattern: string, options: object): Record<string, Partial<Record<StringKey, string>>> }).glob("../../../config/ui-strings/*.json", { eager: true, import: "default" });
+export const LANGUAGES: Record<string, { name: string; strings: Partial<Record<StringKey, string>> }> = { en: { name: "English", strings: en } };
+for (const [path, strings] of Object.entries(files).sort(([a], [b]) => a.localeCompare(b))) {
+  const code = path.slice(path.lastIndexOf("/") + 1, -".json".length);
+  if (code !== "en") LANGUAGES[code] = { name: strings["language.name"] || code, strings };
+}
 
 let current: Partial<Record<StringKey, string>> = en;
 let currentCode = "en";

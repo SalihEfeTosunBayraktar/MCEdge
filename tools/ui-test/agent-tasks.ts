@@ -8,10 +8,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect } from "../mcp-test/client.ts";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const project = exampleProject();
-const OUT = "design/146";
+const OUT = evidence("design/146");
 const ruby = () => JSON.parse(readFileSync(join(project, "elements", "items", "ruby.json"), "utf8"));
 const tag = (app: App, selector: string, text: string, id: string) =>
   app.eval(`document.getElementById(${JSON.stringify(id)})?.removeAttribute("id"); [...document.querySelectorAll(${JSON.stringify(selector)})].find((e) => e.textContent.includes(${JSON.stringify(text)}))?.setAttribute("id", ${JSON.stringify(id)})`);

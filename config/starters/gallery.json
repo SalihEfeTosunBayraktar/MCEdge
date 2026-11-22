@@ -1,0 +1,198 @@
+{
+  "$comment": "Template gallery of verified starters (Q252). targets: the engines every starter must pass on. starters: id (folder config/starters/<id>/ with starter.json and its textures), type (the element type whose sprite its card shows), verified: per engine { build, server, date } written by tools/starters/verify.ts. A starter is listed (gallery, list_starters) only when every target built and passed the dedicated-server smoke test.",
+  "targets": [
+    "fabric-1.21.5",
+    "fabric-26.3",
+    "forge-1.16.5",
+    "neoforge-1.21.5",
+    "neoforge-26.3"
+  ],
+  "starters": [
+    {
+      "id": "sword",
+      "type": "tool",
+      "verified": {
+        "fabric-1.21.5": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "fabric-26.3": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "forge-1.16.5": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "neoforge-1.21.5": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "neoforge-26.3": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        }
+      }
+    },
+    {
+      "id": "ore",
+      "type": "block",
+      "verified": {
+        "fabric-1.21.5": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "fabric-26.3": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "forge-1.16.5": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "neoforge-1.21.5": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "neoforge-26.3": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        }
+      }
+    },
+    {
+      "id": "mob",
+      "type": "living_entity",
+      "verified": {
+        "fabric-1.21.5": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "fabric-26.3": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "forge-1.16.5": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "neoforge-1.21.5": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "neoforge-26.3": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        }
+      }
+    },
+    {
+      "id": "machine",
+      "type": "block",
+      "verified": {
+        "fabric-1.21.5": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "fabric-26.3": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "forge-1.16.5": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "neoforge-1.21.5": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "neoforge-26.3": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        }
+      }
+    },
+    {
+      "id": "food",
+      "type": "item",
+      "verified": {
+        "fabric-1.21.5": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "fabric-26.3": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "forge-1.16.5": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "neoforge-1.21.5": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "neoforge-26.3": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        }
+      }
+    },
+    {
+      "id": "flower",
+      "type": "plant",
+      "verified": {
+        "fabric-1.21.5": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "fabric-26.3": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "forge-1.16.5": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "neoforge-1.21.5": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        },
+        "neoforge-26.3": {
+          "build": "pass",
+          "server": "pass",
+          "date": "2026-11-16"
+        }
+      }
+    }
+  ]
+}

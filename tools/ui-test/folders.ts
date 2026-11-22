@@ -6,10 +6,10 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { connect } from "../mcp-test/client.ts";
-import { assert, copyProject, REPO, run, type App } from "./cdp.ts";
+import { assert, copyProject, REPO, run, type App, evidence } from "./cdp.ts";
 
 const project = copyProject(resolve(REPO, "..", "ETREconomy-MCEdge"), "etr");
-const OUT = "design/folders";
+const OUT = evidence("design/folders");
 // The test starts from a flat element list; the real project has since been sorted into folders.
 writeFileSync(join(project, "folders.json"), JSON.stringify({ folders: [], placement: {} }, null, 2));
 const folders =() => JSON.parse(readFileSync(join(project, "folders.json"), "utf8")) as { folders: string[]; placement: Record<string, string> };

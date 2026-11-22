@@ -8,7 +8,8 @@ import { useAutosave } from "../hooks/useAutosave.ts";
 import { elementName, elementsOf } from "../model.ts";
 import { t, type StringKey } from "../strings.ts";
 import { MiniBar, RefDatalists } from "./ElementFields.tsx";
-import { ActionBar, ActionButton, DataTable, FindBar, FindSelect, FormGroup, FormRow, PanelEmpty, Problems, Separator, SidePanel, useDialogFocus } from "./ui.tsx";
+import { ActionButton, DataTable, FindBar, FindSelect, FormGroup, FormRow, Problems, Separator, useDialogFocus } from "./ui.tsx";
+import { InspectorToggle, ViewShell, type DockSection } from "../dock/Dock.tsx";
 import { useRevealQuery } from "../hooks/reveal.ts";
 
 /** Autocomplete list (ElementFields' RefDatalists) per tag type; types without one get this mod's elements only. */
@@ -88,24 +89,67 @@ export function TagsView({ snapshot, onSaved }: Props) {
   const own = current ? elementsOf(snapshot, TAG_PROVIDERS[current.type]) : [];
   const listId = current ? REF_LIST[current.type] ?? "ref-tag-own" : undefined;
   const typeLabel = (type: TagType) => t(`tags.type.${type}` as StringKey);
+  /** The selected tag, edited in the inspector (Q284): its type and id, its entries, and its problems. */
+  const none = <p className="hint">{t("tags.selectHint")}</p>;
+  const sections: DockSection[] = [
+    { id: "tags.tag", icon: "tag", title: t("tags.group"), body: !current ? none : (
+      <div className="form tagform">
+        <FormRow label={t("tags.col.type")}>
+          <select value={current.type} onChange={(e) => update({ type: e.target.value as TagType })}>
+            {TAG_TYPES.map((type) => <option key={type} value={type}>{typeLabel(type)}</option>)}
+          </select>
+        </FormRow>
+        <FormRow label={t("tags.col.id")} top>
+          <input value={current.id} spellCheck={false} onChange={(e) => update({ id: e.target.value.trim().toLowerCase() })} />
+          <p className="fhelp">{t("tags.idHint", { mod: modId })}</p>
+        </FormRow>
+      </div>
+    ) },
+    { id: "tags.entries", icon: "table", title: t("tags.entries"), badge: current ? String(current.entries.length) : undefined, body: !current ? none : (
+      <div className="form tagform">
+        {/* Entry actions belong to the entry list, so they sit in its own bar, not in the section toolbar (KUYRUK 124). */}
+        <MiniBar meta={t("list.count", { count: current.entries.length })} actions={[
+          { icon: "plus", label: t("tags.addEntry"), onClick: newEntry.trim() ? addEntry : undefined },
+          { icon: "trash", label: t("tags.removeEntry"), tone: "danger", onClick: entry !== undefined ? removeEntry : undefined },
+        ]} />
+        <FormRow label={t("tags.newEntry")}>
+          <input list={listId} value={newEntry} spellCheck={false} placeholder={t("tags.entryHint")}
+            onChange={(e) => setNewEntry(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addEntry())} />
+        </FormRow>
+        {current.entries.length === 0 ? <p className="listempty">{t("tags.noEntries")}</p> : (
+          <div className="listrows tagentries" role="listbox" aria-label={t("tags.entries")}>
+            {current.entries.map((value, i) => (
+              <button key={value} type="button" role="option" aria-selected={i === entry} className={`lrow ${i === entry ? "sel" : ""}`} onClick={() => setEntry(i)}>
+                <span className="lnum">{i + 1}</span><code className="ltxt">{value}</code>
+                <span className="dim gxy">{value.startsWith("#") ? t("tags.entryTag") : qualifyTagRef(modId, value).startsWith(`${modId}:`) ? t("tags.entryMod") : t("tags.entryVanilla")}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        <p className="hint">{t(current.type === "biome" || current.type === "damage_type" || current.type === "enchantment" || current.type === "game_event" ? "tags.modernOnly" : "tags.allVersions")}</p>
+      </div>
+    ) },
+    { id: "tags.problems", icon: "warn", title: t("dock.problems"), badge: issues.length ? String(issues.length) : undefined, defaultOpen: issues.length > 0,
+      body: issues.length ? <Problems issues={issues} /> : <p className="hint">{t("dock.noProblemsHere")}</p> },
+  ];
 
   return (
     <section className="view">
-      <FindBar query={query} onQuery={setQuery} placeholder={t("tags.search")} meta={t("tags.count", { count: tags.length })}>
+      <FindBar query={query} onQuery={setQuery} placeholder={t("tags.search")} meta={t("tags.count", { count: tags.length })}
+        actions={<>
+          <ActionButton icon="tag" label={t("tags.common")} onClick={() => setCommon(true)} />
+          {current && <ActionButton icon="trash" label={t("action.deleteSelected")} tone="danger" onClick={remove} />}
+          <ActionButton icon="plus" label={t("tags.add")} tone="primary" onClick={add} />
+          <InspectorToggle />
+        </>}>
         <FindSelect icon="filter" label={t("find.filter")} value={filter} onChange={setFilter} options={[
           { value: "all", label: t("tags.allTypes") }, ...TAG_TYPES.map((type) => ({ value: type, label: typeLabel(type) })),
         ]} />
       </FindBar>
-      <ActionBar>
-        <ActionButton icon="plus" label={t("tags.add")} tone="primary" onClick={add} />
-        <ActionButton icon="tag" label={t("tags.common")} onClick={() => setCommon(true)} />
-        <Separator />
-        <ActionButton icon="trash" label={t("action.deleteSelected")} tone="danger" disabled={!current} onClick={remove} />
-      </ActionBar>
       {common && <CommonTagsDialog snapshot={snapshot} tags={tags} onAdd={addCommon} onClose={() => setCommon(false)} />}
       <RefDatalists snapshot={snapshot} />
       <datalist id="ref-tag-own">{own.map(({ typeId, element }) => <option key={element.id} value={element.id}>{elementName(typeId, element)}</option>)}</datalist>
-      <div className="split">
+      <ViewShell sections={sections} inspectorLabel={t("dock.inspector")} inspectorClass="tagsinsp">
         <DataTable rows={rows} rowKey={(r) => String(r.index)} selected={selected === undefined ? undefined : String(selected)}
           onSelect={(key) => (setSelected(Number(key)), setEntry(undefined))} empty={tags.length ? t("list.noMatch") : t("tags.empty")}
           columns={[
@@ -114,47 +158,7 @@ export function TagsView({ snapshot, onSaved }: Props) {
             { label: t("tags.col.kind"), width: "18%", cell: (r) => <span className="dim">{t(qualifyTagRef(modId, r.tag.id).startsWith(`${modId}:`) ? "tags.kind.own" : "tags.kind.extends")}</span> },
             { label: t("tags.col.entries"), cell: (r) => <span>{r.tag.entries.join(", ") || <span className="dim">{t("tags.noEntries")}</span>}</span> },
           ]} />
-        <SidePanel title={t("tags.edit")}>
-          {current ? (
-            <div className="form tagform">
-              <FormGroup title={t("tags.group")}>
-                <FormRow label={t("tags.col.type")}>
-                  <select value={current.type} onChange={(e) => update({ type: e.target.value as TagType })}>
-                    {TAG_TYPES.map((type) => <option key={type} value={type}>{typeLabel(type)}</option>)}
-                  </select>
-                </FormRow>
-                <FormRow label={t("tags.col.id")} top>
-                  <input value={current.id} spellCheck={false} onChange={(e) => update({ id: e.target.value.trim().toLowerCase() })} />
-                  <p className="fhelp">{t("tags.idHint", { mod: modId })}</p>
-                </FormRow>
-              </FormGroup>
-              <FormGroup title={t("tags.entries")}>
-                {/* Entry actions belong to the entry list, so they sit in its own bar, not in the section toolbar (KUYRUK 124). */}
-                <MiniBar meta={t("list.count", { count: current.entries.length })} actions={[
-                  { icon: "plus", label: t("tags.addEntry"), onClick: newEntry.trim() ? addEntry : undefined },
-                  { icon: "trash", label: t("tags.removeEntry"), tone: "danger", onClick: entry !== undefined ? removeEntry : undefined },
-                ]} />
-                <FormRow label={t("tags.newEntry")}>
-                  <input list={listId} value={newEntry} spellCheck={false} placeholder={t("tags.entryHint")}
-                    onChange={(e) => setNewEntry(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addEntry())} />
-                </FormRow>
-                {current.entries.length === 0 ? <p className="listempty">{t("tags.noEntries")}</p> : (
-                  <div className="listrows tagentries" role="listbox" aria-label={t("tags.entries")}>
-                    {current.entries.map((value, i) => (
-                      <button key={value} type="button" role="option" aria-selected={i === entry} className={`lrow ${i === entry ? "sel" : ""}`} onClick={() => setEntry(i)}>
-                        <span className="lnum">{i + 1}</span><code className="ltxt">{value}</code>
-                        <span className="dim gxy">{value.startsWith("#") ? t("tags.entryTag") : qualifyTagRef(modId, value).startsWith(`${modId}:`) ? t("tags.entryMod") : t("tags.entryVanilla")}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <p className="hint">{t(current.type === "biome" || current.type === "damage_type" || current.type === "enchantment" || current.type === "game_event" ? "tags.modernOnly" : "tags.allVersions")}</p>
-              </FormGroup>
-              <Problems issues={issues} />
-            </div>
-          ) : <PanelEmpty text={t("tags.selectHint")} />}
-        </SidePanel>
-      </div>
+      </ViewShell>
     </section>
   );
 }

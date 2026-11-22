@@ -21,6 +21,36 @@ const openGui = { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [
 ] }] };
 /** Q205: the session the entity's open GUI shows, and a log line "<prefix><session> <rest>". */
 const sessionOf = { block: "gui_session_id", inputs: { entity: dep } };
+// Q263 data_probe helpers: the probe's mob variable, a saved value read, and a left-leaning text join of many parts.
+const dataMob = { block: "local_entity_get", fields: { var: "mob" } };
+const cartRef = { block: "local_entity_get", fields: { var: "cart" } };
+/** Q264: the item id in a hand of an entity. */
+const handId = (entity: unknown, hand: string) => ({ block: "item_id", inputs: { itemstack: { block: "player_hand_item", fields: { hand }, inputs: { entity } } } });
+/** Q265 structure probe helpers. */
+const idx = { block: "local_number_get", fields: { var: "i" } };
+const sCount = (structure: string, air = false) => ({ block: "structure_block_count", fields: { air }, inputs: { structure } });
+const sSize = (structure: string, axis: string) => ({ block: "structure_size", fields: { axis }, inputs: { structure } });
+const sPos = (structure: string, axis: string) => ({ block: "structure_block_pos", fields: { axis, air: false }, inputs: { structure, index: idx } });
+const addN = (a: unknown, b: unknown) => ({ block: "math_arithmetic", fields: { op: "ADD" }, inputs: { a, b } });
+/** Logs the count and size of a structure, then places it block by block at the origin and logs the first `shown` entries. */
+const structureProbe = (tag: string, structure: string, origin: [number, number, number], shown: number, facing: boolean) => [
+  { block: "log", inputs: { text: joinAll(`[struct] ${tag} count `, fromNumber(sCount(structure)), " air ", fromNumber(sCount(structure, true)), " size ", fromNumber(sSize(structure, "x")), " ", fromNumber(sSize(structure, "y")), " ", fromNumber(sSize(structure, "z"))) } },
+  { block: "for_range", fields: { var: "i" }, inputs: { from: 0, to: { block: "math_arithmetic", fields: { op: "MINUS" }, inputs: { a: sCount(structure), b: 1 } }, step: 1, do: [
+    { block: "block_place_state", inputs: {
+      blockstate: { block: "structure_block_state", fields: { air: false }, inputs: { structure, index: idx } },
+      x: addN(origin[0], sPos(structure, "x")), y: addN(origin[1], sPos(structure, "y")), z: addN(origin[2], sPos(structure, "z")) } },
+    { block: "if", inputs: { cond: { block: "logic_compare", fields: { op: "LT" }, inputs: { a: idx, b: shown } }, then: [
+      { block: "log", inputs: { text: joinAll(`[struct] ${tag} #`, fromNumber(idx), " ", { block: "structure_block_id", fields: { air: false }, inputs: { structure, index: idx } }, " ",
+        fromNumber(sPos(structure, "x")), " ", fromNumber(sPos(structure, "y")), " ", fromNumber(sPos(structure, "z")),
+        ...(facing ? [" ", { block: "block_state_text", fields: { property: "facing" }, inputs: { blockstate: { block: "structure_block_state", fields: { air: false }, inputs: { structure, index: idx } } } }] : [])) } },
+    ] } },
+  ] } },
+  { block: "log", inputs: { text: `[struct] ${tag} placed` } },
+];
+const savedGet = (type: string, key: string) => ({ block: `entity_saved_get_${type}`, inputs: { entity: dataMob, key } });
+const fromNumber = (value: unknown) => ({ block: "text_from_number", inputs: { value } });
+const fromLogic = (value: unknown) => ({ block: "text_from_logic", inputs: { value } });
+const joinAll = (...parts: unknown[]): unknown => parts.reduce((a, b) => ({ block: "text_join", inputs: { a, b } }));
 const sessionLine = (prefix: string, rest: unknown) => ({ block: "text_join", inputs: { a: prefix, b: { block: "text_join", inputs: { a: sessionOf, b: { block: "text_join", inputs: { a: " ", b: rest } } } } } });
 /** Q227: "<menu> <tab> <slice>" of the chosen radial menu slice. */
 const depText = (name: string) => ({ block: "dep_text", fields: { dep: name } });
@@ -42,6 +72,102 @@ export const SPEC: Record<string, Record<string, Record<string, unknown>>> = {
     ] }] } },
     // KUYRUK 46 P1: UseHoeEvent mapping (the hoe's own use; a mixin on ItemStack.useOn on Fabric).
     hoe_probe: { title: "Hoe probe", returnType: "none", globalTrigger: "player_use_hoe", program: log("[probe] hoe used") },
+    // Q256: full item stack comparison (item + data, count ignored); compile coverage on every engine.
+    stackcmp_probe: { title: "Stack compare probe", returnType: "none", globalTrigger: "player_use_hoe", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [{ block: "start" },
+      { block: "if", inputs: { cond: { block: "compare_itemstacks_full", inputs: { a: { block: "dep_itemstack", fields: { dep: "itemstack" } }, b: { block: "item_empty" } } }, then: [{ block: "log", inputs: { text: "[probe] stack equal" } }] } },
+    ] }] } },
+    // Q261: entity_navigate_to / entity_navigation_done. Once per server tick the nearest entity around 0 100 0 (the pig the
+    // runtime script summons) is walked to 10.5 100 0.5; logs "[nav] go", "[nav] walking" (navigation busy) and "[nav] arrived".
+    nav_probe: { title: "Navigation probe", returnType: "none", globalTrigger: "server_ticks", program: { format: 1, variables: [{ name: "mob", type: "entity" }], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "local_entity_set", fields: { var: "mob" }, inputs: { value: { block: "world_nearest_entity", inputs: { x: 0.5, y: 100, z: 0.5, range: 40 } } } },
+      { block: "if", inputs: { cond: { block: "entity_exists", inputs: { entity: { block: "local_entity_get", fields: { var: "mob" } } } }, then: [
+        { block: "if_else", inputs: { cond: { block: "entity_navigation_done", inputs: { entity: { block: "local_entity_get", fields: { var: "mob" } } } },
+          then: [{ block: "if_else", inputs: { cond: { block: "logic_compare", fields: { op: "GT" }, inputs: { a: { block: "entity_distance_to", inputs: { entity: { block: "local_entity_get", fields: { var: "mob" } }, x: 10.5, y: 100, z: 0.5 } }, b: 1.5 } },
+            then: [
+              { block: "entity_navigate_to", inputs: { entity: { block: "local_entity_get", fields: { var: "mob" } }, x: 10.5, y: 100, z: 0.5, speed: 1 } },
+              { block: "log", inputs: { text: "[nav] go" } },
+            ],
+            else: [{ block: "if", inputs: { cond: { block: "logic_compare", fields: { op: "EQ" }, inputs: { a: { block: "math_arithmetic", fields: { op: "MODULO" }, inputs: { a: { block: "world_time" }, b: 20 } }, b: 0 } }, then: [{ block: "log", inputs: { text: "[nav] arrived" } }] } }] } }],
+          else: [{ block: "if", inputs: { cond: { block: "logic_compare", fields: { op: "EQ" }, inputs: { a: { block: "math_arithmetic", fields: { op: "MODULO" }, inputs: { a: { block: "world_time" }, b: 20 } }, b: 0 } }, then: [{ block: "log", inputs: { text: "[nav] walking" } }] } }] } },
+      ] } },
+    ] }] } },
+    // Q263: entity_saved_*. Once per server tick the nearest entity around 0 100 0 (the pig the runtime script summons): when its
+    // saved logic "probe_set" is false it gets a number, a text and a logic value and logs "[data] wrote"; afterwards, once a second, it logs
+    // "[data] read <number> <text> <logic> missing <number> <text> <logic>" (the last three are keys never written, so the defaults).
+    // A second server run on the same world must log "read" with the saved values and never "wrote".
+    data_probe: { title: "Entity data probe", returnType: "none", globalTrigger: "server_ticks", program: { format: 1, variables: [{ name: "mob", type: "entity" }], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "local_entity_set", fields: { var: "mob" }, inputs: { value: { block: "world_nearest_entity", inputs: { x: 0.5, y: 100, z: 0.5, range: 40 } } } },
+      { block: "if", inputs: { cond: { block: "entity_exists", inputs: { entity: dataMob }, }, then: [
+        { block: "if_else", inputs: { cond: savedGet("logic", "probe_set"),
+          then: [{ block: "if", inputs: { cond: { block: "logic_compare", fields: { op: "EQ" }, inputs: { a: { block: "math_arithmetic", fields: { op: "MODULO" }, inputs: { a: { block: "world_time" }, b: 20 } }, b: 0 } }, then: [
+            { block: "log", inputs: { text: joinAll("[data] read ", fromNumber(savedGet("number", "probe_n")), " ", savedGet("text", "probe_t"), " ", fromLogic(savedGet("logic", "probe_l")),
+              " missing ", fromNumber(savedGet("number", "probe_none")), " ", savedGet("text", "probe_none"), " ", fromLogic(savedGet("logic", "probe_none"))) } },
+          ] } }],
+          else: [
+            { block: "entity_saved_set_number", inputs: { entity: dataMob, key: "probe_n", value: 42.5 } },
+            { block: "entity_saved_set_text", inputs: { entity: dataMob, key: "probe_t", value: "hello_world" } },
+            { block: "entity_saved_set_logic", inputs: { entity: dataMob, key: "probe_l", value: true } },
+            { block: "entity_saved_set_logic", inputs: { entity: dataMob, key: "probe_set", value: true } },
+            { block: "log", inputs: { text: joinAll("[data] wrote ", { block: "entity_type_id", inputs: { entity: dataMob } }) } },
+          ] } },
+      ] } },
+    ] }] } },
+    // Q264: entity_swing_arm and the hand blocks on a mob. Every 40 ticks the procedure spawns its own pig (and a minecart, a non-living
+    // entity), puts a diamond pickaxe in the pig's main hand and a torch in its off hand, logs "[hold] pig main <id> off <id>", swings both
+    // arms, logs "[hold] swung", then does the same calls on the minecart and logs "[hold] minecart main <id>" (must stay air, no error), and kills both.
+    hold_probe: { title: "Hold probe", returnType: "none", globalTrigger: "server_ticks", program: { format: 1, variables: [{ name: "mob", type: "entity" }, { name: "cart", type: "entity" }], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "if", inputs: { cond: { block: "logic_compare", fields: { op: "EQ" }, inputs: { a: { block: "math_arithmetic", fields: { op: "MODULO" }, inputs: { a: { block: "world_time" }, b: 40 } }, b: 0 } }, then: [
+        { block: "local_entity_set", fields: { var: "mob" }, inputs: { value: { block: "world_spawn_entity_get", fields: { type: "minecraft:pig" }, inputs: { x: 0.5, y: 100, z: 0.5 } } } },
+        { block: "local_entity_set", fields: { var: "cart" }, inputs: { value: { block: "world_spawn_entity_get", fields: { type: "minecraft:minecart" }, inputs: { x: 3.5, y: 100, z: 0.5 } } } },
+        { block: "player_set_hand_item", fields: { hand: "main" }, inputs: { entity: dataMob, itemstack: { block: "item_stack", fields: { item: "minecraft:diamond_pickaxe" }, inputs: { count: 1 } } } },
+        { block: "player_set_hand_item", fields: { hand: "off" }, inputs: { entity: dataMob, itemstack: { block: "item_stack", fields: { item: "minecraft:torch" }, inputs: { count: 1 } } } },
+        { block: "log", inputs: { text: joinAll("[hold] pig main ", handId(dataMob, "main"), " off ", handId(dataMob, "off")) } },
+        { block: "entity_swing_arm", fields: { hand: "main" }, inputs: { entity: dataMob } },
+        { block: "entity_swing_arm", fields: { hand: "off" }, inputs: { entity: dataMob } },
+        { block: "log", inputs: { text: "[hold] swung" } },
+        { block: "player_set_hand_item", fields: { hand: "main" }, inputs: { entity: cartRef, itemstack: { block: "item_stack", fields: { item: "minecraft:diamond_pickaxe" }, inputs: { count: 1 } } } },
+        { block: "entity_swing_arm", fields: { hand: "main" }, inputs: { entity: cartRef } },
+        { block: "log", inputs: { text: joinAll("[hold] minecart main ", handId(cartRef, "main")) } },
+        { block: "entity_kill", inputs: { entity: dataMob } },
+        { block: "entity_kill", inputs: { entity: cartRef } },
+      ] } },
+    ] }] } },
+    // Q266: a living entity's hurt procedure that returns logic decides the damage. hurt_guard logs "[hurtguard] hurt <amount>" and lets only
+    // hits of 10 or more through. Every 40 ticks hurtguard_probe spawns a hurt_guard_mob (health 20), hits it for 4 (cancelled) and 12 (kept),
+    // logs its health after each and kills it: expected "[hurtguard] after small 20" and "[hurtguard] after big 8".
+    hurt_guard: { title: "Hurt guard", returnType: "logic", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "log", inputs: { text: joinAll("[hurtguard] hurt ", fromNumber({ block: "dep_number", fields: { dep: "amount" } })) } },
+      { block: "return_logic", inputs: { value: { block: "logic_compare", fields: { op: "GTE" }, inputs: { a: { block: "dep_number", fields: { dep: "amount" } }, b: 10 } } } },
+    ] }] } },
+    hurtguard_probe: { title: "Hurt guard probe", returnType: "none", globalTrigger: "server_ticks", program: { format: 1, variables: [{ name: "mob", type: "entity" }], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "if", inputs: { cond: { block: "logic_compare", fields: { op: "EQ" }, inputs: { a: { block: "math_arithmetic", fields: { op: "MODULO" }, inputs: { a: { block: "world_time" }, b: 40 } }, b: 0 } }, then: [
+        { block: "local_entity_set", fields: { var: "mob" }, inputs: { value: { block: "world_spawn_entity_get", fields: { type: "wavethree:hurt_guard_mob" }, inputs: { x: 6.5, y: 100, z: 6.5 } } } },
+        { block: "damage_deal", fields: { type: "generic" }, inputs: { entity: dataMob, amount: 4 } },
+        { block: "log", inputs: { text: joinAll("[hurtguard] after small ", fromNumber({ block: "entity_health", inputs: { entity: dataMob } })) } },
+        { block: "damage_deal", fields: { type: "generic" }, inputs: { entity: dataMob, amount: 12 } },
+        { block: "log", inputs: { text: joinAll("[hurtguard] after big ", fromNumber({ block: "entity_health", inputs: { entity: dataMob } })) } },
+        { block: "entity_kill", inputs: { entity: dataMob } },
+      ] } },
+    ] }] } },
+    // Q265: structure_* blocks. Every 40 ticks the procedure logs the count and size of the project template "probe_house" (without and with air)
+    // and of vanilla minecraft:igloo/top, places both block by block (house at 0 100 0, igloo at 4 100 0) and logs the first entries; out-of-range reads
+    // are logged too. The runtime script compares the log with the template and the igloo with a vanilla /place template copy.
+    // Q268: it runs only while the marker gold block at 15 99 15 stands (set and removed by commands-structprobe.txt), so other runtime checks
+    // that share the area (rules, energy tank at 0 100 0) are not overwritten.
+    structure_probe: { title: "Structure probe", returnType: "none", globalTrigger: "server_ticks", program: { format: 1, variables: [{ name: "i", type: "number" }], stacks: [{ x: 40, y: 40, blocks: [
+      { block: "start" },
+      { block: "if", inputs: { cond: { block: "logic_operation", fields: { op: "AND" }, inputs: { a: { block: "block_at_is", fields: { block: "minecraft:gold_block" }, inputs: { x: 15, y: 99, z: 15 } }, b: { block: "logic_compare", fields: { op: "EQ" }, inputs: { a: { block: "math_arithmetic", fields: { op: "MODULO" }, inputs: { a: { block: "world_time" }, b: 40 } }, b: 0 } } } }, then: [
+        ...structureProbe("house", "probe_house", [0, 100, 0], 8, true),
+        ...structureProbe("igloo", "minecraft:igloo/top", [4, 100, 0], 3, false),
+        { block: "log", inputs: { text: joinAll("[struct] misc missing ", fromNumber(sCount("nothing_here")), " range [", { block: "structure_block_id", fields: { air: false }, inputs: { structure: "probe_house", index: 99 } }, "] air0 ",
+          { block: "structure_block_id", fields: { air: true }, inputs: { structure: "probe_house", index: 1 } }) } },
+      ] } },
+    ] }] } },
     // KUYRUK 49: a message the client translates (key and arguments in the component); compile coverage on every engine.
     translated_probe: { title: "Translated probe", returnType: "none", globalTrigger: "player_use_hoe", program: { format: 1, variables: [{ name: "args", type: "list" }], stacks: [{ x: 40, y: 40, blocks: [{ block: "start" },
       { block: "local_list_set", fields: { var: "args" }, inputs: { value: { block: "list_new" } } },
@@ -125,6 +251,10 @@ export const SPEC: Record<string, Record<string, Record<string, unknown>>> = {
     ] }] } },
     fuel_time: { title: "Fuel time", returnType: "number", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [{ block: "start" }, { block: "return_number", inputs: { value: 600 } }] }] } },
     dispense_result: { title: "Dispense result", returnType: "itemstack", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [{ block: "start" }, { block: "return_itemstack", inputs: { value: { block: "item_stack", fields: { item: "minecraft:diamond" }, inputs: { count: 1 } } } }] }] } },
+    // Q262: ai_work. The condition holds while a redstone block stands at 20 100 20 (the runtime script sets and removes it); the tick procedure logs "[work] tick".
+    work_on: { title: "Work on", returnType: "logic", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [{ block: "start" },
+      { block: "return_logic", inputs: { value: { block: "block_at_is", fields: { block: "minecraft:redstone_block" }, inputs: { x: 20, y: 100, z: 20 } } } }] }] } },
+    work_tick: { title: "Work tick", returnType: "none", program: log("[work] tick") },
     always: { title: "Always", returnType: "logic", program: { format: 1, variables: [], stacks: [{ x: 40, y: 40, blocks: [{ block: "start" }, { block: "return_logic", inputs: { value: true } }] }] } },
     entity_log: { title: "Entity log", returnType: "none", program: entityLog },
     plain_log: { title: "Plain log", returnType: "none", program: log("[wavethree] plain") },
@@ -312,6 +442,9 @@ export const SPEC: Record<string, Record<string, Record<string, unknown>>> = {
       animations: [{ animation: "WALK", walking: true, speed: 1.5, amplitude: 2 }, { animation: "RubyBeastAnimation.IDLE", syncedDataCondition: "idle", speed: 1 }, { animation: "missing_anim" }],
       modelLayers: [{ model: "ruby_imp", texture: T }, { model: "Cow", texture: T }], onMobTickUpdate: "beast_tick" },
     ruby_blob: { mobName: "Ruby Blob", mobModelName: "ruby_blob", mobModelTexture: "textures/ruby_block.png", spawnThisMob: false, animations: [{ animation: "bounce", condition: "always" }], boundingBoxScaleProcedure: "beast_scale", solidBoundingBoxProcedure: "always", breatheUnderwaterProcedure: "always", pushedByFluidsProcedure: "never" },
+    // Q262: ai_work with a start condition procedure and a tick procedure (continueCondition empty: the start condition is reused).
+    hurt_guard_mob: { mobModelTexture: "textures/ruby_block.png", mobName: "Hurt Guard", mobModelName: "Cow", health: 20, spawnThisMob: false, whenMobIsHurt: "hurt_guard", aixml: ai(["ai_float"]) },
+    ruby_worker: { mobModelTexture: "textures/ruby_block.png", mobName: "Ruby Worker", mobModelName: "Cow", spawnThisMob: false, aixml: ai(["ai_float"], ["ai_work", { procedure: "work_tick", condition: "work_on" }]) },
     ruby_zombie: { mobModelTexture: "textures/ruby_block.png", mobName: "Ruby Zombie", aiBase: "Zombie", mobModelName: "Spider", spawnThisMob: true, mobSpawningType: "monster", aixml: ai(["ai_leap"]) },
     ruby_wolf: { mobModelTexture: "textures/ruby_block.png", mobName: "Ruby Wolf", aiBase: "Wolf", mobModelName: "Ocelot", spawnThisMob: false },
     ruby_cube: { mobModelTexture: "textures/ruby_block.png", mobName: "Ruby Cube", aiBase: "Slime", mobModelName: "Slime", spawnThisMob: false, aixml: ai(["ai_float"]) },
@@ -412,6 +545,20 @@ export const SPEC: Record<string, Record<string, Record<string, unknown>>> = {
         // KUYRUK 96: a toggle button with four textures (the on one animated by its .mcmeta) and one with only two.
         { kind: "toggle_button", x: 150, y: 34, width: 16, height: 16, image: T, hoverImage: "textures/ruby_apple.png", onImage: "textures/toggle_on.png", onHoverImage: "textures/ruby_block.png", stateProcedure: "always", procedure: "plain_log", condition: "always" },
         { kind: "toggle_button", x: 150, y: 52, width: 20, height: 20, image: T, onImage: "textures/ruby_apple.png", procedure: "plain_log" },
+      ],
+    },
+    // Q257: place filters. Slot 0 takes gems (a #forge tag, #c on 1.21+) and is "locked" while `never` is true (false);
+    // slot 1 takes only paper and is locked by `never`; slot 2 takes anything; slot 3 is locked by `always`
+    // although its filter lists sticks; slot 4 takes only sticks and has a higher index than the plain slot 2 (Q258: shift
+    // click offers sticks to slot 4 first). Checked at runtime by filter-runtime.sh and in text by gui-filter-check.ts.
+    filter_gui: {
+      title: "Filter", type: 1, width: 176, height: 166,
+      components: [
+        { kind: "slot", x: 25, y: 30, id: 0, lockCondition: "never", allowed: [{ item: "#forge:gems" }] },
+        { kind: "slot", x: 43, y: 30, id: 1, lockCondition: "never", allowed: [{ item: "minecraft:paper" }] },
+        { kind: "slot", x: 61, y: 30, id: 2 },
+        { kind: "slot", x: 79, y: 30, id: 3, lockCondition: "always", allowed: [{ item: "minecraft:stick" }], limit: "minecraft:bone" },
+        { kind: "slot", x: 97, y: 30, id: 4, allowed: [{ item: "minecraft:stick" }] },
       ],
     },
     // Q205: slots from a shared session (no block); slot 0 locks by a session value, slot 2 is a display slot, slot 3

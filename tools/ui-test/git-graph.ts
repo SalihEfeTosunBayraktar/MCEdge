@@ -12,9 +12,9 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import en from "../../config/ui-strings/en.json" with { type: "json" };
 import tr from "../../config/ui-strings/tr.json" with { type: "json" };
-import { assert, exampleProject, run } from "./cdp.ts";
+import { assert, exampleProject, run, evidence } from "./cdp.ts";
 
-const OUT = "design/197";
+const OUT = evidence("design/197");
 const theme = process.env.LIGHT ? "light" : "dark";
 const language = process.env.TR ? "tr" : "en";
 const s = (language === "tr" ? tr : en) as Record<string, string>;
@@ -67,7 +67,7 @@ await run(async (app) => {
   await app.waitFor(`document.querySelector('.gitchanges tr[data-key="notes.txt"]')`); // the app may also refresh schemas/ on open
 
   // Layout: view-wide actions only on the toolbar; the rest by what they act on.
-  const toolbar = await app.eval<string[]>(texts(".gitview > .actions .abtn"));
+  const toolbar = await app.eval<string[]>(texts(".gitview > .findbar .actions .abtn"));
   assert(toolbar.join() === [s["git.pull"], s["git.push"], s["git.refresh"]].join(), `toolbar keeps pull, push, refresh: ${toolbar}`);
   const form = await app.eval<string[]>(texts(".gitform .gitformact .abtn"));
   assert(form.join() === [s["git.commit"], s["git.commitPush"]].join(), `commit buttons under the message: ${form}`);

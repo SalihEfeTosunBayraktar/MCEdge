@@ -5,9 +5,9 @@
 import { readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { typeRegistry } from "../../src/elements/registry.ts";
-import { assert, exampleProject, run } from "./cdp.ts";
+import { assert, exampleProject, run, evidence } from "./cdp.ts";
 
-const OUT = "design/usability";
+const OUT = evidence("design/usability");
 const project = exampleProject();
 const placement: Record<string, string> = {};
 let n = 0;

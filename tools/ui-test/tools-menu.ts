@@ -15,9 +15,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { exportWorkspace } from "../../src/resources/files.ts";
 import { connect } from "../mcp-test/client.ts";
-import { assert, exampleProject, REPO, run, type App } from "./cdp.ts";
+import { assert, exampleProject, REPO, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/135";
+const OUT = evidence("design/135");
 const theme = process.env.LIGHT ? "light" : "dark";
 const project = exampleProject();
 const menu = async (app: App, name: string, item: string) => (await app.click(".menu", name), await app.click(".menulist button", item));
@@ -72,7 +72,7 @@ await run(async (app) => {
       await app.type("help");
       await app.shot(`${OUT}/after-gradle-task-${theme}.png`);
       await app.key("Enter");
-      await app.waitFor(`(document.querySelector("pre.log")?.textContent ?? "").includes("[mcedge] gradle help")`, 30000);
+      await app.waitFor(`(document.querySelector("pre.log")?.textContent ?? "").includes("[mcedge] gradle help")`, 600000); // a cold checkout first downloads the JDK and Gradle
       await app.waitFor(`/BUILD SUCCESSFUL|BUILD FAILED/.test(document.querySelector("pre.log")?.textContent ?? "")`, 300000);
       assert((await log(app)).includes("BUILD SUCCESSFUL"), "gradle help ran");
 
@@ -99,7 +99,11 @@ await run(async (app) => {
       assert(/out\/[a-z0-9.-]+\/(build|\.gradle)/.test(notice), `caches cleared: ${notice}`);
       assert(!existsSync(join(project, "out", "fabric-1.21.5", ".gradle")) && !existsSync(join(project, "out", "fabric-1.21.5", "build")), "folders removed");
       await app.key("Escape");
-      assert(Array.isArray((await mcp.call<{ removed: string[] }>("clear_gradle_caches")).removed), "mcp clear_gradle_caches");
+      // An agent run waits for the user (Q255): the app asks, the test answers "Allow once" with a click.
+      const cleared = mcp.call<{ removed: string[] }>("clear_gradle_caches");
+      await app.waitFor(`document.querySelector("[data-testid=agent-run]")`, 20000);
+      await app.click("[data-testid=agent-run-once]");
+      assert(Array.isArray((await cleared).removed), "mcp clear_gradle_caches");
     }
 
     // ---- ZIP import

@@ -23,6 +23,15 @@ const AS: Record<Severity, "problems.asError" | "problems.asWarning" | "problems
  */
 export function ProblemsPanel({ issues, ignored, onNewTask, onAction, onFix }: Props) {
   const [showIgnored, setShowIgnored] = useState(false);
+  // Filter chips and search (Q284): a chip is a severity that is shown; all three are on at first.
+  const [shownSeverities, setShownSeverities] = useState<Record<Severity, boolean>>({ error: true, warning: true, info: true });
+  const [query, setQuery] = useState("");
+  const sevOf = (issue: ValidationIssue): Severity => issue.severity ?? "error";
+  const q = query.trim().toLowerCase();
+  const keep = (issue: ValidationIssue) => shownSeverities[sevOf(issue)] && (!q || issue.path.toLowerCase().includes(q) || issueText(issue).toLowerCase().includes(q));
+  const listed = issues.filter(keep);
+  const listedIgnored = ignored.filter(keep);
+  const count = (severity: Severity) => issues.filter((i) => sevOf(i) === severity).length;
   const [menu, setMenu] = useState<{ x: number; y: number; issue: ValidationIssue; isIgnored: boolean }>();
 
   const menuItems = (issue: ValidationIssue, isIgnored: boolean): MenuItem[] => {
@@ -41,7 +50,7 @@ export function ProblemsPanel({ issues, ignored, onNewTask, onAction, onFix }: P
   };
 
   const row = (issue: ValidationIssue, isIgnored: boolean) => {
-    const severity = issue.severity ?? "error";
+    const severity = sevOf(issue);
     const canIgnore = !!onAction && !isIgnored && severity !== "error" && adjustable(issue.code);
     return (
       <li key={issue.path + issue.message} className={`sev-${severity}${isIgnored ? " ignored" : ""}`} data-severity={severity}
@@ -51,7 +60,7 @@ export function ProblemsPanel({ issues, ignored, onNewTask, onAction, onFix }: P
           setMenu({ x: e.clientX, y: e.clientY, issue, isIgnored });
         }}>
         <span className="psev" title={severity === "error" ? `${t("problems.severity.error")}: ${t("problems.errorNote")}` : t(`problems.severity.${severity}`)}>
-          <Icon name={severity === "info" ? "info" : "warn"} size={12} />
+          <Icon name={severity === "info" ? "info" : severity === "error" ? "close" : "warn"} size={12} />
         </span>
         <code>{issue.path}</code> {issueText(issue)}
         {isIgnored && <span className="dim">({t("problems.ignored")})</span>}
@@ -71,10 +80,24 @@ export function ProblemsPanel({ issues, ignored, onNewTask, onAction, onFix }: P
   };
 
   return (
-    <>
+    <div className="problems-view">
+      <div className="pfilter" role="toolbar" aria-label={t("problems.filter")}>
+        {(["error", "warning", "info"] as const).map((severity) => (
+          <button key={severity} type="button" className={`pchip sev-${severity} ${shownSeverities[severity] ? "on" : ""}`} aria-pressed={shownSeverities[severity]}
+            onClick={() => setShownSeverities({ ...shownSeverities, [severity]: !shownSeverities[severity] })}>
+            <Icon name={severity === "info" ? "info" : severity === "error" ? "close" : "warn"} size={12} />
+            <span>{t(`problems.chip.${severity}`)}</span><span className="pcount">{count(severity)}</span>
+          </button>
+        ))}
+        <label className="search pfsearch">
+          <Icon name="search" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("problems.search")} aria-label={t("problems.search")} spellCheck={false} />
+        </label>
+      </div>
       <ul className="problems">
         {issues.length === 0 && <li className="dim">{t("status.noProblems")}</li>}
-        {issues.map((issue) => row(issue, false))}
+        {issues.length > 0 && listed.length === 0 && <li className="dim">{t("list.noMatch")}</li>}
+        {listed.map((issue) => row(issue, false))}
         {ignored.length > 0 && (
           <li className="ptoggle">
             <button className="mbtn" onClick={() => setShowIgnored((on) => !on)}>
@@ -82,10 +105,10 @@ export function ProblemsPanel({ issues, ignored, onNewTask, onAction, onFix }: P
             </button>
           </li>
         )}
-        {showIgnored && ignored.map((issue) => row(issue, true))}
+        {showIgnored && listedIgnored.map((issue) => row(issue, true))}
       </ul>
       {menu && <ContextMenu x={menu.x} y={menu.y} onClose={() => setMenu(undefined)} items={menuItems(menu.issue, menu.isIgnored)} />}
-    </>
+    </div>
   );
 }
 

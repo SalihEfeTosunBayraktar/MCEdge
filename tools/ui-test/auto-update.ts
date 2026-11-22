@@ -15,11 +15,11 @@
  * Refuses to run when MCEdge is already installed for this user; the desktop MCEdge.lnk must stay as it was.
  */
 import { spawnSync } from "node:child_process";
-import { appendFileSync, createReadStream, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { appendFileSync, createReadStream, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { assert, launchApp, REPO, type App } from "./cdp.ts";
+import { assert, launchApp, REPO, type App, evidence } from "./cdp.ts";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const ps = (command: string) => spawnSync("powershell", ["-NoProfile", "-Command", command], { encoding: "utf8" }).stdout.trim();
@@ -42,8 +42,14 @@ const readOrNull = (file: string) => (existsSync(file) ? readFileSync(file) : nu
 const desktopBefore = readOrNull(desktopLink);
 // The installer's relaunch runs with the user's environment, so it reads the real user data folder: kept as it was.
 const userState = ["app-state.json", "texture-drafts.json"].map((name) => join(process.env.APPDATA!, "MCEdge", name)).map((file) => ({ file, data: readOrNull(file) }));
-const shots = "design/207";
+const shots = evidence("design/207");
 
+// electron-builder cannot collect the app's dependencies through a node_modules junction (a worktree's): the packaged app would lack
+// electron-updater and not start. Say so instead of failing with "app did not start"; the test needs a checkout with its own node_modules.
+if (lstatSync(join(REPO, "node_modules")).isSymbolicLink()) {
+  console.log("SKIP auto-update: node_modules is a link (worktree), so the installer would be built without its dependencies");
+  process.exit(0);
+}
 if (uninstallKey()) throw new Error("MCEdge is installed for this user; the test would replace it");
 console.log(`work folder ${work}; ${current} -> ${next}`);
 

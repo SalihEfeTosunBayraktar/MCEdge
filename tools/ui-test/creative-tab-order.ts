@@ -7,10 +7,10 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const project = exampleProject();
-const OUT = "design/creative-tab-order";
+const OUT = evidence("design/creative-tab-order");
 type Entry = { kind: string; id?: string; title?: string; slots?: number };
 const saved = () => (JSON.parse(readFileSync(join(project, "elements", "creative_tabs", "ruby_tab.json"), "utf8")).order ?? []) as Entry[];
 const describe = (order: Entry[]) => order.map((e) => e.id ?? e.kind).join(",");

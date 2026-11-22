@@ -7,6 +7,8 @@ import { duplicateElement } from "../elementActions.ts";
 import { allElements, elementName, elementTexture, findElement, issuesFor, type ElementRef } from "../model.ts";
 import { t } from "../strings.ts";
 import { typeGenerated, typeOf } from "../types.ts";
+import { InspectorToggle, ViewShell } from "../dock/Dock.tsx";
+import { gridSections } from "./GridInspector.tsx";
 import { ELEMENT_DRAG, ElementTile } from "./ElementTile.tsx";
 import { DeleteElementDialog } from "./DeleteElementDialog.tsx";
 import { Icon, type IconName } from "./Icon.tsx";
@@ -219,6 +221,32 @@ export function Workspace({ snapshot, coverage, engineName, engineId, selected, 
     return () => window.removeEventListener("keydown", onKey);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /**
+   * Arrow keys move the focus (which selects the tile) to the neighbouring tile: Left/Right along the reading order,
+   * Up/Down to the tile above or below, Home/End to the first and last (Q248).
+   */
+  const arrowTiles = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.ctrlKey || e.altKey || e.metaKey || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(e.key)) return;
+    const all = [...e.currentTarget.querySelectorAll<HTMLElement>(".tile")];
+    const at = all.indexOf((e.target as HTMLElement).closest<HTMLElement>(".tile") as HTMLElement);
+    if (at < 0) return;
+    let next: HTMLElement | undefined;
+    if (e.key === "Home" || e.key === "End") next = e.key === "Home" ? all[0] : all[all.length - 1];
+    else if (e.key === "ArrowLeft" || e.key === "ArrowRight") next = all[at + (e.key === "ArrowLeft" ? -1 : 1)];
+    else {
+      const from = all[at].getBoundingClientRect();
+      const down = e.key === "ArrowDown";
+      const column = (r: DOMRect) => Math.abs(r.left + r.width / 2 - (from.left + from.width / 2));
+      const rows = all.map((tile) => ({ tile, r: tile.getBoundingClientRect() })).filter(({ r }) => (down ? r.top >= from.bottom - 2 : r.bottom <= from.top + 2));
+      // The nearest row in that direction, and in it the tile in the same column.
+      const near = rows.reduce((best, c) => (best === undefined || (down ? c.r.top < best : c.r.top > best) ? c.r.top : best), undefined as number | undefined);
+      next = rows.filter(({ r }) => r.top === near).sort((a, b) => column(a.r) - column(b.r))[0]?.tile;
+    }
+    if (!next) return;
+    e.preventDefault();
+    next.focus();
+  };
+
   /** Items of the open right-click menu. */
   const menuItems = (): MenuItem[] => {
     if (!menu) return [];
@@ -295,7 +323,8 @@ export function Workspace({ snapshot, coverage, engineName, engineId, selected, 
   return (
     <section className="view">
       <FindBar query={query} onQuery={setQuery} placeholder={t("workspace.search")}
-        meta={t("workspace.count", { count: underOpen, total })}>
+        meta={t("workspace.count", { count: underOpen, total })}
+        actions={<><ActionButton icon="plus" label={t("action.new")} tone="primary" pressed={creating} onClick={() => setCreating(!creating)} /><InspectorToggle /></>}>
         <FindSelect icon="filter" label={t("find.filter")} value={filter} onChange={setFilter} options={[
           { value: "all", label: t("workspace.filter.all") },
           { value: "@problems", label: t("workspace.filter.problems") },
@@ -313,26 +342,7 @@ export function Workspace({ snapshot, coverage, engineName, engineId, selected, 
           { value: "details", label: t("workspace.view.details") },
         ]} />
       </FindBar>
-      <ActionBar>
-        <ActionButton icon="plus" label={t("action.new")} tone="primary" pressed={creating} onClick={() => setCreating(!creating)} />
-        <ActionButton icon="folder" label={t("folders.new")} onClick={() => setNaming({ value: "" })} />
-        <Separator />
-        <ActionButton icon="edit" label={t("action.edit")} disabled={(!current || several) && !pickedFolder}
-          onClick={() => (pickedFolder ? setNaming({ rename: pickedFolder, value: folderName(pickedFolder) }) : current && onOpen(current))} />
-        <ActionButton icon="dup" label={t("action.duplicate")} disabled={!current || several} onClick={duplicate} />
-        <span ref={moveButton} className="movebtn">
-          <ActionButton icon="folder" label={t("folders.move")} disabled={!pickedFolder && (!current || !state.folders.length)}
-            onClick={() => {
-              const r = moveButton.current!.getBoundingClientRect();
-              setMenu({ x: r.left, y: r.bottom + 2, target: pickedFolder ? { folder: pickedFolder } : { element: current! }, page: "move" });
-            }} />
-        </span>
-        <ActionButton icon="warn" label={t("refs.unused")} pressed={!!unused}
-          onClick={() => (unused ? setUnused(undefined) : void api.unusedElements(snapshot.dir).then((report) => setUnused(new Set(report.unused.map((u) => elementKey(u.type, u.id))))))} />
-        <Separator />
-        <ActionButton icon="trash" label={t("action.deleteSelected")} tone="danger" disabled={(!current || several) && !pickedFolder}
-          onClick={() => (pickedFolder ? (void saveFolders((s) => removeFolder(s, pickedFolder)), setPickedFolder(undefined)) : remove())} />
-      </ActionBar>
+      <ViewShell sections={gridSections(snapshot, current, chosen.length)} inspectorLabel={t("dock.inspector")} inspectorClass="gridinsp">
       <div className="wsbody">
         <div className="tarea">
           <div className="crumbrow">
@@ -369,6 +379,29 @@ export function Workspace({ snapshot, coverage, engineName, engineId, selected, 
               {t("workspace.selected")}{" "}
               {several ? <b>{t("workspace.selectedMany", { count: chosen.length })}</b> : currentElement && current ? <><b>{elementName(current.typeId, currentElement)}</b> · {typeOf(current.typeId)?.name}</> : <span>{t("workspace.none")}</span>}
             </span>
+            <ActionBar>
+              <ActionButton icon="folder" label={t("folders.new")} onClick={() => setNaming({ value: "" })} />
+              <ActionButton icon="warn" label={t("refs.unused")} pressed={!!unused}
+                onClick={() => (unused ? setUnused(undefined) : void api.unusedElements(snapshot.dir).then((report) => setUnused(new Set(report.unused.map((u) => elementKey(u.type, u.id))))))} />
+              {/* The actions of a selection exist only with one (Q279): no row of dimmed buttons on first open. */}
+              {(current || pickedFolder) && (
+                <>
+                  <Separator />
+                  <ActionButton icon="edit" label={t("action.edit")} disabled={several && !pickedFolder}
+                    onClick={() => (pickedFolder ? setNaming({ rename: pickedFolder, value: folderName(pickedFolder) }) : current && onOpen(current))} />
+                  <ActionButton icon="dup" label={t("action.duplicate")} disabled={!current || several} onClick={duplicate} />
+                  <span ref={moveButton} className="movebtn">
+                    <ActionButton icon="folder" label={t("folders.move")} disabled={!pickedFolder && (!current || !state.folders.length)}
+                      onClick={() => {
+                        const r = moveButton.current!.getBoundingClientRect();
+                        setMenu({ x: r.left, y: r.bottom + 2, target: pickedFolder ? { folder: pickedFolder } : { element: current! }, page: "move" });
+                      }} />
+                  </span>
+                  <ActionButton icon="trash" label={t("action.deleteSelected")} tone="danger" disabled={several && !pickedFolder}
+                    onClick={() => (pickedFolder ? (void saveFolders((s) => removeFolder(s, pickedFolder)), setPickedFolder(undefined)) : remove())} />
+                </>
+              )}
+            </ActionBar>
             {snapshot.needsMigration && <span className="usage" title={t("workspace.migrationHint")}>{t("workspace.migration")}</span>}
           </div>
           {view === "details" ? (
@@ -399,7 +432,7 @@ export function Workspace({ snapshot, coverage, engineName, engineId, selected, 
           ) : tiles.length === 0 && !folderTiles.length ? (
             <p className="empty-note">{t("workspace.empty")}</p>
           ) : (
-            <div className="tiles" role="listbox" aria-label={t("section.elements")}>
+            <div className="tiles" role="listbox" aria-label={t("section.elements")} onKeyDown={arrowTiles}>
               {browsing && open && (
                 <FolderTile name={t("folders.up")} target={parentFolder(open)} onSelect={() => undefined} onOpen={() => setFolder(parentFolder(open))}
                   onDrop={dropInto(parentFolder(open))} />
@@ -441,6 +474,7 @@ export function Workspace({ snapshot, coverage, engineName, engineId, selected, 
             onCreated={(next, ref) => (setCreating(false), onChanged(next), onSelect(ref), onOpen(ref))} />
         )}
       </div>
+      </ViewShell>
     </section>
   );
 }

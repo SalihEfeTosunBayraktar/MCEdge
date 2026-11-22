@@ -7,10 +7,10 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { writePng } from "../../src/generator/png.ts";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const project = exampleProject();
-const OUT = "design/194";
+const OUT = evidence("design/194");
 const RED = [200, 40, 40], BLUE = [40, 60, 200], GREEN = [0x5e, 0x7c, 0x16];
 
 // A 16x16 animation of two frames, red then blue, 4 ticks (200 ms) each.

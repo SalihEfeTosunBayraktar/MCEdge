@@ -5,10 +5,10 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, openSection, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/gui-editor";
+const OUT = evidence("design/gui-editor");
 const project = exampleProject();
 addElement(project, "gui", "sizegui", { type: 0, width: 176, height: 166, components: [{ kind: "label", x: 8, y: 6, text: "Shop" }] });
 addElement(project, "overlay", "sizehud", { components: [{ kind: "label", x: 4, y: 4, text: "HUD" }] });
@@ -59,10 +59,9 @@ await run(async (app) => {
   assert(saved().width === 220, `Ctrl+Y redoes: ${JSON.stringify(saved())}`);
 
   // The Screen tab shows the same width.
-  await app.click(".ltab", "Screen");
+  await openSection(app, "Screen");
   await app.sleep(200);
   assert(await app.eval<boolean>(`[...document.querySelectorAll(".guiform input")].some((e) => e.value === "220")`), "the Screen tab shows the width");
-  await app.click(".ltab", "Widget");
 
   // Overlays: no size fields, no corner.
   await app.click(".abtn", "Back to elements");

@@ -8,11 +8,11 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } fro
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { connect } from "../mcp-test/client.ts";
-import { assert, copyProject, REPO, run, type App } from "./cdp.ts";
+import { assert, copyProject, REPO, run, type App, evidence } from "./cdp.ts";
 
 const language = process.argv[2] ?? "en";
 const theme = (process.argv[3] ?? "dark") as "dark" | "light";
-const OUT = "design/localization";
+const OUT = evidence("design/localization");
 const etr = [resolve(REPO, "..", "ETREconomy-MCEdge"), resolve(REPO, "..", "..", "ETREconomy-MCEdge")].find(existsSync)!;
 const project = copyProject(etr, "etr");
 const out = mkdtempSync(join(tmpdir(), "mcedge-loc-io-"));
@@ -82,7 +82,8 @@ await run(async (app) => {
   const missing = lines.findIndex((l) => /,$/.test(l));
   const changedLine = lines.findIndex((l, i) => i > 0 && l.startsWith("AdminBookSalary,"));
   const missingKey = lines[missing].split(",")[0];
-  lines[changedLine] = "AdminBookSalary,Salary amount,Maaş tutarı";
+  // A text the project does not have (the ETR project already holds "Maaş tutarı", so using it would count as unchanged).
+  lines[changedLine] = "AdminBookSalary,Salary amount,Maaş miktarı";
   lines[missing] = lines[missing] + "Çevrildi";
   lines.splice(lines.length - 1, 0, "gui.etreco.from_csv,From CSV,CSV'den");
   const edited = join(out, `edited-${language}.csv`);
@@ -95,7 +96,7 @@ await run(async (app) => {
   await app.shot(`${OUT}/116-import-preview-${language}-${theme}.png`);
   await app.click(".dialog button[type=submit]");
   await app.sleep(800);
-  assert(tr("AdminBookSalary") === "Maaş tutarı" && tr(missingKey) === "Çevrildi" && tr("gui.etreco.from_csv") === "CSV'den", "applied to tr_tr");
+  assert(tr("AdminBookSalary") === "Maaş miktarı" && tr(missingKey) === "Çevrildi" && tr("gui.etreco.from_csv") === "CSV'den", "applied to tr_tr");
   const keys = Object.keys(JSON.parse(readFileSync(join(locDir, "tr_tr.json"), "utf8")));
   const before = Object.keys(JSON.parse(original["tr_tr.json"].toString("utf8")));
   assert(before.every((k, i) => keys[i] === k), "existing keys keep their order (KUYRUK 107)");

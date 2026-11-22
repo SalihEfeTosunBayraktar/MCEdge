@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  clientRunKey, clientRunPlayer, codeRunKey, isRunKey, runKey, type AgentTask, type ClientRunOptions, type CodeProjectInfo, type EngineInfo, type LiveState, type TaskSource, type Opened, type Preferences, type ProjectSnapshot, type ResourceKind,
+  clientRunKey, clientRunPlayer, codeRunKey, isRunKey, runKey, type AgentTask, type ApprovalRequest, type ClientRunOptions, type CodeProjectInfo, type ApprovalChoice, type EngineInfo, type LiveState, type TaskSource, type Opened, type Preferences, type ProjectSnapshot, type ResourceKind, type StarterCard,
 } from "../../shared/api.ts";
 import { CodeWorkspace } from "./code/CodeWorkspace.tsx";
 import { api } from "./api.ts";
@@ -20,12 +20,16 @@ import { TagsView } from "./components/TagsView.tsx";
 import { VariablesView } from "./components/VariablesView.tsx";
 import { Welcome } from "./components/Welcome.tsx";
 import { Workspace } from "./components/Workspace.tsx";
-import { allElements, elementName, findElement, type ElementRef, type EngineBuild } from "./model.ts";
+import { elementName, findElement, type ElementRef, type EngineBuild } from "./model.ts";
 import { applyPreferences, DEFAULT_PREFERENCES } from "./preferences.ts";
 import { agentFocus } from "./live/timeline.ts";
 import { parseScreen, SHOW_FRESH_MS } from "../../../src/live/screen.ts";
 import { PreferencesDialog } from "./components/PreferencesView.tsx";
+import { SetupDialog } from "./components/SetupDialog.tsx";
+import { TourPanel } from "./components/TourPanel.tsx";
+import { hidden } from "./experience.ts";
 import { NewProjectDialog } from "./components/NewProjectDialog.tsx";
+import { StarterDialog } from "./components/StarterGallery.tsx";
 import { SectionName } from "./components/ui.tsx";
 import { setTypeCatalog } from "./types.ts";
 import { restoreDrafts } from "./textures/drafts.ts";
@@ -39,6 +43,7 @@ import { invalidateTexture } from "./hooks/useTexture.ts";
 import { AboutDialog, ConnectAgentDialog, DocsDialog, KeyboardShortcutsDialog, NoticeDialog, type Notice } from "./components/HelpDialogs.tsx";
 import { gameRunning, UpdateDialog } from "./components/Updates.tsx";
 import { ReportBugDialog } from "./components/ReportBugDialog.tsx";
+import { AgentRunDialog } from "./components/AgentRunDialog.tsx";
 import type { ResourceTab } from "./components/ResourcesView.tsx";
 import { QuickOpen } from "./components/QuickOpen.tsx";
 import { reveal } from "./hooks/reveal.ts";
@@ -73,12 +78,19 @@ export function App() {
   const [exporting, setExporting] = useState(false);
   /** Counts Ctrl+Shift+A presses: the Agents panel shows the AI assistant and focuses its input (Q239). */
   const [aiFocus, setAiFocus] = useState(0);
+  /** A message the AI assistant's input box starts with (Ask the AI on an explained build error, Q246). */
+  const [aiDraft, setAiDraft] = useState<{ text: string; n: number }>();
+  /** The field a build error points at: the open element's editor shows its page and highlights the row (Q246). */
+  const [fieldReveal, setFieldReveal] = useState<{ target: string; field: string; n: number }>();
   /** Texture open in the texture editor, which then replaces the section view. */
   const [painting, setPainting] = useState<string>();
   const [newTexture, setNewTexture] = useState(false);
   const [packDialog, setPackDialog] = useState(false);
   const [resourceTab, setResourceTab] = useState<ResourceTab>("textures");
-  const [dialog, setDialog] = useState<"about" | "docs" | "preferences" | "shortcuts" | "updates" | "connectAgent" | "reportBug" | "newProject" | "dataLists" | "gradleTask" | "importZip" | "quickOpen" | "runClient">();
+  // The starter of the template gallery the New project dialog starts from (Q252).
+  const [starter, setStarter] = useState<StarterCard>();
+  const [dialog, setDialog] = useState<"about" | "docs" | "preferences" | "shortcuts" | "updates" | "connectAgent" | "reportBug" | "newProject" | "starters" | "dataLists" | "gradleTask" | "importZip" | "quickOpen" | "runClient">();
+  const [prefsSection, setPrefsSection] = useState<"ai">();
   /** Ctrl+N asked for the New popup; the element list opens it once and clears this. */
   const [newRequest, setNewRequest] = useState(false);
   const [notice, setNotice] = useState<Notice>();
@@ -107,6 +119,13 @@ export function App() {
   };
   const theme = preferences?.theme ?? "dark";
   const languageCode = preferences?.language;
+
+  // A section or panel Simple mode hides (Q244), shown before the switch or asked for by an agent, falls back to one it keeps.
+  useEffect(() => {
+    if (hidden("sections", section)) setSection("elements");
+    if (hidden("sections", codeSection)) setCodeSection("code");
+    if (panel && hidden("panels", panel)) setPanel("build");
+  }, [preferences?.mode, section, codeSection, panel]);
 
   // Element type labels can be translated, so the catalog follows the language.
   useEffect(() => {
@@ -330,7 +349,7 @@ export function App() {
       if (result) setNotice({ title: t("notice.exportTitle"), lines: [t("notice.exported", { count: result.count })], path: result.file });
     },
     newProject: () => setDialog("newProject"),
-    showPreferences: () => setDialog("preferences"),
+    showPreferences: () => { setPrefsSection(undefined); setDialog("preferences"); },
     showDocs: () => setDialog("docs"),
     showAbout: () => setDialog("about"),
     showShortcuts: () => setDialog("shortcuts"),
@@ -338,12 +357,19 @@ export function App() {
     checkUpdates: () => setDialog("updates"),
     openDeveloperDocs: () => void api.openExternal("https://github.com/SalihEfeTosunBayraktar/MCEdge/tree/main/docs"),
     connectAgent: () => setDialog("connectAgent"),
+    startTour: () => {
+      if (!preferences) return;
+      // A closed tour continues where it stopped; a finished or skipped one starts over (it follows the project it finds).
+      setPreferences({ ...preferences, tour: preferences.tour?.status === "paused" ? { ...preferences.tour, status: "active" } : { status: "active" } });
+      if (!snapshot) setDialog("newProject");
+    },
     reportBug: () => setDialog("reportBug"),
     newElement: () => snapshot && (setOpen(undefined), setPainting(undefined), setSection("elements"), setNewRequest(true)),
     closeEditor: activeTab ? () => closeTabs([activeTab]) : undefined,
     back: () => walk(-1),
     forward: () => walk(1),
     toggleTheme: () => preferences && setPreferences({ ...preferences, theme: theme === "dark" ? "light" : "dark" }),
+    toggleSimpleMode: () => preferences && setPreferences({ ...preferences, mode: preferences.mode === "simple" ? "advanced" : "simple" }),
     go: (next) => (setOpen(undefined), setPainting(undefined), setSection(next)),
     showPanel: setPanel,
     createTexture: () => snapshot && setNewTexture(true),
@@ -365,7 +391,7 @@ export function App() {
   };
 
   // App-wide shortcuts (Help > Keyboard shortcuts): F5 run, Shift+F5 stop, Ctrl+B build, Ctrl+Shift+B build all, Ctrl+E export,
-  // Ctrl+N new element, Ctrl+F the section's search, Ctrl+W close the editor (KUYRUK 128). Enter, F2 and Delete belong to the element list.
+  // Ctrl+N new element, Ctrl+F the section's search, Ctrl+W close the editor (KUYRUK 128), Ctrl+, preferences (Q254). Enter, F2 and Delete belong to the element list.
   const cmdRef = useRef(cmd);
   cmdRef.current = cmd;
   useEffect(() => {
@@ -381,6 +407,7 @@ export function App() {
         : plain && e.code === "KeyN" ? free && c.hasProject && c.newElement
         : plain && e.code === "KeyW" ? free && c.closeEditor
         : plain && e.code === "KeyK" ? free && c.hasProject && c.quickOpen
+        : plain && e.code === "Comma" ? free && c.showPreferences
         : e.ctrlKey && e.shiftKey && !e.altKey && e.code === "KeyA" ? free && c.hasProject && c.openAiPanel
         : e.altKey && !e.ctrlKey && (e.key === "ArrowLeft" || e.key === "ArrowRight") && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target as HTMLElement).tagName)
           ? free && c.hasProject && (e.key === "ArrowLeft" ? c.back : c.forward)
@@ -442,13 +469,34 @@ export function App() {
   // Tell the agent (MCP collaborators tool) what the user has open, and which show request is on screen.
   const openKey = open ? `${open.typeId}/${open.id}` : painting ?? section;
   useEffect(() => {
-    if (!projectDir) return;
-    const send = () => void api.livePresence(projectDir, openKey, shown);
+    const dir = projectDir ?? code?.dir;
+    if (!dir) return;
+    const send = () => void api.livePresence(dir, openKey, shown);
     // Effects run after the paint; a short delay lets a dialog or editor that just mounted settle (images, fonts).
     const first = setTimeout(send, 150);
     const timer = setInterval(send, 20000);
     return () => (clearTimeout(first), clearInterval(timer));
-  }, [projectDir, openKey, shown]);
+  }, [projectDir, code?.dir, openKey, shown, preferences?.agentRuns]);
+  // Agent runs waiting for the user (Q255): polled while a project is open (the files are tiny), one dialog at a time.
+  const presenceDir = projectDir ?? code?.dir;
+  const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
+  useEffect(() => {
+    if (!presenceDir) return setApprovals([]);
+    const poll = () => void api.liveApprovals(presenceDir).then((next) => setApprovals((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next)), () => {});
+    poll();
+    const timer = setInterval(poll, 1000);
+    return () => clearInterval(timer);
+  }, [presenceDir]);
+  const askedFlash = useRef<string>(undefined);
+  useEffect(() => {
+    if (approvals[0] && askedFlash.current !== approvals[0].id) (askedFlash.current = approvals[0].id, void api.liveFlash());
+  }, [approvals]);
+  const answerRun = (answer: ApprovalChoice) => {
+    const request = approvals[0];
+    if (!request || !presenceDir) return;
+    setApprovals((prev) => prev.filter((r) => r.id !== request.id));
+    void api.liveAnswerApproval(presenceDir, request.id, answer);
+  };
   const agentAt = live.agent ? Date.parse(live.agent.at) : 0;
   const recentlyChanged = new Set(live.entries.filter((e) => now - Date.parse(e.at) < 20000 && e.target).map((e) => e.target!));
   const agent = snapshot && live.agent ? {
@@ -491,7 +539,8 @@ export function App() {
   if (element && open) openedElement.current = `${open.typeId}:${open.id}`;
   return (
     // Remounted per language so memoized views pick up the new strings.
-    <div className="app" key={languageCode}>
+    // and per UI mode, so every view drops or brings back what Simple mode hides (Q244).
+    <div className="app" key={`${languageCode}:${preferences?.mode ?? "advanced"}`}>
       <MenuBar cmd={cmd} projectName={snapshot?.project.mod.name ?? code?.name} engines={code ? [] : projectEngines} engineId={engineId} onEngineChange={setEngineId} />
       {!preferences || typesLoaded !== languageCode ? null : code ? (
         <div className="body">
@@ -508,8 +557,9 @@ export function App() {
           </main>
         </div>
       ) : !snapshot ? (
-        <Welcome error={openError} onPreferences={cmd.showPreferences} onOpen={cmd.openProject} onNew={cmd.newProject}
-          onOpenExample={cmd.openExample} onOpenRecent={cmd.openRecent} />
+        <Welcome error={openError} onPreferences={cmd.showPreferences} onOpen={cmd.openProject} onNew={cmd.newProject} onStarters={() => setDialog("starters")}
+          onOpenExample={cmd.openExample} onOpenRecent={cmd.openRecent}
+          tourOffer={preferences.level === "new" && !preferences.tour ? { onStart: cmd.startTour, onDecline: () => setPreferences({ ...preferences, tour: { status: "skipped" } }) } : undefined} />
       ) : (
         <div className="body">
           <Rail active={section} onSelect={cmd.go} />
@@ -533,7 +583,8 @@ export function App() {
                 }}
                 onOpen={(ref) => (setBackTo([...backTo, open!]), setSelected(ref), setOpen(ref))}
                 onDeleted={(name) => (setOpen(undefined), setNotice({ title: t("editor.deletedTitle"), lines: [t("editor.deletedClosed", { name })] }))}
-                agentFields={focus?.target === `${open.typeId}/${open.id}` ? focus.fields : undefined} onNewTask={setNewTask} />
+                agentFields={focus?.target === `${open.typeId}/${open.id}` ? focus.fields : undefined} onNewTask={setNewTask}
+                reveal={fieldReveal?.target === `${open.typeId}/${open.id}` ? fieldReveal : undefined} />
             ) : (
               // Every section names itself at the left of its find bar (KUYRUK 122).
               <SectionName.Provider value={t(`section.${section}`)}>
@@ -580,14 +631,20 @@ export function App() {
           onProblemAction={snapshot && ((action) => void api.updateProblems(snapshot.dir, action).then(setSnapshot))} console={!!snapshot}
           scenariosDir={snapshot?.dir}
           agent={snapshot && { dir: snapshot.dir, live, now, onOpenTarget: openTarget, show: timelineShow, onConnect: () => setDialog("connectAgent"),
-            ai: { chat: ai, preferencesRev: preferences?.ai, onPreferences: cmd.showPreferences, focusRequest: aiFocus } }}
+            ai: { chat: ai, preferencesRev: preferences?.ai, onPreferences: () => { setPrefsSection("ai"); setDialog("preferences"); }, focusRequest: aiFocus, draft: aiDraft } }}
           tasks={snapshot && { dir: snapshot.dir, tasks, entries: live.entries, onNewTask: setNewTask, onOpenTarget: openTarget,
             onShowStep: (session, step) => (setTimelineShow({ session, step }), setPanel("activity")) }}
           onNewTask={snapshot ? setNewTask : undefined} builds={builds} engineId={engineId} onGradle={(args) => gradle("console", args)}
-          onStopGradle={() => void api.stopGradle(runKey(engineId, "gradle"))} onStopRun={code ? undefined : stopRun} onSelect={setPanel} onClose={() => setPanel(undefined)} onReport={() => setDialog("reportBug")} />
+          onStopGradle={() => void api.stopGradle(runKey(engineId, "gradle"))} onStopRun={code ? undefined : stopRun} onSelect={setPanel} onClose={() => setPanel(undefined)} onReport={() => setDialog("reportBug")}
+          explain={{ dir: snapshot?.dir ?? code!.dir, level: preferences?.level, mapped: !!snapshot,
+            onOpen: (element, field) => { if (openTarget(element) && field) setFieldReveal({ target: element, field, n: Date.now() }); },
+            onAsk: (text) => (setAiDraft({ text, n: Date.now() }), cmd.openAiPanel()) }} />
       )}
-      {dialog === "newProject" && <NewProjectDialog engines={engines} onCreated={(opened) => (setDialog(undefined), load(opened))} onClose={() => setDialog(undefined)} />}
-      {dialog === "preferences" && preferences && <PreferencesDialog preferences={preferences} onChange={setPreferences} onClose={() => setDialog(undefined)} />}
+      {dialog === "starters" && <StarterDialog onPick={(card) => (setStarter(card), setDialog("newProject"))} onClose={() => setDialog(undefined)} />}
+      {dialog === "newProject" && <NewProjectDialog engines={engines} starter={starter} onCreated={(opened) => (setDialog(undefined), setStarter(undefined), load(opened))} onClose={() => (setDialog(undefined), setStarter(undefined))} />}
+      {snapshot && preferences?.tour?.status === "active" && <TourPanel snapshot={snapshot} engineId={engineId} tour={preferences.tour} onChange={(tour) => setPreferences({ ...preferences, tour })} />}
+      {preferences && !preferences.level && <SetupDialog preferences={preferences} onDone={setPreferences} />}
+      {dialog === "preferences" && preferences && <PreferencesDialog openSection={prefsSection} preferences={preferences} onChange={setPreferences} onClose={() => setDialog(undefined)} />}
       {dialog === "about" && <AboutDialog onClose={() => setDialog(undefined)} />}
       {dialog === "docs" && <DocsDialog onClose={() => setDialog(undefined)} />}
       {dialog === "quickOpen" && snapshot && <QuickOpen snapshot={snapshot} onOpen={openQuick} onClose={() => setDialog(undefined)} />}
@@ -605,9 +662,10 @@ export function App() {
         <RunClientDialog engineName={engines.find((e) => e.id === engineId)?.name ?? engineId} players={players} serverRunning={serverRunning}
           onClose={() => setDialog(undefined)} onRun={(options) => (setDialog(undefined), startClient(options))} />
       )}
+      {approvals[0] && <AgentRunDialog request={approvals[0]} more={approvals.length - 1} onAnswer={answerRun} />}
       {notice && <NoticeDialog notice={notice} onClose={() => setNotice(undefined)} />}
-      <StatusBar agent={agent} problems={snapshot?.issues.length ?? 0} elements={snapshot && allElements(snapshot).length} builds={builds}
-        engineName={code ? `JDK ${code.jdk}` : engine ? `${engine.name}` : ""} onOpenPanel={(p) => (snapshot || code) && setPanel(p)}
+      <StatusBar agent={agent} problems={snapshot?.issues.length ?? 0} builds={builds}
+        engineName={code ? `JDK ${code.jdk}` : ""} onOpenPanel={(p) => (snapshot || code) && setPanel(p)}
         onTogglePanel={() => setPanel(panel ? undefined : lastPanel.current)} panelOpen={!!panel} open={!!snapshot || !!code} />
     </div>
   );

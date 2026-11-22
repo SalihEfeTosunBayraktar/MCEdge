@@ -5,9 +5,9 @@
  * & run items, the Run another client dialog (default Dev2, name checks, join), one Build output entry with its own
  * Stop per client, and Join test server while the server runs. Screenshots (dark and light) go to design/190/.
  */
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/190";
+const OUT = evidence("design/190");
 const btn = (id: string) => `document.querySelector('[data-testid="${id}"]')`;
 const menu = async (app: App, top: string, item: string) => {
   await app.click(".menu", top);

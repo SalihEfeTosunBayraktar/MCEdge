@@ -5,6 +5,7 @@ import type { Element } from "../elements/model.ts";
 import type { Engine } from "../engines/registry.ts";
 import type { ModProject } from "../ir/types.ts";
 import type { Remap } from "./png.ts";
+import type { ImageFilter } from "../resources/imageFilter.ts";
 import type { Context } from "./render.ts";
 
 /**
@@ -50,7 +51,7 @@ export interface ElementContext extends Context {
    */
   /** `half` keeps the top or bottom half of the image (button states stored one above the other). */
   /** `below` puts a second project PNG under the first, scaled to its size (two button states made into one texture). */
-  textures?: { from: string; to: string; remap?: Remap; half?: "top" | "bottom"; below?: string }[];
+  textures?: { from: string; to: string; remap?: Remap; half?: "top" | "bottom"; below?: string; filter?: ImageFilter }[];
   /** Tag memberships; tags with the same registry and id are merged into one file. */
   tags?: TagEntry[];
   /**

@@ -12,7 +12,7 @@
  * main-thread totals. PERF_VERBOSE=1 prints the hottest functions, PERF_ONLY="drag block,undo" measures only these
  * actions, PERF_TRACE_TOP / PERF_TRACE_CATEGORIES / PERF_TRACE_DUMP=file tune or save the trace.
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { copyProject, launchApp, type App } from "./cdp.ts";
 
@@ -24,7 +24,8 @@ const flag = (name: string) => {
 const jsonOut = flag("--json");
 const profileDir = flag("--profiles");
 const plain = args.includes("--plain") && !!args.splice(args.indexOf("--plain"), 1);
-const ids = args.length ? args : ["kullanicigui_while_this_g_u_i_is_open_tick", "jobselect1", "industrialovenoff_update_tick", "filesearchandopen", "goldsellerleftclick"];
+// Without ids: the five largest procedures of the project (it changes, so none is named).
+const ids = args.length ? args : null;
 
 const WS = `document.querySelector(".blocklyhost").blocklyWorkspace`;
 const B = `document.querySelector(".blocklyhost").blockly`;
@@ -351,7 +352,9 @@ try {
   rows.pop();
   await app.click("button.abtn", "Back").catch(() => app.key("Escape"));
   await app.sleep(800);
-  for (const id of ids) await exercise(app, id);
+  const procDir = join(project, "elements", "procedures");
+  const largest = readdirSync(procDir).filter((f) => f.endsWith(".json")).map((f) => ({ id: f.slice(0, -5), size: statSync(join(procDir, f)).size })).sort((a, b) => b.size - a.size);
+  for (const id of ids ?? largest.slice(0, 5).map((f) => f.id)) await exercise(app, id);
 } catch (error) {
   console.error("FAIL", error);
   await app.shot("tools/ui-test/last-failure.png").catch(() => {});

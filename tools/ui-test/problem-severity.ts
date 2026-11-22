@@ -10,9 +10,9 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import en from "../../config/ui-strings/en.json" with { type: "json" };
 import tr from "../../config/ui-strings/tr.json" with { type: "json" };
-import { assert, exampleProject, run } from "./cdp.ts";
+import { assert, exampleProject, run, evidence } from "./cdp.ts";
 
-const OUT = "design/196";
+const OUT = evidence("design/196");
 const theme = process.env.LIGHT ? "light" : "dark";
 const language = process.env.TR ? "tr" : "en";
 const s = (language === "tr" ? tr : en) as Record<string, string>;

@@ -6,7 +6,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { readPng, writePng } from "../../src/generator/png.ts";
-import { assert, exampleProject, run } from "./cdp.ts";
+import { assert, exampleProject, run, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
 const theme = (process.argv[2] ?? "dark") as "dark" | "light";
@@ -25,7 +25,7 @@ await run(async (app) => {
   await app.waitFor(`document.querySelector(".guistage .gwidget.k-image img, .guistage .gwidget.k-image canvas")`);
   await app.waitFor(`document.querySelector(".ggrid")`);
   await app.sleep(300);
-  const file = `design/181/grid-${theme}.png`;
+  const file = evidence(`design/181/grid-${theme}.png`);
   await app.shot(file);
   const stage = await app.rect(".guistage");
   const z = await app.eval<number>(`Number(getComputedStyle(document.querySelector(".guistage")).getPropertyValue("--z"))`);

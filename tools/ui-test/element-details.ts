@@ -7,7 +7,7 @@
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { assert, copyProject, launchApp, REPO, type App } from "./cdp.ts";
+import { assert, copyProject, launchApp, REPO, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
 const theme = (process.argv[2] ?? "dark") as "dark" | "light";
@@ -16,7 +16,7 @@ const project = copyProject(resolve(REPO, "..", "ETREconomy-MCEdge"), "etr");
 addElement(project, "creative_tab", "zz_broken_tab", { name: "Broken Tab", icon: "no_such_item" });
 addElement(project, "armor_trim", "zz_trim");
 const userData = mkdtempSync(join(tmpdir(), "mcedge-ui-data-"));
-const shot = (app: App, name: string) => app.shot(`design/129/${name}-${theme}-${lang}-after.png`);
+const shot = (app: App, name: string) => app.shot(evidence(`design/129/${name}-${theme}-${lang}-after.png`));
 const rows = (app: App) => app.eval<{ key: string; cells: string[]; problems: number }[]>(`[...document.querySelectorAll(".elemtable tbody tr")].map((r) => ({
   key: r.dataset.key, cells: [...r.cells].map((c) => c.textContent), problems: Number(r.querySelector("[data-problems]")?.dataset.problems) }))`);
 const filter = (app: App, value: string) => app.setValue(".view .findbar select", value);

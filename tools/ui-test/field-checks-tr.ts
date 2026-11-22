@@ -8,7 +8,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { typeRegistry } from "../../src/elements/registry.ts";
 import { elementIdLookup, validateElement } from "../../src/elements/model.ts";
-import { assert, exampleProject, run } from "./cdp.ts";
+import { assert, exampleProject, run, evidence } from "./cdp.ts";
 
 // 1. English messages are unchanged (MCP and CLI read them).
 const item = typeRegistry().byId.get("item")!;
@@ -34,11 +34,11 @@ await run(async (app) => {
   assert(name === "zorunlu", `required is Turkish: ${name}`);
   const group = await app.eval<string>(`document.querySelector(".issues").textContent`);
   assert(group.includes("en çok 99 olmalı") && !/must be|required/.test(group), `the Problems group is Turkish: ${group}`);
-  await app.shot("design/149/149-editor-tr-dark.png");
+  await app.shot(evidence("design/149/149-editor-tr-dark.png"));
   await app.click(".sitem", "sorun");
   await app.waitFor(`document.querySelector(".problems li")`);
   const panel = await app.eval<string>(`document.querySelector(".problems").textContent`);
   assert(panel.includes("en çok 99 olmalı") && !/must be at most/.test(panel), `the Problems panel is Turkish: ${panel}`);
   await app.setTheme("light");
-  await app.shot("design/149/149-problems-tr-light.png");
+  await app.shot(evidence("design/149/149-problems-tr-light.png"));
 }, { project, language: "tr" });

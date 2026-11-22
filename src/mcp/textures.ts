@@ -8,8 +8,9 @@ import { typeFields, valuesOfType } from "../elements/model.ts";
 import { typeRegistry } from "../elements/registry.ts";
 import { readPng, writePng, type Rgba } from "../generator/png.ts";
 import { loadProject } from "../ir/storage.ts";
-import { ANCHORS, clearRegion, copyRegion, desaturate, pasteRegion, resizeCanvas, shiftHue, type Image } from "../textures/edit.ts";
+import { ANCHORS, clearRegion, copyRegion, desaturate, pasteRegion, resizeCanvas, shiftHue, trimBox, type Image } from "../textures/edit.ts";
 import { flip, mirror, shape } from "../textures/shapes.ts";
+import { crop, frameRect } from "../textures/pixelArt.ts";
 
 type Text = { content: { type: "text"; text: string }[]; isError?: boolean };
 type Guard = (fn: () => Promise<Text> | Text) => Promise<Text>;
@@ -40,11 +41,8 @@ function animationOf(png: string, image: Rgba): Record<string, unknown> {
 }
 const hex = (d: Uint8Array, i: number) => `#${[...d.subarray(i, i + 4)].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
 
-/**
- * The texture editor for agents: list, create, read and write pixels, fill areas, resize (nearest neighbour) and
- * delete project PNGs. Colours read back as #rrggbbaa.
- */
-export function registerTextureTools(server: McpServer, root: string, guard: Guard): void {
+/** Project PNGs by their project path ("textures/..."), kept inside the project. */
+export function textureStore(root: string) {
   const file = (path: string) => {
     const f = resolve(root, path);
     if (relative(root, f).startsWith("..")) throw new Error("path outside project");
@@ -58,6 +56,27 @@ export function registerTextureTools(server: McpServer, root: string, guard: Gua
     mkdirSync(dirname(file(path)), { recursive: true });
     writeFileSync(file(path), writePng(image));
   };
+  return { file, load, save };
+}
+
+// Q271: drawing tools work on one frame of an animation strip; coordinates are then relative to that frame.
+export const FRAME = z.number().int().min(0).optional().describe("Animated texture: draw on this frame only (0 = top); x, y are then inside the frame");
+/** Runs `edit` on frame `frame` of the strip (or the whole image) and puts the frame back. */
+export function onFrame<T>(image: Rgba, frame: number | undefined, edit: (target: Rgba) => T): T {
+  if (frame === undefined) return edit(image);
+  const r = frameRect(image, frame);
+  const part = crop(image, r);
+  const result = edit({ width: part.width, height: part.height, data: part.data as Uint8Array });
+  image.data.set(part.data, r.y * image.width * 4);
+  return result;
+}
+
+/**
+ * The texture editor for agents: list, create, read and write pixels, fill areas, resize (nearest neighbour) and
+ * delete project PNGs. Colours read back as #rrggbbaa.
+ */
+export function registerTextureTools(server: McpServer, root: string, guard: Guard): void {
+  const { file, load, save } = textureStore(root);
   const set = (image: Rgba, x: number, y: number, c: number[]) => {
     if (x < 0 || y < 0 || x >= image.width || y >= image.height) throw new Error(`pixel ${x},${y} outside ${image.width}x${image.height}`);
     image.data.set(c[3] === 0 ? [0, 0, 0, 0] : c, (y * image.width + x) * 4);
@@ -96,14 +115,15 @@ export function registerTextureTools(server: McpServer, root: string, guard: Gua
   server.registerTool(
     "read_texture",
     {
-      description: "Pixels of a texture (or a rectangle of it) as rows of #rrggbbaa colours, top row first.",
-      inputSchema: { path: PATH, x: z.number().int().min(0).default(0), y: z.number().int().min(0).default(0), width: z.number().int().min(1).optional(), height: z.number().int().min(1).optional() },
+      description: "Pixels of a texture (or a rectangle of it) as rows of #rrggbbaa colours, top row first. To see it as a picture use preview_texture.",
+      inputSchema: { path: PATH, x: z.number().int().min(0).default(0), y: z.number().int().min(0).default(0), width: z.number().int().min(1).optional(), height: z.number().int().min(1).optional(), frame: FRAME },
     },
-    ({ path, x, y, width, height }) => guard(() => {
-      const image = load(path);
+    ({ path, x, y, width, height, frame }) => guard(() => {
+      const strip = load(path);
+      const image = frame === undefined ? strip : crop(strip, frameRect(strip, frame));
       const w = Math.min(width ?? image.width, image.width - x), h = Math.min(height ?? image.height, image.height - y);
       const rows = Array.from({ length: Math.max(0, h) }, (_, r) => Array.from({ length: Math.max(0, w) }, (_, c) => hex(image.data, ((y + r) * image.width + x + c) * 4)).join(" "));
-      return json({ path, width: image.width, height: image.height, x, y, rows });
+      return json({ path, width: image.width, height: image.height, ...(frame === undefined ? {} : { frame }), x, y, rows });
     }),
   );
   server.registerTool(
@@ -115,18 +135,21 @@ export function registerTextureTools(server: McpServer, root: string, guard: Gua
         pixels: z.array(z.object({ x: z.number().int(), y: z.number().int(), color: COLOR })).optional(),
         rects: z.array(z.object({ x: z.number().int(), y: z.number().int(), width: z.number().int().min(1), height: z.number().int().min(1), color: COLOR })).optional(),
         rows: z.object({ x: z.number().int().default(0), y: z.number().int().default(0), colors: z.array(z.array(COLOR)) }).optional(),
+        frame: FRAME,
       },
     },
-    ({ path, pixels, rects, rows }) => guard(() => {
-      const image = load(path);
+    ({ path, pixels, rects, rows, frame }) => guard(() => {
+      const strip = load(path);
       let count = 0;
-      for (const p of pixels ?? []) (set(image, p.x, p.y, parseColor(p.color)), count++);
-      for (const r of rects ?? []) {
-        const c = parseColor(r.color);
-        for (let yy = r.y; yy < r.y + r.height; yy++) for (let xx = r.x; xx < r.x + r.width; xx++) (set(image, xx, yy, c), count++);
-      }
-      rows?.colors.forEach((row, r) => row.forEach((color, c) => (set(image, rows.x + c, rows.y + r, parseColor(color)), count++)));
-      save(path, image);
+      onFrame(strip, frame, (image) => {
+        for (const p of pixels ?? []) (set(image, p.x, p.y, parseColor(p.color)), count++);
+        for (const r of rects ?? []) {
+          const c = parseColor(r.color);
+          for (let yy = r.y; yy < r.y + r.height; yy++) for (let xx = r.x; xx < r.x + r.width; xx++) (set(image, xx, yy, c), count++);
+        }
+        rows?.colors.forEach((row, r) => row.forEach((color, c) => (set(image, rows.x + c, rows.y + r, parseColor(color)), count++)));
+      });
+      save(path, strip);
       return json({ path, pixelsWritten: count });
     }),
   );
@@ -145,20 +168,23 @@ export function registerTextureTools(server: McpServer, root: string, guard: Gua
           color: COLOR,
         })).min(1),
         mirror: z.object({ x: z.boolean().default(false), y: z.boolean().default(false) }).optional(),
+        frame: FRAME,
       },
     },
-    ({ path, shapes, mirror: mode }) => guard(() => {
-      const image = load(path);
+    ({ path, shapes, mirror: mode, frame }) => guard(() => {
+      const strip = load(path);
       let count = 0;
-      for (const s of shapes) {
-        const c = parseColor(s.color);
-        for (const [x, y] of mirror(shape(s.type, s.points, s.filled), image.width, image.height, mode ?? {})) {
-          if (x < 0 || y < 0 || x >= image.width || y >= image.height) continue;
-          set(image, x, y, c);
-          count++;
+      onFrame(strip, frame, (image) => {
+        for (const s of shapes) {
+          const c = parseColor(s.color);
+          for (const [x, y] of mirror(shape(s.type, s.points, s.filled), image.width, image.height, mode ?? {})) {
+            if (x < 0 || y < 0 || x >= image.width || y >= image.height) continue;
+            set(image, x, y, c);
+            count++;
+          }
         }
-      }
-      save(path, image);
+      });
+      save(path, strip);
       return json({ path, pixelsWritten: count });
     }),
   );
@@ -212,6 +238,33 @@ export function registerTextureTools(server: McpServer, root: string, guard: Gua
     }),
   );
   server.registerTool(
+    "trim_texture_canvas",
+    {
+      description: "Q274: cut the empty (fully transparent) margins around the drawing away, like the texture editor's Trim to drawing: the canvas shrinks to "
+        + "the drawing and its pixels are not scaled or moved relative to each other. An animated texture (with a .mcmeta) is trimmed with one box for every "
+        + "frame, grown to a square so its frames stay square and aligned. Returns the new size and the removed margins.",
+      inputSchema: { path: PATH },
+    },
+    ({ path }) => guard(() => {
+      const image = load(path);
+      const animated = existsSync(`${file(path)}.mcmeta`) && image.height > image.width && image.height % image.width === 0;
+      const frames = animated
+        ? Array.from({ length: image.height / image.width }, (_, i) => copyRegion(image, { x: 0, y: i * image.width, w: image.width, h: image.width }))
+        : [image];
+      const box = trimBox(frames, animated);
+      if (!box) throw new Error(`${path} has no visible pixels to keep`);
+      const { width, height } = frames[0];
+      const removed = { left: box.x, top: box.y, right: width - box.x - box.w, bottom: height - box.y - box.h };
+      if (box.w !== width || box.h !== height) {
+        const cut = frames.map((f) => copyRegion(f, box));
+        const out: Rgba = { width: box.w, height: box.h * cut.length, data: new Uint8Array(box.w * box.h * cut.length * 4) };
+        cut.forEach((f, i) => out.data.set(f.data, i * box.w * box.h * 4));
+        save(path, out);
+      }
+      return json({ path, width: box.w, height: box.h * frames.length, frames: frames.length, removed });
+    }),
+  );
+  server.registerTool(
     "adjust_texture",
     {
       description: "Adjust a texture's colours like the texture editor's Adjust colours: hue shifts every colour by degrees (-180 to 180), desaturate takes out "
@@ -250,7 +303,7 @@ export function registerTextureTools(server: McpServer, root: string, guard: Gua
         + "frame), hold_first (play once, then show the first frame) or ping_pong (forwards, then backwards); it is kept in the .mcmeta's own "
         + "\"mcedge\" section and the generated mod gets the vanilla frame list that plays it. Blocks and items start a once mode when the player "
         + "enters a world (and after a resource reload); GUI images when their animationStart says. still: true deletes the .mcmeta. Build a strip with create_texture "
-        + "(height = width x frames) and write_texture_pixels / draw_texture_shapes per frame (frame i starts at y = i x width).",
+        + "(height = width x frames) or edit_texture_frames, and draw each frame with the frame argument of write_texture_pixels / draw_texture_shapes / fill_texture.",
       inputSchema: {
         path: PATH,
         frametime: z.number().int().min(1).optional(), interpolate: z.boolean().optional(),

@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { appendActivity, type ActivityEntry } from "../live/activity.ts";
+import { appRunning, approvalTimeoutMs, askApproval, EXECUTION_CONFIG, isHeavyTool } from "../live/approval.ts";
 import { ackNote, readNotes } from "../live/notes.ts";
 import { currentTask, listTasks } from "../live/tasks.ts";
 import { FileTracker, storeChanges } from "../live/timeline.ts";
@@ -26,8 +27,11 @@ const NAMED_STEP_GAP_MS = 5 * 60_000;
  * change to another target or pauses. Every result mentions notes the user left that the agent has not seen yet.
  * Must run before the tools are registered.
  */
-export function registerActivityTools(server: McpServer, root: string): void {
+export function registerActivityTools(server: McpServer, root: string, options: { allowHeadless?: boolean } = {}): void {
   const session = SESSION;
+  const allowHeadless = options.allowHeadless || process.env[EXECUTION_CONFIG.headlessEnv] === "1";
+  /** The user chose "Allow for this agent session" in the app: this server run (one session) runs without asking again. */
+  let sessionAllowed = false;
   const client = () => server.server.getClientVersion()?.name;
   const clientVersion = () => server.server.getClientVersion()?.version;
   /** The model the agent named in begin_step (KUYRUK 195): MCP's clientInfo names the client, not the model. */
@@ -47,6 +51,27 @@ export function registerActivityTools(server: McpServer, root: string): void {
     step.lastTarget = target;
   };
 
+  /**
+   * Heavy tools (config/agent-execution.json) never run behind the user's back (Q255): the app must have the project
+   * open, and unless its policy is Allow the user confirms in the app. Returns the refusal, or nothing to go ahead.
+   */
+  const gate = async (tool: string, args: Record<string, unknown> | undefined): Promise<Text | undefined> => {
+    if (!isHeavyTool(tool)) return undefined;
+    const refuse = (message: string): Text => ({ content: [{ type: "text", text: `[MCEdge] ${tool} was not run. ${message}` }], isError: true });
+    const app = appRunning(root);
+    if (!app) {
+      return allowHeadless ? undefined : refuse(`The MCEdge app is not open with this project, and nothing may start in the background without the user knowing. `
+        + `Ask the user to open MCEdge with this project, then call ${tool} again. For unattended runs the user can restart this MCP server with ${EXECUTION_CONFIG.headlessFlag} (or ${EXECUTION_CONFIG.headlessEnv}=1).`);
+    }
+    if (app.agentRuns === "allow" || sessionAllowed) return undefined;
+    const summary = JSON.stringify(args ?? {});
+    const answer = await askApproval(root, { tool, summary: summary.length > 200 ? `${summary.slice(0, 200)}...` : summary, client: client(), session });
+    if (answer === "session") sessionAllowed = true;
+    if (answer === "once" || answer === "session") return undefined;
+    return refuse(answer === "deny" ? "The user denied it in the MCEdge app. Do not retry; ask the user what to do instead."
+      : `The user did not answer in the MCEdge app within ${Math.round(approvalTimeoutMs() / 1000)} seconds. Ask the user to look at the MCEdge window, then call ${tool} again.`);
+  };
+
   const original = server.registerTool.bind(server) as (...args: unknown[]) => unknown;
   (server as unknown as { registerTool: (...args: unknown[]) => unknown }).registerTool = (name: unknown, config: unknown, handler: unknown) => {
     const tool = String(name);
@@ -58,8 +83,9 @@ export function registerActivityTools(server: McpServer, root: string): void {
       const compared = !read && !NOT_COMPARED.test(tool);
       const target = NO_TARGET.test(tool) ? undefined : targetOf(args ?? {});
       const call = async (): Promise<[Text, ActivityEntry]> => {
-        if (compared) safe(() => tracker.before());
-        const result = await run(...params);
+        const refusal = await gate(tool, args);
+        if (compared && !refusal) safe(() => tracker.before());
+        const result = refusal ?? await run(...params);
         const id = `${session}.${++calls}`;
         const entry: ActivityEntry = { at: new Date().toISOString(), actor: "agent", client: client(), session, call: id, tool, target };
         const version = clientVersion();
@@ -69,7 +95,7 @@ export function registerActivityTools(server: McpServer, root: string): void {
         if (result.isError) entry.error = true;
         const task = safe(() => currentTask(root, session));
         if (task) entry.task = task;
-        if (compared) {
+        if (compared && !refusal) {
           safe(() => {
             const diff = tracker.after();
             if (!diff.changes.length) return;
@@ -90,7 +116,9 @@ export function registerActivityTools(server: McpServer, root: string): void {
       safe(() => appendActivity(root, entry));
       return withNotes(result, tool);
     };
-    return original(name, config, wrapped);
+    // The agent reads the rule where it picks the tool.
+    const described = isHeavyTool(tool) && config ? { ...(config as object), description: `${(config as { description?: string }).description ?? ""} Needs the MCEdge app open with this project; the user may be asked to confirm (Q255).`.trim() } : config;
+    return original(name, described, wrapped);
   };
 
   /** Tells the agent about notes and open tasks it has not been told of yet, after the tool's own result. */

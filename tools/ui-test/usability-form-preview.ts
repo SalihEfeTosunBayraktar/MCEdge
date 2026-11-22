@@ -3,10 +3,10 @@
  * texture large, in inventory slots with the name as a tooltip, and the other texture fields (block faces). It
  * follows the draft and hides on narrow windows. Screenshots go to design/usability/.
  */
-import { assert, exampleProject, launchApp, run, type App } from "./cdp.ts";
+import { assert, exampleProject, launchApp, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/usability";
+const OUT = evidence("design/usability");
 const project = exampleProject();
 addElement(project, "block", "pillar", { name: "Ruby Pillar", texture: "textures/ruby_block.png", textureTop: "textures/ruby_apple.png" });
 
@@ -26,7 +26,8 @@ await run(async (app) => {
     preview: document.querySelector(".formpreview").getBoundingClientRect().left,
     view: document.querySelector(".formscroll").getBoundingClientRect().right,
     tip: document.querySelector(".pvtip").textContent })`);
-  assert(box.preview > box.form && box.preview < box.view, `preview right of the form: ${JSON.stringify(box)}`);
+  // Q279: the preview sits in the inspector, right of the form column (inside the view).
+  assert(box.preview >= box.form, `preview right of the form: ${JSON.stringify(box)}`);
   assert(box.tip === "Ruby", `tooltip shows the name: ${box.tip}`);
   const before = await big(app);
   await app.shot(`${OUT}/after-item-form.png`);
@@ -52,7 +53,9 @@ try {
   await narrow.waitFor(`document.querySelector(".tile")`);
   await open(narrow, "Ruby");
   await narrow.sleep(400);
-  assert(await narrow.eval<boolean>(`getComputedStyle(document.querySelector(".formpreview")).display === "none"`), "hidden at 1100 px");
+  // Q279: the inspector stays at 1100 px and the form keeps at least 600 px; it collapses to its strip below 900 px.
+  const w = await narrow.eval<number>(`document.querySelector(".formcols > .form").getBoundingClientRect().width`);
+  assert(w >= 600, `the form keeps its width at 1100 px: ${w}`);
 } finally {
   await narrow.close();
 }

@@ -25,6 +25,7 @@ export function registerCreateProjectTool(server: McpServer, guard: Guard): void
         package: z.string().optional().describe("Java package; com.<author or example>.<modId> when left out"),
         engines: z.array(z.string()).optional().describe("Engine ids the project targets; all when left out"),
         template: z.enum(PROJECT_TEMPLATES).default("empty"),
+        starter: z.object({ id: z.string(), params: z.record(z.string(), z.string().min(1)) }).optional().describe("A starter of the gallery (list_starters) added to the new project; the template is ignored then"),
         folder: z.string().optional(),
         author: z.string().optional(),
       },

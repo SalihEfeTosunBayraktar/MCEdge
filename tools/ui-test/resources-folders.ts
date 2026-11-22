@@ -13,9 +13,9 @@
  */
 import { copyFileSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, copyProject, exampleProject, run, type App } from "./cdp.ts";
+import { assert, copyProject, exampleProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/211";
+const OUT = evidence("design/211");
 interface Stored { folders: string[]; placement: Record<string, string>; colors?: Record<string, string>; icons?: Record<string, string> }
 const stored = (project: string): Stored => existsSync(join(project, "texture-folders.json"))
   ? JSON.parse(readFileSync(join(project, "texture-folders.json"), "utf8")) : { folders: [], placement: {} };

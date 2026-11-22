@@ -19,6 +19,24 @@ export function Texture({ dir, path, size, animate }: { dir: string; path: strin
   return ratio > 1 ? <span className="pixel" style={{ width: size, height: size, overflow: "hidden" }}>{img}</span> : img;
 }
 
+/**
+ * A texture that is read only once its cell is near the visible area (Q280). A list of hundreds (Resources) opened
+ * with one read and one data URL per file, 180 MB through IPC and 4 s of the main process for 680 textures; now only
+ * the cells on screen load.
+ */
+export function LazyTexture({ dir, path, size }: { dir: string; path: string; size: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [seen, setSeen] = useState(false);
+  useEffect(() => {
+    const cell = ref.current;
+    if (!cell || seen) return;
+    const observer = new IntersectionObserver((entries) => entries.some((e) => e.isIntersecting) && setSeen(true), { rootMargin: "240px" });
+    observer.observe(cell);
+    return () => observer.disconnect();
+  }, [seen]);
+  return seen ? <Texture dir={dir} path={path} size={size} /> : <span ref={ref} className="pixel placeholder" style={{ width: size, height: size }} />;
+}
+
 /** The texture with its animation when it has one (read again when the file is rewritten, which changes `url`). */
 function useAnimation(dir: string, path: string, url: string | undefined): PreviewTexture | undefined {
   const [texture, setTexture] = useState<PreviewTexture>();

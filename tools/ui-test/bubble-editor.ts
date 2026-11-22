@@ -9,13 +9,13 @@
  */
 import { copyFileSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, launchApp, type App } from "./cdp.ts";
+import { assert, exampleProject, launchApp, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 import { timelineAt, timelineLengths, timingOf } from "../../src/elements/transitions.ts";
 
-const OUT = "design/216";
-const OUT_223 = "design/223";
-const OUT_228 = "design/228";
+const OUT = evidence("design/216");
+const OUT_223 = evidence("design/223");
+const OUT_228 = evidence("design/228");
 mkdirSync(OUT_228, { recursive: true });
 mkdirSync(OUT, { recursive: true });
 mkdirSync(OUT_223, { recursive: true });

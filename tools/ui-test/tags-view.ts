@@ -6,10 +6,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect } from "../mcp-test/client.ts";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const project = exampleProject();
-const OUT = "design/element-tags";
+const OUT = evidence("design/element-tags");
 const saved = () => JSON.parse(readFileSync(join(project, "tags.json"), "utf8")).tags as { type: string; id: string; entries: string[] }[];
 const settle = async (app: App) => {
   await app.sleep(600);
@@ -33,7 +33,7 @@ await run(async (app) => {
   await addEntry(app, "minecraft:diamond", true);
   await addEntry(app, "#minecraft:coals");
   await addEntry(app, "sapphire");
-  await app.waitFor(`document.querySelector(".tagform .issues")?.textContent.includes("sapphire")`, 5000);
+  await app.waitFor(`document.querySelector(".tagsinsp .issues")?.textContent.includes("sapphire")`, 5000);
   await app.shot(`${OUT}/problem-dark.png`);
   await app.click(".tagentries .lrow", "sapphire");
   await app.click(".tagform .mbtn", "Remove selected");

@@ -5,9 +5,9 @@
  * plain export. Screenshots in design/238/ (en and tr, dark and light). The uploads themselves are covered by
  * tools/mcp-test/publish.ts against a mock API.
  */
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/238";
+const OUT = evidence("design/238");
 const project = exampleProject();
 const DLG = ".exportdlg";
 

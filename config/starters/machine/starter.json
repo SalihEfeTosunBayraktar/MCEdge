@@ -1,0 +1,118 @@
+{
+  "id": "machine",
+  "params": {
+    "name": "smelter"
+  },
+  "elements": [
+    {
+      "type": "gui",
+      "id": "{{name}}_gui",
+      "values": {
+        "title": "{{Name Words}}",
+        "type": 1,
+        "width": 176,
+        "height": 166,
+        "components": [
+          {
+            "kind": "label",
+            "name": "title",
+            "x": 8,
+            "y": 6,
+            "text": "{{Name Words}}",
+            "color": "#404040"
+          },
+          {
+            "kind": "slot",
+            "x": 56,
+            "y": 35,
+            "id": 0
+          },
+          {
+            "kind": "slot",
+            "x": 116,
+            "y": 35,
+            "id": 1,
+            "output": true
+          }
+        ]
+      }
+    },
+    {
+      "type": "block",
+      "id": "{{name}}_machine",
+      "values": {
+        "texture": "textures/{{name}}_machine.png",
+        "name": "{{Name Words}}",
+        "hardness": 3.5,
+        "resistance": 6,
+        "creativeTabs": [
+          "REDSTONE"
+        ],
+        "soundOnStep": "METAL",
+        "hasInventory": true,
+        "guiBoundTo": "{{name}}_gui",
+        "openGUIOnRightClick": true,
+        "inventorySize": 2,
+        "inventoryStackSize": 64,
+        "inventoryInSlotIDs": [
+          {
+            "slot": 0
+          }
+        ],
+        "inventoryOutSlotIDs": [
+          {
+            "slot": 1
+          }
+        ],
+        "hasEnergyStorage": true,
+        "energyCapacity": 10000,
+        "energyMaxReceive": 100,
+        "energyMaxExtract": 0
+      }
+    }
+  ],
+  "textures": [
+    {
+      "from": "machine.png",
+      "to": "{{name}}_machine.png"
+    }
+  ],
+  "scenario": [
+    {
+      "op": "player",
+      "name": "Operator",
+      "pos": [
+        0.5,
+        101,
+        0.5
+      ]
+    },
+    {
+      "label": "place the machine",
+      "op": "setblock",
+      "pos": [
+        2,
+        100,
+        2
+      ],
+      "block": "{{mod}}:{{name}}_machine",
+      "expect": "{{mod}}:{{name}}_machine"
+    },
+    {
+      "label": "right click uses the machine",
+      "op": "useBlock",
+      "pos": [
+        2,
+        100,
+        2
+      ],
+      "expect": {
+        "matches": "SUCCESS|CONSUME"
+      }
+    },
+    {
+      "op": "removePlayer",
+      "name": "Operator"
+    }
+  ]
+}

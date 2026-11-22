@@ -5,10 +5,10 @@
  * the textured button's normal texture help no longer describes the old one-file layout; procedure side panel
  * labels wrap instead of being cut ("Skip missing-depen"). Screenshots go to design/usability/.
  */
-import { assert, exampleProject, run } from "./cdp.ts";
+import { assert, exampleProject, run, evidence, textOf } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/usability";
+const OUT = evidence("design/usability");
 const project = exampleProject();
 addElement(project, "gui", "empty_screen", { type: 0, width: 176, height: 166 });
 addElement(project, "procedure", "coin_text");
@@ -33,7 +33,7 @@ await run(async (app) => {
 
   await app.click(".tile", "wallet", { double: true });
   await app.waitFor(`document.querySelector(".gwidget.k-label")`);
-  const label = await app.eval<{ text: string; title: string }>(`(() => { const l = document.querySelector(".gwidget.k-label"); return { text: l.textContent, title: l.title }; })()`);
+  const label = await app.eval<{ text: string; title: string }>(`(() => { const l = document.querySelector(".gwidget.k-label"); return { text: ${textOf("l")}, title: l.title }; })()`);
   assert(label.text === "(text)" && label.title === "Text from the procedure coin_text", `label marks procedure text: ${JSON.stringify(label)}`);
   await app.shot(`${OUT}/after-gui-label-procedure.png`);
   await app.click(".abtn", "Back to elements");

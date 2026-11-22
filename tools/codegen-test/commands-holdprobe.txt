@@ -1,0 +1,11 @@
+@wait 5
+forceload add 0 0
+@wait 1
+fill -3 99 -3 25 99 25 minecraft:stone
+fill -3 100 -3 25 104 25 minecraft:air
+kill @e[type=minecraft:pig]
+kill @e[type=minecraft:minecart]
+@wait 8
+stop
+@wait 15
+@kill

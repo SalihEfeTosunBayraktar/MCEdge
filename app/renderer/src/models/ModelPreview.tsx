@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { disposeStage } from "./disposeStage.ts";
 import {
   DISPLAY_CONTEXTS,
   FACES,
@@ -18,6 +19,8 @@ import { api } from "../api.ts";
 import { Icon } from "../components/Icon.tsx";
 import { animationClock, drawFrame, frameSize, loadPreviewTexture, onAnimationTick, type PreviewTexture } from "../textures/animatedTexture.ts";
 import { t, type StringKey } from "../strings.ts";
+import { LightNote } from "../components/LightNote.tsx";
+import { usePerformance } from "../preferences.ts";
 
 type View = "block" | (typeof DISPLAY_CONTEXTS)[number];
 
@@ -45,7 +48,7 @@ interface Props {
  * Animated textures (.png.mcmeta) play as in the game (KUYRUK 166). The inventory and item frame contexts show the
  * model in an inventory slot or an item frame, seen from the front as the game draws them (KUYRUK 162).
  */
-export function ModelPreview({ dir, modId, model, textures, height = 260, itemDisplay, textureOverrides }: Props) {
+function ModelPreviewLive({ dir, modId, model, textures, height = 260, itemDisplay, textureOverrides }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const stage = useRef<Stage>(undefined);
   const [view, setView] = useState<View>("block");
@@ -294,11 +297,8 @@ function createStage(node: HTMLDivElement): Stage {
     dispose() {
       observer.disconnect();
       stopAnimation?.();
-      controls.dispose();
-      flatControls.dispose();
       disposables.forEach((d) => d.dispose());
-      renderer.dispose();
-      renderer.domElement.remove();
+      disposeStage([controls, flatControls], renderer);
     },
   };
 }
@@ -447,4 +447,9 @@ function elementRotation(e: ModelElement) {
   const stretch = r.rescale ? 1 / Math.cos(angle) : 1;
   const rescale = new THREE.Vector3(r.axis === "x" ? 1 : stretch, r.axis === "y" ? 1 : stretch, r.axis === "z" ? 1 : stretch);
   return { origin: new THREE.Vector3(...(r.origin ?? [8, 8, 8])), turn: new THREE.Quaternion().setFromAxisAngle(axis, angle), rescale };
+}
+
+/** The 3D view, or a note while light mode has 3D off (Q250). */
+export function ModelPreview(props: Parameters<typeof ModelPreviewLive>[0]) {
+  return usePerformance().render3d ? <ModelPreviewLive {...props} /> : <LightNote />;
 }

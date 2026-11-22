@@ -4,10 +4,10 @@
  * resize_texture_canvas and adjust_texture. LIGHT=1 also takes the light screenshot. Screenshots go to design/133/.
  */
 import { connect } from "../mcp-test/client.ts";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const project = exampleProject();
-const OUT = "design/133";
+const OUT = evidence("design/133");
 const PATH = "textures/item/selection.png";
 
 async function cell(app: App, x: number, y: number, size = 16): Promise<[number, number]> {
@@ -99,6 +99,17 @@ await run(async (app) => {
     assert(big.length === 32 && big[0].split(" ").length === 32, "canvas 32 x 32");
     assert((await opaque(mcp)).sort().join(" ") === square(17, 15), `picture kept in the centre: ${(await opaque(mcp)).join(" ")}`);
     await app.shot(`${OUT}/after-canvas-dark.png`);
+    // Q274: Trim to drawing cuts the empty margins away: back to the 4 x 4 square, its pixels unchanged; one undo step.
+    const colour = await pixel(mcp, 17, 15);
+    await app.click(".abtn.trimcanvas");
+    await save(app);
+    const trimmed = await rows(mcp);
+    assert(trimmed.length === 4 && trimmed[0].split(" ").length === 4, `trimmed to 4 x 4: ${trimmed.length} x ${trimmed[0].split(" ").length}`);
+    assert((await opaque(mcp)).sort().join(" ") === square(0, 0) && (await pixel(mcp, 0, 0)) === colour, "the drawing kept, not scaled");
+    await app.shot(evidence(`design/274/trimmed-dark.png`));
+    await app.key("z", CTRL);
+    await save(app);
+    assert((await rows(mcp)).length === 32 && (await opaque(mcp)).sort().join(" ") === square(17, 15), "undo brings the margins back");
     if (process.env.LIGHT) {
       await app.setTheme("light");
       await app.click(".abtn", "Select");

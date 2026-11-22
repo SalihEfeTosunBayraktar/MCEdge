@@ -7,10 +7,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect } from "../mcp-test/client.ts";
-import { assert, copyProject, run, type App } from "./cdp.ts";
+import { assert, copyProject, run, type App, evidence } from "./cdp.ts";
 
 const project = copyProject("C:\\MyProjects\\AI-Assisted\\ETREconomy-Legacy", "ETREconomy-Legacy");
-const OUT = "design/code-mode";
+const OUT = evidence("design/code-mode");
 const FILE = "src/main/java/etreco/EtrecoMod.java";
 const heavy = process.argv.includes("--build");
 

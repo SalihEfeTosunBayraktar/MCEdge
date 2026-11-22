@@ -222,7 +222,7 @@ export function useResourceFolders({ kind, snapshot, onChanged, keys, isUsed, re
     /** Move the selection into a folder; disabled with nothing to move or nowhere to move it. */
     moveButton: (chosen: string[]) => (
       <div className="menuwrap texmove">
-        <ActionButton icon="folder" label={t("folders.move")} disabled={!chosen.length || (!own.folders.length && !chosen.some(ownFolder))} onClick={() => setMoving(!moving)} />
+        <ActionButton icon="folder" popup pressed={moving} label={t("folders.move")} disabled={!chosen.length || (!own.folders.length && !chosen.some(ownFolder))} onClick={() => setMoving(!moving)} />
         {moving && chosen.length > 0 && (
           <MenuList onClose={() => setMoving(false)} items={[
             { label: t("resources.noFolder"), checked: chosen.every((p) => !ownFolder(p)), onClick: () => (setMoving(false), moveInto(chosen, "")) },

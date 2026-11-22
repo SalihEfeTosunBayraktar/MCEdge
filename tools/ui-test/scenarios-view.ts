@@ -6,10 +6,10 @@
  */
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, launchApp, type App } from "./cdp.ts";
+import { assert, exampleProject, launchApp, type App, evidence } from "./cdp.ts";
 
 if (existsSync("C:/BrainOS/.ingame")) throw new Error("game mode is on (C:/BrainOS/.ingame); not starting a server");
-const OUT = "design/241";
+const OUT = evidence("design/241");
 const ENGINE = "fabric-1.21.5";
 const project = exampleProject();
 const text = (app: App, selector: string) => app.eval<string>(`document.querySelector(${JSON.stringify(selector)})?.textContent ?? ""`);

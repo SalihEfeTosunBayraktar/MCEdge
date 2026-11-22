@@ -4,11 +4,12 @@
  * `node tools/ui-test/usability-measure.ts before` writes design/usability/before-*.png; "after" uses the
  * shortcuts added by the fixes and writes after-*.png. ETREconomy (629 procedures) is copied, never changed.
  */
-import { existsSync } from "node:fs";
-import { copyProject, exampleProject, launchApp, type App } from "./cdp.ts";
+import { existsSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { copyProject, exampleProject, launchApp, type App, evidence } from "./cdp.ts";
 
 const phase = process.argv[2] === "after" ? "after" : "before";
-const OUT = "design/usability";
+const OUT = evidence("design/usability");
 const ETR = "C:/MyProjects/AI-Assisted/ETREconomy-MCEdge";
 
 interface Count { clicks: number; drags: number; keys: number; notes: string[] }
@@ -194,26 +195,29 @@ try {
   const varBlocks = await app.eval<number>(`document.querySelector(".blocklyhost").blocklyWorkspace.getToolbox().getFlyout().getWorkspace().getTopBlocks().length`);
   note(`the Variables category shows ${varBlocks} generic blocks; the variable is picked in each block's dropdown, globals are not listed in the side panel`);
 
-  begin("procedure: open the called procedure 'iksircall'");
-  await app.eval(`(() => { const ws = document.querySelector(".blocklyhost").blocklyWorkspace; ws.getToolbox().clearSelection(); ws.getAllBlocks(false).find((b) => b.type === "call_procedure" && b.getFieldValue("procedure") === "iksircall").pathObject.svgPath.id = "callblock"; })()`);
+  // The project changes: the procedure called from tickler and the GUI to edit are looked up, not named.
+  const callee = await app.eval<string>(`document.querySelector(".blocklyhost").blocklyWorkspace.getAllBlocks(false).find((b) => b.type === "call_procedure").getFieldValue("procedure")`);
+  begin("procedure: open the called procedure");
+  await app.eval(`(() => { const ws = document.querySelector(".blocklyhost").blocklyWorkspace; ws.getToolbox().clearSelection(); ws.getAllBlocks(false).find((b) => b.type === "call_procedure" && b.getFieldValue("procedure") === ${JSON.stringify(callee)}).pathObject.svgPath.id = "callblock"; })()`);
   await c.click("#callblock", undefined, { button: "right" });
   const canOpen = await app.eval<boolean>(`[...document.querySelectorAll(".blocklyMenuItem")].some((m) => m.textContent.includes("Open procedure"))`);
   if (canOpen) {
-    await c.click(".blocklyMenuItem", "Open procedure iksircall");
+    await c.click(".blocklyMenuItem", `Open procedure ${callee}`);
     note("right click > Open procedure; Back returns to tickler");
   } else {
     await app.key("Escape");
     note("no way from the block: back to the list, search, open (the program's view is lost)");
     await c.click(".abtn", "Back to elements");
-    await openTile(app, "iksircall", "iksircall");
+    await openTile(app, callee, callee);
   }
-  await app.waitFor(`document.querySelector(".edname")?.textContent === "iksircall"`);
+  await app.waitFor(`document.querySelector(".edname")?.textContent && document.querySelector(".edname").textContent !== "tickler"`);
   // Back to the list (after the fixes Back first returns to tickler; not counted).
   await c.click(".actions .abtn");
   while (await app.eval<boolean>(`!!document.querySelector(".edname")`)) await app.click(".actions .abtn");
 
   begin("gui: open a GUI");
-  await openTile(app, "testgui", "testgui");
+  const guiId = readdirSync(join(etr, "elements", "guis")).sort()[0].slice(0, -5);
+  await openTile(app, guiId, guiId);
   await app.waitFor(`document.querySelector(".guistage")`);
   await app.shot(`${OUT}/${phase}-gui.png`);
 
@@ -246,7 +250,7 @@ try {
 
   begin("gui: bind a procedure to the button");
   if (align) await c.click(".lrow", "Textured button");
-  await c.select("On click", "iksircall", ".guiform");
+  await c.select("On click", callee, ".guiform");
 
   begin("gui: preview the screen without editor marks");
   const preview2 = await app.eval<boolean>(`[...document.querySelectorAll(".abtn")].some((b) => /Preview/.test(b.textContent))`);
@@ -272,3 +276,4 @@ for (const [name, r] of Object.entries(results)) {
   console.log(`- ${name}: ${r.clicks} clicks, ${r.drags} drags, ${r.keys} keys`);
   for (const n of r.notes) console.log(`    ${n}`);
 }
+console.log("PASS");

@@ -22,6 +22,7 @@ import { radialDataPath, radialOutputs } from "./radial.ts";
 import { seatOutputs } from "./seats.ts";
 import { readPng, remapTexture, writePng, type Rgba } from "./png.ts";
 import { vanillaMcmeta } from "../resources/textureAnimation.ts";
+import { applyImageFilter } from "../resources/imageFilter.ts";
 import { spriteAnimationOutputs } from "./textureAnimations.ts";
 import { render, type Context } from "./render.ts";
 import { writeSourceMap } from "./sourceMap.ts";
@@ -102,6 +103,13 @@ export function generateTarget(project: ModProject, projectDir: string, engine: 
     const target = join(outDir, "src/main/resources", to);
     mkdirSync(dirname(target), { recursive: true });
     copyFileSync(resolve(projectDir, from), target);
+  }
+  // Project structure templates ship with the mod whether or not a structure element uses them: procedures read them by id (Q265).
+  const structures = join(projectDir, "structures");
+  for (const name of existsSync(structures) ? readdirSync(structures).filter((n) => n.endsWith(".nbt")) : []) {
+    const target = join(outDir, "src/main/resources/data", project.mod.id, env.mc === "1.16.5" ? "structures" : "structure", name);
+    mkdirSync(dirname(target), { recursive: true });
+    copyFileSync(join(structures, name), target);
   }
   if (project.mod.logo) copyFileSync(resolve(projectDir, project.mod.logo), join(outDir, "src/main/resources", LOGO_FILE));
   copyDatapack(env, join(outDir, "src/main/resources/data"));
@@ -397,7 +405,7 @@ function copyTextures(project: ModProject, elementContexts: Record<string, Eleme
     for (const ctx of contexts) {
       const copies = ctx.textures ?? (field && typeof ctx.texture === "string" && ctx.texture
         ? [{ from: ctx.texture, to: `${field.textureKind ?? "other"}/${ctx.id}` }] : []);
-      for (const { from, to, remap, half, below } of copies) {
+      for (const { from, to, remap, half, below, filter } of copies) {
         const target = join(assets, `${to}.png`);
         mkdirSync(dirname(target), { recursive: true });
         const png = (path: string) => readPng(readFileSync(resolve(projectDir, path)));
@@ -405,6 +413,12 @@ function copyTextures(project: ModProject, elementContexts: Record<string, Eleme
         else if (half) writeFileSync(target, writePng(halfOf(png(from), half)));
         else if (below) writeFileSync(target, writePng(stacked(png(from), png(below))));
         else copyTexture(resolve(projectDir, from), target);
+        // Q273: a GUI image's opacity and tint, on its visible pixels only.
+        if (filter) {
+          const image = readPng(readFileSync(target));
+          applyImageFilter(image.data, filter);
+          writeFileSync(target, writePng(image));
+        }
       }
     }
   }

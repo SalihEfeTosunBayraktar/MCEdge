@@ -1,10 +1,11 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { visibility, type FieldDef, type GroupDef } from "../../../../src/elements/model.ts";
 import type { Element, ProjectSnapshot } from "../../../shared/api.ts";
 import { FieldList, type FormContext } from "../components/ElementFields.tsx";
 import { Icon, type IconName } from "../components/Icon.tsx";
 import { Texture } from "../components/Texture.tsx";
-import { ActionButton, ContextMenu, Dialog, FormGroup, FormRow, MenuList, type MenuItem, PanelGrip, Separator, ShortcutsButton } from "../components/ui.tsx";
+import { ActionButton, ContextMenu, Dialog, FormGroup, FormRow, MenuList, type MenuItem, Separator, ShortcutsButton } from "../components/ui.tsx";
+import { EditorShell, RailButton, RailSeparator, setDockSection, StatusItems, ZoomGroup, type DockSection } from "../dock/Dock.tsx";
 import { useTexture } from "../hooks/useTexture.ts";
 import { useCtrlWheel } from "../hooks/useCtrlWheel.ts";
 import { api } from "../api.ts";
@@ -12,6 +13,8 @@ import { VanillaHud } from "./VanillaHud.tsx";
 import { WidgetTexture } from "./WidgetTexture.tsx";
 import { loadPreviewTexture } from "../textures/animatedTexture.ts";
 import { playbackModeOf, type PlaybackMode } from "../../../../src/resources/textureAnimation.ts";
+import { imageFilterOf } from "../../../../src/resources/imageFilter.ts";
+import { PixelText } from "./PixelText.tsx";
 import { freeLayerName, hiddenIn, layerOf, layersOf, pinned, sortByLayer, type Layer } from "./layers.ts";
 import { t, type StringKey } from "../strings.ts";
 import { anchorOffset, guiScaleFor, overlayScreen, RESOLUTIONS, widgetAnchor } from "../../../../src/elements/overlayLayout.ts";
@@ -33,12 +36,19 @@ interface Props {
   onChange: (key: string, value: unknown) => void;
   /** Back, duplicate and delete of the element. */
   elementActions: React.ReactNode;
+  /** Icon, name, type and badges of the element, shown in the top bar. */
+  identity: React.ReactNode;
 }
 
 type Box = { x: number; y: number; w: number; h: number };
 type Edge = "left" | "center" | "right" | "top" | "middle" | "bottom";
 const EDGES: [Edge, IconName][] = [["left", "alignleft"], ["center", "aligncenter"], ["right", "alignright"], ["top", "aligntop"], ["middle", "alignmiddle"], ["bottom", "alignbottom"]];
-const ZOOMS = [1, 2, 3, 4, 5, 6];
+const ZOOMS = [0.5, 1, 1.5, 2, 3, 4, 5, 6];
+/** The next zoom step up (`d` > 0) or down from `z`, which may lie between steps after a fit. */
+const stepZoom = (z: number, d: number) => (d > 0 ? ZOOMS.find((v) => v > z + 1e-6) : [...ZOOMS].reverse().find((v) => v < z - 1e-6)) ?? z;
+/** Zoom that fits a stage of `w` x `h` canvas pixels in an area box, in quarter steps (crisp enough, never scrolling). */
+const fitZoom = (box: { w: number; h: number }, w: number, h: number) =>
+  Math.min(ZOOMS.at(-1)!, Math.max(ZOOMS[0], Math.floor(Math.min((box.w - 44) / w, (box.h - 44) / h) * 4) / 4));
 const MAX_UNDO = 100;
 const HUD_KEY = "overlayHud";
 
@@ -61,7 +71,7 @@ async function readClipboard(): Promise<Widget[]> {
  * player inventory), widgets placed, moved and resized on it with optional grid snapping, and a side panel with
  * the selected widget's properties and the rest of the element's settings.
  */
-export function GuiLayoutPage({ snapshot, typeId, draft, ctx, layout, groups, all, onChange, elementActions }: Props) {
+export function GuiLayoutPage({ snapshot, typeId, draft, ctx, layout, groups, all, onChange, elementActions, identity }: Props) {
   const overlay = typeId === "overlay";
   const widgets = asWidgets(draft[layout.key]);
   const layers = layersOf(draft.layers, t("gui.layer.default"));
@@ -74,7 +84,6 @@ export function GuiLayoutPage({ snapshot, typeId, draft, ctx, layout, groups, al
   const setSelected = (index: number | undefined) => (setSelectedState(index), setExtra([]));
   /** Preview: the screen without selection frames, handles, slot numbers and grid; nothing is edited. */
   const [preview, setPreview] = useState(false);
-  const [tab, setTab] = useState<"widget" | "screen">("widget");
   const [adding, setAdding] = useState(false);
   /** Widget whose name is being edited in the list (double click or F2). */
   const [renaming, setRenaming] = useState<number>();
@@ -83,6 +92,8 @@ export function GuiLayoutPage({ snapshot, typeId, draft, ctx, layout, groups, al
   /** Widget the Make grid dialog copies. */
   const [gridding, setGridding] = useState<number>();
   const [zoom, setZoom] = useState(3);
+  /** The zoom follows the canvas area (a collapsed inspector, a bigger window) until the user zooms by hand; Fit goes back. */
+  const [fitted, setFitted] = useState(true);
   const shownRef = useRef(false);
   /** Overlays: the window the canvas is previewed on (an index of RESOLUTIONS, -1 the 427x240 canvas) and the GUI scale setting (0 auto). */
   const [screenIndex, setScreenIndex] = useState(-1);
@@ -218,7 +229,7 @@ export function GuiLayoutPage({ snapshot, typeId, draft, ctx, layout, groups, al
     const { x, y } = freeSpot(widgetBox(base), [...widgets.map((w) => widgetBox(w)), ...inventoryBox], width, height, grid);
     const added = { ...base, x, y, layer: layers[active].name };
     commitSorted([...widgets, added], layers, added);
-    setTab("widget");
+    setDockSection("gui.props", true);
   };
   const remove = () => {
     if (current === undefined) return;
@@ -320,7 +331,7 @@ export function GuiLayoutPage({ snapshot, typeId, draft, ctx, layout, groups, al
     const placed = source.map((w) => ({ ...w, layer: w.layer && names.has(w.layer) ? w.layer : layers[active].name }));
     const copies = cloneWidgets(placed, list, k * grid.sx, k * grid.sy);
     commitSelecting([...list, ...copies], copies);
-    setTab("widget");
+    setDockSection("gui.props", true);
   };
   /** Replaces widget `index` by an N x M grid of it, all in one new group, selected. */
   const makeGrid = (index: number, rows: number, cols: number, stepX: number, stepY: number) => {
@@ -378,7 +389,7 @@ export function GuiLayoutPage({ snapshot, typeId, draft, ctx, layout, groups, al
       { label: t("gui.menu.duplicate"), shortcut: "Ctrl+D", onClick: on(duplicate) },
       { label: t("gui.menu.copy"), shortcut: "Ctrl+C", onClick: on(copy) },
       { label: t("gui.menu.paste"), shortcut: "Ctrl+V", onClick: () => void paste() },
-      { label: t("gui.menu.rename"), shortcut: "F2", onClick: current !== undefined ? () => (setTab("widget"), setRenaming(current)) : undefined },
+      { label: t("gui.menu.rename"), shortcut: "F2", onClick: current !== undefined ? () => (setDockSection("gui.props", true), setRenaming(current)) : undefined },
       { label: "", separator: true },
       { label: t("gui.group"), shortcut: "Ctrl+G", onClick: selection.length > 1 ? group : undefined },
       { label: t("gui.ungroup"), shortcut: "Ctrl+Shift+G", onClick: grouped ? ungroup : undefined },
@@ -399,7 +410,7 @@ export function GuiLayoutPage({ snapshot, typeId, draft, ctx, layout, groups, al
     const next = name.trim().toLowerCase().replace(/[^a-z0-9_]+/g, "_") || undefined;
     if (index < widgets.length && next !== widgets[index].name) update(index, { name: next });
   };
-  const zoomBy = (d: number) => setZoom((z) => ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, ZOOMS.indexOf(z) + d))] ?? z);
+  const zoomBy = (d: number) => (setFitted(false), setZoom((z) => stepZoom(z, d)));
 
   // ---- dragging: move the pressed widget (and the rest of the selection with it) or resize it ----
   const stage = useRef<HTMLDivElement>(null);
@@ -415,7 +426,7 @@ export function GuiLayoutPage({ snapshot, typeId, draft, ctx, layout, groups, al
     const together = mode === "move" && selection.length > 1 && selection.includes(index) && !e.altKey;
     if (!together) pick(index, e.altKey);
     const moving = together ? selection : e.altKey ? [index] : withGroups(widgets, [index]);
-    setTab("widget");
+    setDockSection("gui.props", true);
     // A locked widget is picked like any other but never dragged.
     if (pinned(layers, widgets[index])) return;
     stage.current?.setPointerCapture(e.pointerId);
@@ -445,6 +456,12 @@ export function GuiLayoutPage({ snapshot, typeId, draft, ctx, layout, groups, al
     d.started = true;
   };
   const endDrag = () => void (drag.current = undefined);
+  // Stable handlers for the memoised WidgetView (Q280): they call the current closures, so a move of one widget
+  // does not re-render the other hundred.
+  const widgetHandlers = useRef({ press, openMenu });
+  widgetHandlers.current = { press, openMenu };
+  const pressWidget = useCallback((index: number, mode: "move" | "resize", box: Box) => (e: React.PointerEvent) => widgetHandlers.current.press(index, mode, box)(e), []);
+  const menuWidget = useCallback((index: number) => (e: React.MouseEvent) => widgetHandlers.current.openMenu(index)(e), []);
 
   // ---- keyboard: delete, nudge, undo ----
   const keys = useRef<(e: KeyboardEvent) => void>(undefined);
@@ -459,8 +476,10 @@ export function GuiLayoutPage({ snapshot, typeId, draft, ctx, layout, groups, al
       ? (lower === "z" && !e.shiftKey ? () => step(undo, redo) : lower === "y" || (lower === "z" && e.shiftKey) ? () => step(redo, undo)
         : lower === "g" ? (e.shiftKey ? ungroup : group) : lower === "d" ? duplicate : lower === "c" && selection.length ? copy : lower === "v" ? () => void paste() : undefined)
       : k === "Delete" || k === "Backspace" ? (current !== undefined && pinned(layers, widgets[current]) ? undefined : remove)
-      : k === "F2" ? (current !== undefined ? () => (setTab("widget"), setRenaming(current)) : undefined)
+      : k === "F2" ? (current !== undefined ? () => (setDockSection("gui.props", true), setRenaming(current)) : undefined)
       : k === "Escape" ? () => (preview ? setPreview(false) : setSelected(undefined))
+      // Page Up / Page Down select the previous / next widget, so a widget can be chosen without the mouse (Q248).
+      : (k === "PageDown" || k === "PageUp") && widgets.length ? () => pick(((current ?? (k === "PageDown" ? -1 : widgets.length)) + (k === "PageDown" ? 1 : -1) + widgets.length) % widgets.length, true)
       : k.toLowerCase() === "p" && !e.altKey ? () => setPreview(!preview)
       : k === "ArrowLeft" ? () => nudge(-by, 0) : k === "ArrowRight" ? () => nudge(by, 0)
       : k === "ArrowUp" ? () => nudge(0, -byY) : k === "ArrowDown" ? () => nudge(0, byY)
@@ -475,22 +494,18 @@ export function GuiLayoutPage({ snapshot, typeId, draft, ctx, layout, groups, al
     return () => window.removeEventListener("keydown", listener);
   }, []);
 
-  // Start zoomed so the screen fits the canvas area.
   const area = useRef<HTMLDivElement>(null);
   // Ctrl + wheel steps the zoom like the toolbar buttons; a previewed screen is fitted, so it does not zoom (KUYRUK 179).
   useCtrlWheel(area, (step) => !shownRef.current && zoomBy(step));
-  useLayoutEffect(() => {
-    const box = area.current?.getBoundingClientRect();
-    if (!box) return;
-    const fit = Math.min((box.width - 48) / width, (box.height - 48) / height);
-    setZoom(ZOOMS.filter((z) => z <= fit).at(-1) ?? 1);
-    // Fit once per editor; the user zooms after that.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Overlay screen preview (KUYRUK 170): the stage is the whole screen in canvas pixels, fitted to the area, and every
   // widget sits where its anchor puts it there; moving one still changes its x, y on the canvas.
   const [areaSize, setAreaSize] = useState<{ w: number; h: number }>();
+  // Measured before the first paint, so the fitted zoom is right from the first frame.
+  useLayoutEffect(() => {
+    const el = area.current;
+    if (el) setAreaSize({ w: el.clientWidth, h: el.clientHeight });
+  }, []);
   useEffect(() => {
     const el = area.current;
     if (!el) return;
@@ -498,6 +513,11 @@ export function GuiLayoutPage({ snapshot, typeId, draft, ctx, layout, groups, al
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
+  useEffect(() => {
+    if (fitted && areaSize && !shownRef.current) setZoom(fitZoom(areaSize, width, height));
+    // The canvas size is left out on purpose: dragging its corner must not rescale the stage under the pointer.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitted, areaSize]);
   const previewed = overlay && screenIndex >= 0 ? RESOLUTIONS[screenIndex] : undefined;
   const shown = previewed ? overlayScreen(draft, previewed.width, previewed.height, guiSetting) : undefined;
   shownRef.current = !!shown;
@@ -541,104 +561,83 @@ export function GuiLayoutPage({ snapshot, typeId, draft, ctx, layout, groups, al
   const setGrid = (key: "gridSx" | "gridSy" | "gridOx" | "gridOy", value: number) => setFields({ [key]: value }, `grid.${key}`);
   const panelBg = !overlay && draft.renderBgLayer !== false;
 
-  return (
-    <>
-      <div className="actions" role="toolbar">
-        {elementActions}
-        <Separator />
-        <div className="menuwrap">
-          <ActionButton icon="plus" label={t("gui.add")} tone="primary" onClick={() => setAdding(!adding)} />
-          {adding && (
-            <MenuList onClose={() => setAdding(false)} items={[
-              ...kinds.map((kind) => ({ label: t(`gui.kind.${kind}` as StringKey), onClick: () => add(kind) })),
-              ...(kinds.includes("button") ? [{ label: t("gui.kind.invisible_button"), onClick: () => add("button", true) }] : []),
-            ]} />
-          )}
-        </div>
-        <ActionButton icon="dup" compact label={t("gui.duplicate")} title="Ctrl+D" disabled={!selection.length} onClick={duplicate} />
-        <ActionButton icon="group" compact label={t("gui.group")} title="Ctrl+G" disabled={selection.length < 2} onClick={group} />
-        <ActionButton icon="ungroup" compact label={t("gui.ungroup")} title="Ctrl+Shift+G" disabled={!selection.some((i) => widgets[i].group)} onClick={ungroup} />
-        <ActionButton icon="tiles" compact label={t("gui.makeGrid")} disabled={current === undefined} onClick={() => setGridding(current)} />
-        <ActionButton icon="trash" label={t("gui.remove")} tone="danger" disabled={current === undefined} onClick={remove} />
-        <Separator />
-        {EDGES.map(([edge, icon]) => (
+  const sections: DockSection[] = [
+    // Layers and Widgets come before the properties: selecting a widget grows the properties, and the list the user is
+    // clicking in (a double click renames) must not move under the pointer.
+    {
+      id: "gui.layers", icon: "tiles", title: t("gui.layers"), badge: String(layers.length), defaultOpen: true,
+      body: (
+        <>
+          <LayerList layers={layers} active={active} onActive={setActiveLayer} onAdd={addLayer} onRename={renameLayer}
+                    onToggle={toggleLayer} onMove={moveLayer} onRemove={removeLayer} />
+        </>
+      ),
+    },
+    {
+      id: "gui.widgets", icon: "box", title: t("gui.widgets"), badge: String(widgets.length), defaultOpen: true,
+      body: (
+        <>
+          <WidgetList widgets={widgets} layers={layers} selection={selection}
+                    onSelect={(i, add) => (add ? toggleSelected(i, true) : setSelected(i))}
+                    onSelectGroup={(name, add) => {
+                      const members = widgets.flatMap((w, i) => (w.group === name ? [i] : []));
+                      if (!add) return selectAll(members);
+                      selectAll(members.every((i) => selection.includes(i)) ? selection.filter((i) => !members.includes(i)) : [...selection, ...members.filter((i) => !selection.includes(i))]);
+                    }}
+                    expanded={expanded} onExpand={(name) => setExpanded(expanded.includes(name) ? expanded.filter((g) => g !== name) : [...expanded, name])}
+                    onGroupToggle={toggleGroup} onGroupRename={renameGroup}
+                    renaming={renaming} onRenameStart={setRenaming} onRename={rename} />
+                  {selection.length > 1 && <p className="hint nomargin">{t("gui.multiHint", { count: selection.length })}</p>}
+        </>
+      ),
+    },
+    {
+      id: "gui.props", icon: "edit", title: t("dock.properties"), defaultOpen: true,
+      badge: selection.length > 1 ? t("gui.multi.title", { count: selection.length }) : current !== undefined ? t(`gui.kind.${widgets[current].kind}` as StringKey) : undefined,
+      body: (
+        <>
+          <div className="dk-aligns">
+            {EDGES.map(([edge, icon]) => (
           <span key={edge} data-align={edge} className="alignbtn">
             <ActionButton icon={icon} compact label={t(selection.length > 1 ? `gui.align.${edge}` : `gui.align.screen.${edge}`)} disabled={!selection.length}
               onClick={() => align(edge)} />
           </span>
         ))}
-        <Separator />
-        <ActionButton icon="undo" label={t("gui.undo")} title="Ctrl+Z" disabled={!undo.current.length} onClick={() => step(undo, redo)} />
-        <ActionButton icon="redo" label={t("gui.redo")} title="Ctrl+Y" disabled={!redo.current.length} onClick={() => step(redo, undo)} />
-        <Separator />
-        <ActionButton icon="zoomin" compact label={t("gui.zoomIn")} disabled={!!shown || zoom === ZOOMS.at(-1)} onClick={() => zoomBy(1)} />
-        <ActionButton icon="zoomout" compact label={t("gui.zoomOut")} disabled={!!shown || zoom === ZOOMS[0]} onClick={() => zoomBy(-1)} />
-        {grid.snapKey && <ActionButton icon="grid" label={t("gui.snap")} pressed={grid.snap} onClick={toggleSnap} />}
-        <ActionButton icon="eye" label={t("gui.preview")} title="P" pressed={preview} onClick={() => setPreview(!preview)} />
-        <ShortcutsButton shortcuts={[
-          [t("keys.k.shiftClick"), t("keys.gui.add")], [t("keys.k.arrows"), t("keys.gui.nudge")], [t("keys.k.shiftArrows"), t("keys.gui.nudgeFar")],
-          ["Delete / Backspace", t("keys.gui.remove")], [t("keys.k.f2"), t("keys.gui.rename")], ["Esc", t("keys.gui.deselect")], ["P", t("keys.gui.preview")], [t("keys.k.ctrlWheel"), t("keys.gui.zoom")],
-          [t("keys.k.rightClick"), t("keys.gui.menu")], [t("keys.k.altClick"), t("keys.gui.pickOne")], ["Ctrl+G", t("keys.gui.group")], ["Ctrl+Shift+G", t("keys.gui.ungroup")],
-          ["Ctrl+D", t("keys.gui.duplicate")], ["Ctrl+C", t("keys.gui.copy")], ["Ctrl+V", t("keys.gui.paste")],
-          ["Ctrl+Z", t("keys.undo")], ["Ctrl+Y / Ctrl+Shift+Z", t("keys.redo")], ["?", t("keys.list")],
-        ]} />
-      </div>
-      {menu && <ContextMenu x={menu.x} y={menu.y} items={menuItems(menu.page, selection.length > 0)} onClose={() => setMenu(undefined)} />}
-      {gridding !== undefined && widgets[gridding] && (
-        <MakeGridDialog widget={widgets[gridding]} onCancel={() => setGridding(undefined)}
-          onOk={(rows, cols, sx, sy) => makeGrid(gridding, rows, cols, sx, sy)} />
-      )}
-      <div className="procbody">
-        <div ref={area} className="guiarea" onPointerDown={() => setSelected(undefined)} onContextMenu={openMenu(undefined)}>
-          <div ref={stage} className={`guistage ${overlay ? "overlay" : ""} ${panelBg ? "panelbg" : ""} ${preview ? "preview" : ""} ${shown ? "onscreen" : ""}`}
-            style={{
-              width: stageW * view, height: stageH * view, ["--z" as string]: view,
-            }}
-            onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag}>
-            {overlay && typeof draft.baseTexture === "string" && draft.baseTexture && <BaseTexture dir={snapshot.dir} path={draft.baseTexture} />}
-            {designAt && <span className="gdesign" title={t("gui.screen.design")} style={pos(designAt.dx, designAt.dy, width, height, view)} />}
-            {overlay && hud && <VanillaHud width={shown ? shown.guiWidth : width} height={shown ? shown.guiHeight : height} />}
-            {inventory.map((f, i) => <span key={i} className="gslot inv" style={pos(f.x, f.y, 18, 18, zoom)} />)}
-            {!overlay && !preview && <span className="gcanvashandle" title={t("gui.canvas.drag")} onPointerDown={pressCorner} />}
-            {drawOrder(widgets).map((i) => [widgets[i], i] as const).map(([w, i]) => hiddenIn(layers, w) || w.editHidden ? null : (
-              <WidgetView key={i} index={i} widget={w} zoom={view} shift={shiftOf(w)} dir={snapshot.dir} overlay={overlay} selected={!preview && selection.includes(i)}
-                primary={!preview && i === current} pinned={pinned(layers, w)}
-                procedureName={w.procedure ? snapshot.project.elements.procedure?.find((p) => p.id === w.procedure)?.id : undefined}
-                onPress={(mode, box) => press(i, mode, box)} onMenu={openMenu(i)} />
-            ))}
-            {/* Over the widgets, so its lines show on opaque images too; it takes no pointer events (KUYRUK 181). */}
-            {(grid.snap || gridEditing) && !preview && !shown && (
-              <span className="ggrid" style={{
-                backgroundSize: `${grid.sx * zoom}px ${grid.sy * zoom}px`,
-                backgroundPosition: `${(grid.ox % grid.sx) * zoom}px ${(grid.oy % grid.sy) * zoom}px`,
-              }} />
-            )}
           </div>
-          {widgets.length === 0 && (
-            <div className="guiempty" onPointerDown={(e) => e.stopPropagation()}>
-              <p className="hint">{t("gui.empty")}</p>
-              <div className="emptyadd">
-                {kinds.filter((k) => ["label", "button", "image_button", "image", "slot"].includes(k)).map((kind) => (
-                  <button key={kind} type="button" className="mbtn" onClick={() => add(kind)}><Icon name="plus" size={12} /><span>{t(`gui.kind.${kind}` as StringKey)}</span></button>
-                ))}
-              </div>
+          {selection.length > 1 ? (
+            <div className="form">
+              <MultiWidgetForm list={selection.map((i) => widgets[i])} layers={layers} overlay={overlay} ctx={ctx} layoutKey={layout.key}
+                      onLayer={moveSelectedToLayer}
+                      onLock={(on) => updateSelected(() => ({ editLocked: on || undefined }))}
+                      onChange={(key, value) => updateSelected((w) => fieldChange(w, key, value, snapshot.textures), `multi.${key}`)} />
             </div>
-          )}
-        </div>
-        <aside className="panel procpanel">
-          <PanelGrip />
-          <div className="langtabs pagetabs" role="tablist">
-            <button role="tab" aria-selected={tab === "widget"} className={`ltab ${tab === "widget" ? "on" : ""}`} onClick={() => setTab("widget")}>{t("gui.tab.widget")}</button>
-            <button role="tab" aria-selected={tab === "screen"} className={`ltab ${tab === "screen" ? "on" : ""}`} onClick={() => setTab("screen")}>
-              {t(overlay ? "gui.tab.overlay" : "gui.tab.screen")}
-            </button>
-          </div>
-          <div className="form procform guiform">
-            {tab === "widget" ? (
-              <>
-                {/* Canvas size, grid and text size live here, so the toolbar holds only actions in one row (KUYRUK 137, U14). */}
-                <FormGroup title={t("gui.canvasGroup")}>
-                  <div className="guictls">
+          ) : current !== undefined ? (
+            <>
+              <div className="form">
+                      <label className="frow">
+                        <span className="flabel">{t("gui.layer.of")}</span>
+                        <select value={layerOf(layers, widgets[current]).name} onChange={(e) => moveToLayer(current, e.target.value)}>
+                          {layers.map((l) => <option key={l.name} value={l.name}>{l.name}</option>)}
+                        </select>
+                      </label>
+                      <label className="frow">
+                        <span className="flabel">{t("gui.layer.lockWidget")}</span>
+                        <span className="check"><input type="checkbox" checked={widgets[current].editLocked === true}
+                          onChange={(e) => update(current, { editLocked: e.target.checked || undefined })} /></span>
+                      </label>
+                    </div>
+                    <WidgetForm key={current} index={current} layoutKey={layout.key} widget={widgets[current]} overlay={overlay} ctx={ctx}
+                      onChange={(key, value) => update(current, fieldChange(widgets[current], key, value, snapshot.textures), `${current}.${key}`)} />
+            </>
+          ) : <p className="hint nomargin">{t("gui.selectHint")}</p>}
+        </>
+      ),
+    },
+    {
+      id: "gui.canvas", icon: "grid", title: t("gui.canvasGroup"), badge: `${width}×${height}`, defaultOpen: true,
+      body: (
+        <>
+          <div className="guictls">
                     <p className="hint nomargin guimeta">{t("gui.meta", { width, height, zoom })}</p>
               {overlay && (
                 <label className="check hudctl" title={t("gui.hud.hint")}>
@@ -670,62 +669,112 @@ export function GuiLayoutPage({ snapshot, typeId, draft, ctx, layout, groups, al
                 <button type="button" className="btn small" title={t("gui.textSize.bigger")} disabled={!texted.length || textScale >= 8} onClick={() => scaleText(0.25)}>A+</button>
               </span>
                   </div>
-                </FormGroup>
-                {overlay && (
-                  <FormGroup title={t("gui.screen")}>
-                    <ScreenPreview index={screenIndex} onIndex={setScreenIndex} guiSetting={guiSetting} onGuiSetting={setGuiSetting} shown={shown} />
-                  </FormGroup>
-                )}
-                <FormGroup title={t("gui.layers")}>
-                  <LayerList layers={layers} active={active} onActive={setActiveLayer} onAdd={addLayer} onRename={renameLayer}
-                    onToggle={toggleLayer} onMove={moveLayer} onRemove={removeLayer} />
-                </FormGroup>
-                <FormGroup title={t("gui.widgets")}>
-                  <WidgetList widgets={widgets} layers={layers} selection={selection}
-                    onSelect={(i, add) => (add ? toggleSelected(i, true) : setSelected(i))}
-                    onSelectGroup={(name, add) => {
-                      const members = widgets.flatMap((w, i) => (w.group === name ? [i] : []));
-                      if (!add) return selectAll(members);
-                      selectAll(members.every((i) => selection.includes(i)) ? selection.filter((i) => !members.includes(i)) : [...selection, ...members.filter((i) => !selection.includes(i))]);
-                    }}
-                    expanded={expanded} onExpand={(name) => setExpanded(expanded.includes(name) ? expanded.filter((g) => g !== name) : [...expanded, name])}
-                    onGroupToggle={toggleGroup} onGroupRename={renameGroup}
-                    renaming={renaming} onRenameStart={setRenaming} onRename={rename} />
-                  {selection.length > 1 && <p className="hint nomargin">{t("gui.multiHint", { count: selection.length })}</p>}
-                </FormGroup>
-                {selection.length > 1 ? (
-                  <FormGroup title={t("gui.multi.title", { count: selection.length })}>
-                    <MultiWidgetForm list={selection.map((i) => widgets[i])} layers={layers} overlay={overlay} ctx={ctx} layoutKey={layout.key}
-                      onLayer={moveSelectedToLayer}
-                      onLock={(on) => updateSelected(() => ({ editLocked: on || undefined }))}
-                      onChange={(key, value) => updateSelected((w) => fieldChange(w, key, value, snapshot.textures), `multi.${key}`)} />
-                  </FormGroup>
-                ) : current !== undefined ? (
-                  <FormGroup title={t(`gui.kind.${widgets[current].kind}` as StringKey)}>
-                    <div className="form">
-                      <label className="frow">
-                        <span className="flabel">{t("gui.layer.of")}</span>
-                        <select value={layerOf(layers, widgets[current]).name} onChange={(e) => moveToLayer(current, e.target.value)}>
-                          {layers.map((l) => <option key={l.name} value={l.name}>{l.name}</option>)}
-                        </select>
-                      </label>
-                      <label className="frow">
-                        <span className="flabel">{t("gui.layer.lockWidget")}</span>
-                        <span className="check"><input type="checkbox" checked={widgets[current].editLocked === true}
-                          onChange={(e) => update(current, { editLocked: e.target.checked || undefined })} /></span>
-                      </label>
-                    </div>
-                    <WidgetForm key={current} index={current} layoutKey={layout.key} widget={widgets[current]} overlay={overlay} ctx={ctx}
-                      onChange={(key, value) => update(current, fieldChange(widgets[current], key, value, snapshot.textures), `${current}.${key}`)} />
-                  </FormGroup>
-                ) : <p className="panel-empty">{t("gui.selectHint")}</p>}
-              </>
-            ) : (
-              <ScreenSettings groups={groups} layoutKey={layout.key} all={all} draft={draft} ctx={ctx} onChange={onChange} />
+          {overlay && (
+            <FormGroup title={t("gui.screen")}>
+              <ScreenPreview index={screenIndex} onIndex={setScreenIndex} guiSetting={guiSetting} onGuiSetting={setGuiSetting} shown={shown} />
+            </FormGroup>
+          )}
+        </>
+      ),
+    },
+    {
+      id: "gui.screen", icon: "gear", title: t(overlay ? "gui.tab.overlay" : "gui.tab.screen"), defaultOpen: false,
+      body: <ScreenSettings groups={groups} layoutKey={layout.key} all={all} draft={draft} ctx={ctx} onChange={onChange} />,
+    },
+  ];
+  const status = (
+    <StatusItems items={[
+      t("gui.meta", { width, height, zoom: Math.round(view * 100) / 100 }),
+      selection.length ? t("dock.selected", { count: selection.length }) : null,
+      grid.snapKey ? `${t("gui.grid")} ${grid.sx}×${grid.sy}${grid.snap ? ` · ${t("gui.snap")}` : ""}` : null,
+      preview ? t("gui.preview") : null,
+    ]} />
+  );
+
+  return (
+    <>
+      {menu && <ContextMenu x={menu.x} y={menu.y} items={menuItems(menu.page, selection.length > 0)} onClose={() => setMenu(undefined)} />}
+      {gridding !== undefined && widgets[gridding] && (
+        <MakeGridDialog widget={widgets[gridding]} onCancel={() => setGridding(undefined)}
+          onOk={(rows, cols, sx, sy) => makeGrid(gridding, rows, cols, sx, sy)} />
+      )}
+      <EditorShell label={t("dock.editor")} bar={
+        <>
+        {elementActions}
+        <span className="dk-id edhead">{identity}</span>
+        <Separator />
+        <div className="menuwrap">
+          <ActionButton icon="plus" popup pressed={adding} label={t("gui.add")} tone="primary" onClick={() => setAdding(!adding)} />
+          {adding && (
+            <MenuList onClose={() => setAdding(false)} items={[
+              ...kinds.map((kind) => ({ label: t(`gui.kind.${kind}` as StringKey), onClick: () => add(kind) })),
+              ...(kinds.includes("button") ? [{ label: t("gui.kind.invisible_button"), onClick: () => add("button", true) }] : []),
+            ]} />
+          )}
+        </div>
+        <ActionButton hideLabel icon="undo" label={t("gui.undo")} title="Ctrl+Z" disabled={!undo.current.length} onClick={() => step(undo, redo)} />
+        <ActionButton hideLabel icon="redo" label={t("gui.redo")} title="Ctrl+Y" disabled={!redo.current.length} onClick={() => step(redo, undo)} />
+        <span className="dk-grow" />
+        {grid.snapKey && <ActionButton icon="grid" label={t("gui.snap")} pressed={grid.snap} onClick={toggleSnap} />}
+        <ActionButton icon="eye" label={t("gui.preview")} title="P" pressed={preview} onClick={() => setPreview(!preview)} />
+        <Separator />
+        <ZoomGroup zoom={view} canOut={!shown && view > ZOOMS[0]} canIn={!shown && view < ZOOMS.at(-1)!} onOut={() => zoomBy(-1)} onIn={() => zoomBy(1)}
+          onFit={() => setFitted(true)} fitted={fitted && !shown} disabled={!!shown} />
+        <ShortcutsButton shortcuts={[
+          [t("keys.k.shiftClick"), t("keys.gui.add")], ["PageUp / PageDown", t("keys.gui.cycle")], [t("keys.k.arrows"), t("keys.gui.nudge")], [t("keys.k.shiftArrows"), t("keys.gui.nudgeFar")],
+          ["Delete / Backspace", t("keys.gui.remove")], [t("keys.k.f2"), t("keys.gui.rename")], ["Esc", t("keys.gui.deselect")], ["P", t("keys.gui.preview")], [t("keys.k.ctrlWheel"), t("keys.gui.zoom")],
+          [t("keys.k.rightClick"), t("keys.gui.menu")], [t("keys.k.altClick"), t("keys.gui.pickOne")], ["Ctrl+G", t("keys.gui.group")], ["Ctrl+Shift+G", t("keys.gui.ungroup")],
+          ["Ctrl+D", t("keys.gui.duplicate")], ["Ctrl+C", t("keys.gui.copy")], ["Ctrl+V", t("keys.gui.paste")],
+          ["Ctrl+Z", t("keys.undo")], ["Ctrl+Y / Ctrl+Shift+Z", t("keys.redo")], ["?", t("keys.list")],
+        ]} />
+        </>
+      } railLabel={t("dock.tools")} rail={
+        <>
+        <RailButton icon="dup" label={t("gui.duplicate")} shortcut="Ctrl+D" disabled={!selection.length} onClick={duplicate} />
+        <RailButton icon="group" label={t("gui.group")} shortcut="Ctrl+G" disabled={selection.length < 2} onClick={group} />
+        <RailButton icon="ungroup" label={t("gui.ungroup")} shortcut="Ctrl+Shift+G" disabled={!selection.some((i) => widgets[i].group)} onClick={ungroup} />
+        <RailButton icon="tiles" label={t("gui.makeGrid")} disabled={current === undefined} onClick={() => setGridding(current)} />
+        <RailSeparator />
+        <RailButton icon="trash" label={t("gui.remove")} tone="danger" disabled={current === undefined} onClick={remove} />
+        </>
+      } sections={sections} inspectorLabel={t("dock.inspector")} inspectorClass="procpanel" bodyClass="form procform guiform" status={status}>
+        <div ref={area} className="guiarea" onPointerDown={() => setSelected(undefined)} onContextMenu={openMenu(undefined)}>
+          <div ref={stage} className={`guistage ${overlay ? "overlay" : ""} ${panelBg ? "panelbg" : ""} ${preview ? "preview" : ""} ${shown ? "onscreen" : ""}`}
+            style={{
+              width: stageW * view, height: stageH * view, ["--z" as string]: view,
+            }}
+            onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag}>
+            {overlay && typeof draft.baseTexture === "string" && draft.baseTexture && <BaseTexture dir={snapshot.dir} path={draft.baseTexture} />}
+            {designAt && <span className="gdesign" title={t("gui.screen.design")} style={pos(designAt.dx, designAt.dy, width, height, view)} />}
+            {overlay && hud && <VanillaHud width={shown ? shown.guiWidth : width} height={shown ? shown.guiHeight : height} />}
+            {inventory.map((f, i) => <span key={i} className="gslot inv" style={pos(f.x, f.y, 18, 18, zoom)} />)}
+            {!overlay && !preview && <span className="gcanvashandle" title={t("gui.canvas.drag")} onPointerDown={pressCorner} />}
+            {drawOrder(widgets).map((i) => [widgets[i], i] as const).map(([w, i]) => hiddenIn(layers, w) || w.editHidden ? null : (
+              <WidgetView key={i} index={i} widget={w} zoom={view} shift={shiftOf(w)} dir={snapshot.dir} overlay={overlay} selected={!preview && selection.includes(i)}
+                primary={!preview && i === current} pinned={pinned(layers, w)}
+                procedureName={w.procedure ? snapshot.project.elements.procedure?.find((p) => p.id === w.procedure)?.id : undefined}
+                onPress={pressWidget} onMenu={menuWidget} />
+            ))}
+            {/* Over the widgets, so its lines show on opaque images too; it takes no pointer events (KUYRUK 181). */}
+            {(grid.snap || gridEditing) && !preview && !shown && (
+              <span className="ggrid" style={{
+                backgroundSize: `${grid.sx * zoom}px ${grid.sy * zoom}px`,
+                backgroundPosition: `${(grid.ox % grid.sx) * zoom}px ${(grid.oy % grid.sy) * zoom}px`,
+              }} />
             )}
           </div>
-        </aside>
-      </div>
+          {widgets.length === 0 && (
+            <div className="guiempty" onPointerDown={(e) => e.stopPropagation()}>
+              <p className="hint">{t("gui.empty")}</p>
+              <div className="emptyadd">
+                {kinds.filter((k) => ["label", "button", "image_button", "image", "slot"].includes(k)).map((kind) => (
+                  <button key={kind} type="button" className="mbtn" onClick={() => add(kind)}><Icon name="plus" size={12} /><span>{t(`gui.kind.${kind}` as StringKey)}</span></button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </EditorShell>
     </>
   );
 }
@@ -858,7 +907,7 @@ function BaseTexture({ dir, path }: { dir: string; path: string }) {
 }
 
 /** One widget drawn like the generated screen draws it, with a selection frame and a resize handle. */
-function WidgetView({ index, widget: w, zoom, shift, dir, overlay, selected, primary, pinned: locked, procedureName, onPress, onMenu }: {
+const WidgetView = memo(function WidgetView({ index, widget: w, zoom, shift, dir, overlay, selected, primary, pinned: locked, procedureName, onPress, onMenu }: {
   /** Place in the layout's widget list (the canvas draws in z order). */
   index: number;
   widget: Widget;
@@ -873,8 +922,8 @@ function WidgetView({ index, widget: w, zoom, shift, dir, overlay, selected, pri
   /** Locked: selectable on the canvas, but not moved or resized. */
   pinned: boolean;
   procedureName?: string;
-  onPress: (mode: "move" | "resize", box: Box) => (e: React.PointerEvent) => void;
-  onMenu: (e: React.MouseEvent) => void;
+  onPress: (index: number, mode: "move" | "resize", box: Box) => (e: React.PointerEvent) => void;
+  onMenu: (index: number) => (e: React.MouseEvent) => void;
 }) {
   const shownState = w.kind === "state_image" ? imageStates(w)[previewStateOf(w)] : undefined;
   const url = useTexture(dir, w.kind === "image" || w.kind === "image_button" || w.kind === "toggle_button" ? w.image ?? "" : shownState?.image ?? "");
@@ -892,14 +941,14 @@ function WidgetView({ index, widget: w, zoom, shift, dir, overlay, selected, pri
         <>
           {bg && <span className="glabelbg" style={{ background: bg.color, left: -bg.padding * ts * zoom, right: -bg.padding * ts * zoom,
             top: -bg.padding * ts * zoom, bottom: (1 - bg.padding) * ts * zoom }} />}
-          <span className={`gtext ${!text && w.textProcedure ? "gfromproc" : ""}`} style={{ color }}>
-            {text || (w.textProcedure ? t("gui.procText") : t("gui.kind.label"))}</span>
+          <span className={`gtext ${!text && w.textProcedure ? "gfromproc" : ""}`}>
+            <PixelText text={text || (w.textProcedure ? t("gui.procText") : t("gui.kind.label"))} color={color ?? "#404040"} zoom={zoom} scale={ts} /></span>
         </>
       );
       break;
     }
     case "button":
-      body = w.invisible ? <span className="ginvisible" /> : <span className="gbutton"><span className="gtext">{text}</span></span>;
+      body = w.invisible ? <span className="ginvisible" /> : <span className="gbutton"><span className="gtext"><PixelText text={text} color="#ffffff" zoom={zoom} scale={textScaleOf(w)} shadow /></span></span>;
       break;
     case "image_button":
       // Two files: the normal state, the hover state under the mouse; each a GUI sprite, which a .mcmeta animates.
@@ -907,39 +956,41 @@ function WidgetView({ index, widget: w, zoom, shift, dir, overlay, selected, pri
       body = !url ? <span className="gmissing">{t("gui.noImage")}</span>
         : hoverFile(w) ? (
           <span className="gimg gimgbtn">
-            <WidgetTexture dir={dir} path={w.image ?? ""} rule="sprite" className="gnormal" />
-            {hoverUrl && <WidgetTexture dir={dir} path={hoverFile(w)} rule="sprite" className="ghover" />}
+            <WidgetTexture dir={dir} path={w.image ?? ""} rule="sprite" look={w} className="gnormal" />
+            {hoverUrl && <WidgetTexture dir={dir} path={hoverFile(w)} rule="sprite" look={w} className="ghover" />}
           </span>
-        ) : <span className="gimg gsheet"><img className="pixel" src={url} alt="" draggable={false} /></span>;
+        ) : <span className="gimg gsheet">{imageFilterOf(w) ? <WidgetTexture dir={dir} path={w.image ?? ""} rule="toggle" look={w} />
+          : <img className="pixel" src={url} alt="" draggable={false} />}</span>;
       break;
     case "toggle_button":
       // The canvas shows the off state, and off with the mouse over it; the side panel shows all four.
       body = !url ? <span className="gmissing">{t("gui.noImage")}</span> : (
         <span className="gimg gimgbtn gtoggle">
-          <span className="gframe gnormal"><WidgetTexture dir={dir} path={w.image ?? ""} rule="toggle" /></span>
-          {hoverUrl && <span className="gframe ghover"><WidgetTexture dir={dir} path={toggleTextures(w)[1]} rule="toggle" /></span>}
+          <span className="gframe gnormal"><WidgetTexture dir={dir} path={w.image ?? ""} rule="toggle" look={w} /></span>
+          {hoverUrl && <span className="gframe ghover"><WidgetTexture dir={dir} path={toggleTextures(w)[1]} rule="toggle" look={w} /></span>}
         </span>
       );
       break;
     case "text_field":
-      body = <span className="gfield"><span className="gtext">{text}</span></span>;
+      // Q276: the hint as the game draws it, dark grey with a shadow.
+      body = <span className="gfield"><span className="gtext"><PixelText text={text} color="#555555" zoom={zoom} shadow /></span></span>;
       break;
     case "checkbox":
       body = (
         <span className="gcheck">
-          <span className="gbox">{w.checked === true && <Icon name="check" size={12 * zoom} />}</span>
-          <span className="gtext">{text}</span>
+          <span className="gbox">{w.checked === true && <Icon name="check" size={11 * zoom} />}</span>
+          <span className="gtext"><PixelText text={text} color="#e0e0e0" zoom={zoom} shadow /></span>
         </span>
       );
       break;
     case "image":
       // An animated strip is one frame high and plays, as the generated screen draws it.
-      body = url ? <WidgetTexture dir={dir} path={w.image ?? ""} rule="image" widget={w} className="gimg" onSize={setNatural} />
+      body = url ? <WidgetTexture dir={dir} path={w.image ?? ""} rule="image" widget={w} look={w} className="gimg" onSize={setNatural} />
         : <span className="gmissing">{t("gui.noImage")}</span>;
       break;
     case "state_image":
       // KUYRUK 186: the state chosen in the side panel, as the game draws it (scaled to the widget, a strip's frame or its animation).
-      body = url ? <span className="gimg gstate" data-state={previewStateOf(w)} data-texture={shownState?.image ?? ""}><WidgetTexture dir={dir} path={shownState?.image ?? ""} rule="state" widget={{ frame: shownState?.frame }} /></span>
+      body = url ? <span className="gimg gstate" data-state={previewStateOf(w)} data-texture={shownState?.image ?? ""}><WidgetTexture dir={dir} path={shownState?.image ?? ""} rule="state" widget={{ frame: shownState?.frame }} look={w} /></span>
         : <span className="gmissing">{t("gui.noImage")}</span>;
       break;
     case "slot":
@@ -949,13 +1000,15 @@ function WidgetView({ index, widget: w, zoom, shift, dir, overlay, selected, pri
   return (
     <div className={`gwidget k-${w.kind} ${selected ? "sel" : ""} ${locked ? "glocked" : ""}`} data-index={index}
       style={{ ...pos(box.x + (shift?.dx ?? 0), box.y + (shift?.dy ?? 0), box.w, box.h, zoom), ["--ts" as string]: textScaleOf(w) }}
-      onPointerDown={onPress("move", { ...box, x: num(w.x), y: num(w.y) })} onContextMenu={onMenu} title={w.kind === "button" && procedureName ? t("gui.runs", { procedure: procedureName })
+      onPointerDown={onPress(index, "move", { ...box, x: num(w.x), y: num(w.y) })} onContextMenu={onMenu(index)} title={w.kind === "button" && procedureName ? t("gui.runs", { procedure: procedureName })
         : w.kind === "label" && !text && w.textProcedure ? t("gui.fromProcedure", { procedure: w.textProcedure }) : undefined}>
       {body}
-      {primary && !locked && SIZED.includes(w.kind) && <span className="ghandle" onPointerDown={onPress("resize", box)} />}
+      {primary && !locked && SIZED.includes(w.kind) && <span className="ghandle" onPointerDown={onPress(index, "resize", box)} />}
     </div>
   );
-}
+}, (a, b) => a.index === b.index && a.widget === b.widget && a.zoom === b.zoom && a.dir === b.dir && a.overlay === b.overlay && a.selected === b.selected
+  && a.primary === b.primary && a.pinned === b.pinned && a.procedureName === b.procedureName && a.onPress === b.onPress && a.onMenu === b.onMenu
+  && a.shift?.dx === b.shift?.dx && a.shift?.dy === b.shift?.dy);
 
 function WidgetList({ widgets, layers, selection, onSelect, onSelectGroup, expanded, onExpand, onGroupToggle, onGroupRename, renaming, onRenameStart, onRename }: {
   widgets: Widget[];
@@ -1012,8 +1065,9 @@ function WidgetList({ widgets, layers, selection, onSelect, onSelectGroup, expan
     const locked = members.every((j) => widgets[j].editLocked === true);
     const hidden = members.every((j) => widgets[j].editHidden === true);
     out.push(
-      <div key={`g:${name}`} role="option" aria-selected={all} className={`lrow ggroup ${all ? "sel" : ""}`} data-group={name}
+      <div key={`g:${name}`} role="option" aria-selected={all} tabIndex={0} className={`lrow ggroup ${all ? "sel" : ""}`} data-group={name}
         title={t("gui.group.hint")} onClick={(e) => onSelectGroup(name, e.shiftKey || e.ctrlKey)}
+        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && e.target === e.currentTarget && (e.preventDefault(), onSelectGroup(name, e.shiftKey || e.ctrlKey))}
         onDoubleClick={(e) => (e.target as HTMLElement).closest("button") === null && setRenamingGroup(name)}>
         <button type="button" className={`iconbtn gcaret ${open ? "open" : ""}`} aria-expanded={open} title={t(open ? "gui.group.collapse" : "gui.group.expand")}
           onClick={(e) => (e.stopPropagation(), onExpand(name))}><Icon name="chev" size={12} /></button>
@@ -1029,7 +1083,7 @@ function WidgetList({ widgets, layers, selection, onSelect, onSelectGroup, expan
     );
     if (open) for (const j of members) out.push(row(widgets[j], j, true));
   });
-  return <div className="listrows guilist" role="listbox" aria-label={t("gui.widgets")}>{out}</div>;
+  return <div className="listrows guilist" role="listbox" aria-label={t("gui.widgets")} data-own-arrows>{out}</div>;
 }
 
 /** Inline name editor: Enter or leaving the field saves, Escape cancels (`onDone(undefined)`). */
@@ -1064,14 +1118,16 @@ function LayerList({ layers, active, onActive, onAdd, onRename, onToggle, onMove
 }) {
   const order = layers.map((l, i) => ({ l, i })).reverse();
   return (
-    <div className="layerlist">
+    <div className="layerlist" role="group" aria-label={t("gui.layers")}>
       {order.map(({ l, i }) => (
-        <div key={i} className={`layerrow ${i === active ? "sel" : ""}`} onClick={() => onActive(i)}>
+        // The row's name field takes the focus, and that makes its layer the active one (keyboard and click alike); a click on the blank part of the row does too.
+        <div key={i} role="group" aria-label={l.name} aria-current={i === active ? "true" : undefined} className={`layerrow ${i === active ? "sel" : ""}`}
+          onMouseDown={(e) => e.target === e.currentTarget && onActive(i)}>
           <button type="button" className={`iconbtn ${l.hidden ? "" : "on"}`} title={t(l.hidden ? "gui.layer.show" : "gui.layer.hide")}
             onClick={(e) => (e.stopPropagation(), onToggle(i, "hidden"))}><Icon name="eye" size={12} /></button>
           <button type="button" className={`iconbtn ${l.locked ? "on" : ""}`} title={t(l.locked ? "gui.layer.unlock" : "gui.layer.lock")}
             onClick={(e) => (e.stopPropagation(), onToggle(i, "locked"))}><Icon name="lock" size={12} /></button>
-          <input value={l.name} aria-label={t("gui.layer.name")} spellCheck={false} onChange={(e) => onRename(i, e.target.value)} />
+          <input value={l.name} aria-label={t("gui.layer.name")} spellCheck={false} onFocus={() => onActive(i)} onChange={(e) => onRename(i, e.target.value)} />
           <button type="button" className="iconbtn" title={t("gui.layer.up")} disabled={i === layers.length - 1}
             onClick={(e) => (e.stopPropagation(), onMove(i, 1))}><Icon name="up" size={12} /></button>
           <button type="button" className="iconbtn" title={t("gui.layer.down")} disabled={i === 0}

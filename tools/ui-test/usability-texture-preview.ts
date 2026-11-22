@@ -2,9 +2,9 @@
  * KUYRUK #75: the texture editor shows the texture being drawn at real size (1x, 2x), in an inventory slot and tiled
  * 3 x 3, and the preview follows each stroke. Screenshots go to design/usability/.
  */
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/usability";
+const OUT = evidence("design/usability");
 const project = exampleProject();
 
 /** RGBA of one pixel of a preview canvas (canvas pixels, not screen pixels). */
@@ -27,7 +27,8 @@ await run(async (app) => {
   assert(sizes.length === 4, `four previews (1x, 2x, slot, tiled): ${sizes.length}`);
   assert(sizes[0].w === 16 && sizes[1].w === 32, `1x and 2x at real size: ${JSON.stringify(sizes.slice(0, 2))}`);
   assert(sizes[2].w === 32, "the slot icon is 32 px (16 px at 2x)");
-  assert(sizes[3].w === 144 && sizes[3].h === 144, `3 x 3 tiles of 16 px at 3x: ${JSON.stringify(sizes[3])}`);
+  // The tiled picture is 144 px (3 x 3 tiles at 3x) and shrinks to the width of the narrower inspector (Q278: 300 px panel).
+  assert(sizes[3].w >= 128 && sizes[3].w <= 144 && sizes[3].w === sizes[3].h, `3 x 3 tiles of 16 px, at most 144 px: ${JSON.stringify(sizes[3])}`);
 
   // Paint pixel (0, 0) red: the 1x preview, the slot and all nine tiles show it at once.
   await app.eval(`[...document.querySelectorAll(".sw")].find((b) => b.title === "#b02e26").click()`);

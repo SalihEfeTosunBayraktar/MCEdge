@@ -1,0 +1,84 @@
+{
+  "id": "sword",
+  "params": {
+    "name": "ruby"
+  },
+  "elements": [
+    {
+      "type": "tool",
+      "id": "{{name}}_sword",
+      "values": {
+        "texture": "textures/{{name}}_sword.png",
+        "name": "{{Name Words}} Sword",
+        "rarity": "RARE",
+        "creativeTabs": [
+          "COMBAT"
+        ],
+        "enchantability": 12,
+        "usageCount": 1561,
+        "toolType": "Sword",
+        "blockDropsTier": "DIAMOND",
+        "efficiency": 6,
+        "damageVsEntity": 5,
+        "attackSpeed": 1.6
+      }
+    },
+    {
+      "type": "recipe",
+      "id": "{{name}}_sword",
+      "values": {
+        "title": "{{Name Words}} Sword",
+        "recipeType": "Crafting",
+        "recipeSlots": [
+          "",
+          "minecraft:diamond",
+          "",
+          "",
+          "minecraft:diamond",
+          "",
+          "",
+          "minecraft:stick",
+          ""
+        ],
+        "recipeReturnStack": "{{name}}_sword",
+        "recipeRetstackSize": 1
+      }
+    }
+  ],
+  "textures": [
+    {
+      "from": "sword.png",
+      "to": "{{name}}_sword.png"
+    }
+  ],
+  "scenario": [
+    {
+      "op": "player",
+      "name": "Smith",
+      "pos": [
+        0.5,
+        101,
+        0.5
+      ]
+    },
+    {
+      "label": "the sword can be given",
+      "op": "give",
+      "item": "{{mod}}:{{name}}_sword",
+      "count": 1,
+      "hold": true,
+      "expect": 1
+    },
+    {
+      "label": "the sword is in the inventory",
+      "op": "read",
+      "what": "count",
+      "item": "{{mod}}:{{name}}_sword",
+      "expect": 1
+    },
+    {
+      "op": "removePlayer",
+      "name": "Smith"
+    }
+  ]
+}

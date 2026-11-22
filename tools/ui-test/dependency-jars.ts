@@ -9,7 +9,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { cachedModDependencies } from "../../src/build/modDependencies.ts";
 import { listEngines } from "../../src/engines/registry.ts";
-import { assert, exampleProject, run } from "./cdp.ts";
+import { assert, exampleProject, run, evidence } from "./cdp.ts";
 
 const theme = (process.argv[2] ?? "dark") as "dark" | "light";
 const lang = process.argv[3] ?? "en";
@@ -45,8 +45,8 @@ await run(async (app) => {
         if (jar.via) assert(row.text.includes(jar.via), `${modId} on ${row.engine} names the dependency that pulled ${jar.project} in`);
       }
     }
-    if (modId === "jei") await app.shot(`design/156/dependencies-jei-${theme}-${lang}-after.png`);
-    if (modId === "geckolib") await app.shot(`design/156/dependencies-${theme}-${lang}-after.png`);
+    if (modId === "jei") await app.shot(evidence(`design/156/dependencies-jei-${theme}-${lang}-after.png`));
+    if (modId === "geckolib") await app.shot(evidence(`design/156/dependencies-${theme}-${lang}-after.png`));
   }
   // The table summarises each dependency over the engines.
   const resolved = Object.values(expected("geckolib")).filter((r) => r.status === "resolved").length;
@@ -56,13 +56,14 @@ await run(async (app) => {
   // 2. Resolve jars: keep only geckolib (cached, so no download), then resolve; the panel shows every engine resolved.
   for (const modId of ["jei", "architectury"]) {
     await app.click(".view .grid tbody tr", modId);
-    await app.eval(`[...document.querySelectorAll(".view .actions .abtn")].at(-1).click()`);
+    // Q284: the bar holds Resolve jars, Delete selected (with a selection) and New dependency.
+    await app.eval(`[...document.querySelectorAll(".view .actions .abtn")].find((b) => b.textContent.includes("Delete selected")).click()`);
     await app.sleep(100);
   }
   for (let i = 0; i < 40 && read().mod.dependencies.length !== 1; i++) await app.sleep(100);
   assert(read().mod.dependencies.length === 1, "two dependencies deleted and saved");
   await app.click(".view .grid tbody tr", "geckolib");
-  const button = `[...document.querySelectorAll(".view .actions .abtn")][1]`;
+  const button = `[...document.querySelectorAll(".view .actions .abtn")].find((b) => /Resolv/.test(b.textContent))`;
   assert(await app.eval<boolean>(`!${button}.disabled`), "Resolve jars is enabled");
   await app.eval(`${button}.click()`);
   await app.waitFor(`${button}.disabled`, 2000).catch(() => {}); // may finish before the first poll

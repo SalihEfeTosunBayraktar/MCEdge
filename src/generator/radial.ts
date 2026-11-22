@@ -106,6 +106,15 @@ export function runtimeFolders(env: GenEnv): string[] {
   return [...folders].sort();
 }
 
+/** The PNG of a slice shape, drawn once per shape (it is a pure function of its three numbers, and ~100 ms to draw: Q280). */
+const sectorPngs = new Map<string, Buffer>();
+function sectorPng(n: number, hole: number, gap: number): Buffer {
+  const key = `${n}:${hole}:${gap}`;
+  let png = sectorPngs.get(key);
+  if (!png) sectorPngs.set(key, (png = writePng(sectorImage(n, hole, gap))));
+  return png;
+}
+
 /**
  * Radial outputs of a project: images to write under the mod's textures/ (`to` without .png), radial_menus.json and the
  * images it could not read. Nothing without radial menus.
@@ -138,7 +147,7 @@ export function radialOutputs(env: GenEnv): { images: { to: string; bytes: Buffe
     for (let n = 1; n <= Math.min(12, most); n++) {
       if (sectors.has(`${shape}_${n}`)) continue;
       sectors.add(`${shape}_${n}`);
-      images.push({ to: `radial/${shape}_${n}`, bytes: writePng(sectorImage(n, layout.hole, layout.gap)) });
+      images.push({ to: `radial/${shape}_${n}`, bytes: sectorPng(n, layout.hole, layout.gap) });
     }
     const own = (key: string) => read(str(menu[key]), `radial/${menu.id}_${key}`, `radial_menu/${menu.id}: ${str(menu[key])}`);
     const background = own("background");

@@ -237,6 +237,9 @@ export function scan(input: ScanInput): Hit[] {
           if (Array.isArray(states)) states.forEach((state, k) => state && typeof state === "object"
             && idSlot(from, `${path}[${i}].states[${k}].condition`, { holder: state as Record<string, unknown>, key: "condition" }, ["procedure"], "procedure_field"));
           idSlot(from, `${path}[${i}].limit`, { holder: widget as Record<string, unknown>, key: "limit" }, REGISTRY_PROVIDERS.item, "registry_field");
+          const allowed = (widget as Record<string, unknown>).allowed;
+          if (Array.isArray(allowed)) allowed.forEach((row, k) => row && typeof row === "object"
+            && idSlot(from, `${path}[${i}].allowed[${k}].item`, { holder: row as Record<string, unknown>, key: "item" }, REGISTRY_PROVIDERS.item, "registry_field"));
         });
       } else if (field.type === "list" && Array.isArray(value)) {
         value.forEach((row, i) => row && typeof row === "object" && scanTyped(from, field.fields ?? [], row as Record<string, unknown>, `${path}[${i}].`));

@@ -7,12 +7,12 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const language = process.argv[2] ?? "en";
 const theme = (process.argv[3] ?? "dark") as "dark" | "light";
 const suffix = process.argv[4] ?? "after";
-const OUT = "design/localization";
+const OUT = evidence("design/localization");
 const project = exampleProject();
 const lang = (code: string) => JSON.parse(readFileSync(join(project, "localization", `${code}.json`), "utf8")) as Record<string, string>;
 

@@ -7,7 +7,7 @@
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { assert, exampleProject, launchApp, type App } from "./cdp.ts";
+import { assert, exampleProject, launchApp, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
 const theme = (process.argv[2] ?? "dark") as "dark" | "light";
@@ -15,7 +15,7 @@ const lang = process.argv[3] ?? "en";
 const project = exampleProject();
 addElement(project, "procedure", "main");
 const userData = mkdtempSync(join(tmpdir(), "mcedge-ui-data-"));
-const shot = (app: App, name: string) => app.shot(`design/130/${name}-${theme}-${lang}-after.png`);
+const shot = (app: App, name: string) => app.shot(evidence(`design/130/${name}-${theme}-${lang}-after.png`));
 const tabs = (app: App) => app.eval<string[]>(`[...document.querySelectorAll(".edtabs [data-tab]")].map((t) => t.dataset.tab)`);
 const active = (app: App) => app.eval<string | null>(`document.querySelector(".edtabs .edtab.on")?.dataset.tab ?? null`);
 const openTile = async (app: App, id: string) => {

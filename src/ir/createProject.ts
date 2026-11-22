@@ -1,8 +1,9 @@
-import { cpSync, existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { isAbsolute, join, resolve } from "node:path";
 import { listEngines } from "../engines/registry.ts";
 import { ROOT } from "../paths.ts";
 import { changeModIdentity } from "./modIdentity.ts";
+import { applyStarter, listStarters } from "./starters.ts";
 import { loadProject, saveModInfo, saveProject } from "./storage.ts";
 import type { ModProject } from "./types.ts";
 
@@ -25,6 +26,8 @@ export interface NewProject {
   /** Engines the project targets (all when left out). */
   engines?: string[];
   template: ProjectTemplate;
+  /** A starter of the gallery (Q252) added to an empty project; `template` is ignored then. */
+  starter?: { id: string; params: Record<string, string> };
   author?: string;
 }
 
@@ -49,7 +52,8 @@ export function newProjectProblem(options: NewProject): string | undefined {
   if (!options.name.trim()) return "the name is empty";
   if (!MOD_ID.test(options.modId)) return `"${options.modId}" is not a valid mod id: 2-64 lowercase letters, digits and _, starting with a letter`;
   if (!PACKAGE.test(options.package)) return `"${options.package}" is not a valid Java package: lowercase names separated by dots`;
-  if (!(PROJECT_TEMPLATES as readonly string[]).includes(options.template)) return `template must be one of ${PROJECT_TEMPLATES.join(", ")}`;
+  if (options.starter && !listStarters().some((s) => s.id === options.starter!.id)) return `no starter "${options.starter.id}" in the gallery; see list_starters`;
+  if (!options.starter && !(PROJECT_TEMPLATES as readonly string[]).includes(options.template)) return `template must be one of ${PROJECT_TEMPLATES.join(", ")}`;
   const known = listEngines().map((e) => e.id);
   const unknown = (options.engines ?? []).filter((e) => !known.includes(e));
   if (unknown.length) return `unknown engine ${unknown.join(", ")}; one of ${known.join(", ")}`;
@@ -69,7 +73,7 @@ export function createProject(options: NewProject): string {
   const dir = resolve(options.parent, options.folder ?? options.modId);
   mkdirSync(dir, { recursive: true });
   const engines = options.engines?.length && options.engines.length < listEngines().length ? { engines: options.engines } : {};
-  if (options.template === "example") {
+  if (options.template === "example" && !options.starter) {
     // The example's own files, then its mod id and package changed everywhere (elements, lang keys, folders).
     const example = join(ROOT, "examples", "hello");
     for (const name of readdirSync(example)) if (name !== "out") cpSync(join(example, name), join(dir, name), { recursive: true });
@@ -93,6 +97,16 @@ export function createProject(options: NewProject): string {
     };
     saveProject(dir, project);
     writeFileSync(join(dir, ".gitignore"), "out/\n");
+    if (options.starter) {
+      // A starter that cannot be added leaves no half-made project behind (the folder was new or empty).
+      try {
+        const result = applyStarter(dir, options.starter.id, options.starter.params);
+        if (!result.applied) throw new Error(`the starter could not be added: ${[...result.errors.map((e) => e.message), ...result.newProblems.map((p) => `${p.path}: ${p.message}`)].join("; ")}`);
+      } catch (error) {
+        rmSync(dir, { recursive: true, force: true });
+        throw error;
+      }
+    }
   }
   return dir;
 }

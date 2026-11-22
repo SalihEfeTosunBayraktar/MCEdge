@@ -6,7 +6,7 @@ import { t } from "../strings.ts";
 import { Icon } from "./Icon.tsx";
 import { Sprite } from "./Sprite.tsx";
 import { Texture } from "./Texture.tsx";
-import { ContextMenu } from "./ui.tsx";
+import { ContextMenu, TabList } from "./ui.tsx";
 
 /**
  * Editor tabs (KUYRUK 130, MCreator's tabbed editors): every element, procedure and texture opened stays as a tab after
@@ -59,18 +59,23 @@ export function EditorTabs({ snapshot, sectionName, tabs, active, onShow, onShow
 }) {
   const [menu, setMenu] = useState<{ x: number; y: number; key: TabKey }>();
   return (
-    <div className="edtabs" role="tablist" aria-label={t("tabs.label")}>
+    <TabList className="edtabs" label={t("tabs.label")} manual>
       <button type="button" role="tab" aria-selected={!active} className={`edtab section ${!active ? "on" : ""}`} onClick={onShowSection}>
         <span className="etname">{sectionName}</span>
       </button>
       {tabs.map((key) => (
-        <div key={key} role="tab" aria-selected={key === active} data-tab={key} className={`edtab ${key === active ? "on" : ""}`} tabIndex={0}
-          onClick={() => onShow(key)} onKeyDown={(e) => e.key === "Enter" && onShow(key)}
+        <div key={key} role="tab" aria-selected={key === active} data-tab={key} className={`edtab ${key === active ? "on" : ""}`}
+          onClick={() => onShow(key)}
+          onKeyDown={(e) => {
+            // Arrow keys (TabList) only move the focus here; Enter or Space shows the editor, Delete closes the tab.
+            if (e.key === "Enter" || e.key === " ") (e.preventDefault(), onShow(key));
+            else if (e.key === "Delete") (e.preventDefault(), onClose([key]));
+          }}
           onMouseDown={(e) => e.button === 1 && e.preventDefault()}
           onAuxClick={(e) => e.button === 1 && onClose([key])}
           onContextMenu={(e) => (e.preventDefault(), setMenu({ x: e.clientX, y: e.clientY, key }))}>
           <TabLabel snapshot={snapshot} tabKey={key} />
-          <button type="button" className="etclose" title={`${t("tabs.close")} (Ctrl+W)`} aria-label={t("tabs.close")}
+          <button type="button" className="etclose" tabIndex={-1} title={`${t("tabs.close")} (Ctrl+W)`} aria-label={t("tabs.close")}
             onClick={(e) => (e.stopPropagation(), onClose([key]))}><Icon name="close" size={10} /></button>
         </div>
       ))}
@@ -81,6 +86,6 @@ export function EditorTabs({ snapshot, sectionName, tabs, active, onShow, onShow
           { label: t("tabs.closeAll"), onClick: () => onClose(tabs) },
         ]} />
       )}
-    </div>
+    </TabList>
   );
 }

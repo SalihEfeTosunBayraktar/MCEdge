@@ -11,9 +11,9 @@
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { copyProject, exampleProject, launchApp, REPO, type App } from "./cdp.ts";
+import { copyProject, exampleProject, launchApp, REPO, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/audit-2026-11-10";
+const OUT = process.env.AUDIT_OUT ?? evidence("design/audit-2026-11-10");
 const ETR = "C:\\MyProjects\\AI-Assisted\\ETREconomy-MCEdge";
 const onlyHello = process.argv.includes("--hello");
 
@@ -232,10 +232,23 @@ async function runPass(pass: Pass) {
             });
           }
         }
-        if (["tags", "variables", "settings"].includes(id)) {
+        if (["tags", "variables"].includes(id)) {
           await step(`${id} select row`, async () => {
-            await app.click(".grid tbody tr");
+            // A project without tags or variables (examples/hello) has an empty list: New adds one and selects it.
+            if (await app.eval<boolean>(`!!document.querySelector(".grid tbody tr")`)) await app.click(".grid tbody tr");
+            else await app.click(".view .abtn.primary");
             await shoot(app, pass, `section-${id}-selected`);
+          });
+        }
+        if (id === "settings") {
+          // The mod form has no table; the dependency and integration tabs do (a row is selected when there is one).
+          await step("settings tabs", async () => {
+            for (const k of [1, 2]) {
+              await app.eval(`document.querySelectorAll(".view .langtabs .ltab, .view [role=tablist] .ltab")[${k}].click()`);
+              await app.sleep(300);
+              if (await app.eval<boolean>(`!!document.querySelector(".grid tbody tr")`)) await app.click(".grid tbody tr");
+              await shoot(app, pass, `section-settings-tab${k + 1}`);
+            }
           });
         }
       });
@@ -322,7 +335,7 @@ async function runPass(pass: Pass) {
 async function welcome(theme: Theme, lang: "en" | "tr", recentDir: string) {
   const userData = mkdtempSync(join(tmpdir(), "mcedge-ui-data-"));
   writeFileSync(join(userData, "app-state.json"), JSON.stringify({
-    exportFolders: {}, preferences: { language: lang, theme, fontScale: 1, uiFont: "", codeFont: "" },
+    exportFolders: {}, preferences: { language: lang, theme, fontScale: 1, uiFont: "", codeFont: "", level: "java", mode: "advanced" },
     recent: [{ dir: recentDir, name: "hello", openedAt: new Date().toISOString() }, { dir: "C:\\missing\\old-mod", name: "old-mod", openedAt: "2026-10-01T10:00:00Z" }],
   }));
   const app = await launchApp({ userData, theme, language: lang });
@@ -348,3 +361,6 @@ if (!onlyHello) {
 }
 writeFileSync(resolve(REPO, `${OUT}/skipped.txt`), log.join("\n") + "\n");
 console.log(`done, ${log.length} skipped`);
+// A skipped step means a screen the audit could not reach: that fails the run.
+if (log.length) process.exitCode = 1;
+else console.log("PASS");

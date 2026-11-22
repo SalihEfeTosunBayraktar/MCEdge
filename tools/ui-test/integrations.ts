@@ -6,10 +6,10 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const project = exampleProject();
-const OUT = "design/integrations";
+const OUT = evidence("design/integrations");
 const mod = () => JSON.parse(readFileSync(join(project, "mcedge.json"), "utf8")).mod as { integrations?: { id: string; required: boolean }[] };
 const pageTabs = (app: App) => app.eval<string[]>(`[...document.querySelectorAll(".pagetabs .ltab")].map((b) => b.textContent)`);
 

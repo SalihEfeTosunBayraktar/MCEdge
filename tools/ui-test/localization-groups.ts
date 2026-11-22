@@ -7,15 +7,15 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { connect } from "../mcp-test/client.ts";
-import { assert, copyProject, exampleProject, REPO, run } from "./cdp.ts";
+import { assert, copyProject, exampleProject, REPO, run, evidence } from "./cdp.ts";
 
 const language = process.argv[2] ?? "en";
 const theme = (process.argv[3] ?? "dark") as "dark" | "light";
-const OUT = "design/localization";
+const OUT = evidence("design/localization");
 const section = language === "tr" ? "Yerelleştirme" : "Localization";
 const etr = [resolve(REPO, "..", "ETREconomy-MCEdge"), resolve(REPO, "..", "..", "ETREconomy-MCEdge")].find(existsSync)!;
 const rowsCount = `Number(document.querySelector(".locgrid").dataset.rows)`;
-const groups = `[...document.querySelectorAll(".locgroups .lgroup")].map((g) => ({ id: g.dataset.group, count: Number(g.querySelector(".lgcount").textContent) }))`;
+const groups = `[...document.querySelectorAll(".locgroups .lgroup")].map((g) => ({ id: g.dataset.group, count: Number(g.querySelector(".pncount").textContent) }))`;
 
 // ---- ETR: groups and generator keys ----
 const etrCopy = copyProject(etr, "etr");
@@ -70,7 +70,7 @@ await run(async (app) => {
   assert(!(key in en()), "the en_us override is gone from the file");
   const cell = `document.querySelector('.locgrid td[data-row="${key}"][data-lang="en_us"]')`;
   assert(await app.eval<boolean>(`${cell}.classList.contains("inh")`), "the cell shows the inherited name");
-  assert(await app.eval<boolean>(`document.querySelector(".actions .abtn", "x") && [...document.querySelectorAll(".actions .abtn")].find((b) => b.textContent.includes(${JSON.stringify(language === "tr" ? "Öğe adına döndür" : "Reset to element name")})).disabled`), "nothing left to reset");
+  assert(await app.eval<boolean>(`![...document.querySelectorAll(".actions .abtn")].find((b) => b.textContent.includes(${JSON.stringify(language === "tr" ? "Öğe adına döndür" : "Reset to element name")}))`), "nothing left to reset (Q284: the button is only there while a name is overridden)");
   await app.shot(`${OUT}/117-reset-after-${language}-${theme}.png`);
 
   await app.click(".locdetail .linkbtn");

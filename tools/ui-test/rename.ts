@@ -6,10 +6,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { connect } from "../mcp-test/client.ts";
-import { assert, copyProject, REPO, run } from "./cdp.ts";
+import { assert, copyProject, REPO, run, evidence } from "./cdp.ts";
 
 const project = copyProject(resolve(REPO, "..", "ETREconomy-MCEdge"), "etr");
-const OUT = "design/rename";
+const OUT = evidence("design/rename");
 const json = <T>(path: string) => JSON.parse(readFileSync(join(project, path), "utf8")) as T;
 
 const mcp = await connect(project);
@@ -38,7 +38,7 @@ try {
     assert(await app.eval<boolean>(`document.querySelector(".dialog button[type=submit]").disabled`), "OK is off for a refused id");
 
     // A free id previews what follows.
-    await app.setValue(".dialog input", "supervending");
+    await app.setValue(".dialog input", "renamedvending");
     await app.waitFor(`document.querySelector("[data-testid=rename-preview]")`, 10000);
     const preview = await app.eval<string>(`document.querySelector("[data-testid=rename-preview]").textContent`);
     assert(preview.includes(String(before.usedBy.total - 0)) || /Changes \d+ places/.test(preview), `preview text: ${preview}`);
@@ -50,11 +50,11 @@ try {
   }, { project });
 
   // The files followed.
-  assert(existsSync(join(project, "elements/blocks/supervending.json")) && !existsSync(join(project, "elements/blocks/upgradedvending.json")), "element file moved");
+  assert(existsSync(join(project, "elements/blocks/renamedvending.json")) && !existsSync(join(project, "elements/blocks/upgradedvending.json")), "element file moved");
   const loc = json<Record<string, string>>("localization/en_us.json");
-  assert(Object.keys(loc).some((k) => k.endsWith(".etreco.supervending")) && !Object.keys(loc).some((k) => k.endsWith(".etreco.upgradedvending")), "translation keys moved");
-  assert(json<{ placement: Record<string, string> }>("folders.json").placement["block/supervending"] === folder, "folder kept");
-  const after = await mcp.call("find_references", { type: "block", id: "supervending", limit: 500 });
+  assert(Object.keys(loc).some((k) => k.endsWith(".etreco.renamedvending")) && !Object.keys(loc).some((k) => k.endsWith(".etreco.upgradedvending")), "translation keys moved");
+  assert(json<{ placement: Record<string, string> }>("folders.json").placement["block/renamedvending"] === folder, "folder kept");
+  const after = await mcp.call("find_references", { type: "block", id: "renamedvending", limit: 500 });
   assert(after.usedBy.total === before.usedBy.total && after.uses.total === before.uses.total, `references kept: ${before.usedBy.total}/${before.uses.total} -> ${after.usedBy.total}/${after.uses.total}`);
   assert((await mcp.call<unknown[]>("validate_project")).length === problemsBefore, "problem count unchanged");
   assert((await mcp.call("find_references", { type: "block", id: "upgradedvending" }, true)).includes("no block"), "the old id is gone");

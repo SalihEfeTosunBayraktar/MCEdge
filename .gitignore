@@ -11,4 +11,6 @@ tools/codegen-test/project/schemas/
 tools/codegen-test/logs/
 tools/ui-test/last-failure.png
 tools/codegen-test/project/sounds/
+tools/codegen-test/project/structures/
 tools/import-mcreator/java-ast/work/
+.ui-out/

@@ -3,9 +3,11 @@
 // type that shows it) and generates again without Gradle: a field that changes the output but is not declared is
 // reported, and the check fails. Fields the project does not show, and field types it cannot change (lists, textures,
 // layouts), are counted as not exercised.
-// usage: node tools/codegen-test/coverage-check.ts [project dir, default the test project] [engine ids]
+// usage: node tools/codegen-test/coverage-check.ts [project dir] [engine ids]
+// Without a project dir it uses tools/codegen-test/project when it has an mcedge.json (a local test project with many elements;
+// only its models/ and textures/ are committed), otherwise the committed examples/hello (fewer elements, so fewer fields are exercised).
 import { createHash } from "node:crypto";
-import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import { typeFields, visibility, type Element, type FieldDef } from "../../src/elements/model.ts";
@@ -18,7 +20,9 @@ import { loadProject } from "../../src/ir/storage.ts";
 import type { ModProject } from "../../src/ir/types.ts";
 
 const [projectArg, ...engineArgs] = process.argv.slice(2);
-const projectDir = projectArg ?? join(import.meta.dirname, "project");
+const testProject = join(import.meta.dirname, "project");
+const projectDir = projectArg ?? (existsSync(join(testProject, "mcedge.json")) ? testProject : join(import.meta.dirname, "..", "..", "examples", "hello"));
+console.log(`project ${projectDir}`);
 const project = loadProject(projectDir);
 const registry = typeRegistry();
 const procedures = (project.elements.procedure ?? []).map((p) => p.id);

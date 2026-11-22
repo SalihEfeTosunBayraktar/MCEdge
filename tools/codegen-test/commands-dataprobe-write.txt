@@ -1,0 +1,15 @@
+@wait 5
+forceload add 0 0
+@wait 1
+fill -3 99 -3 16 99 4 minecraft:stone
+fill -3 100 -3 16 104 4 minecraft:air
+kill @e[type=minecraft:pig]
+@wait 2
+summon minecraft:pig 0.5 100 0.5 {PersistenceRequired:1b,NoAI:1b}
+say data-phase-write
+@wait 6
+save-all flush
+@wait 3
+stop
+@wait 15
+@kill

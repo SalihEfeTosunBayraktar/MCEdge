@@ -10,13 +10,13 @@ import { join } from "node:path";
 import en from "../../config/ui-strings/en.json" with { type: "json" };
 import tr from "../../config/ui-strings/tr.json" with { type: "json" };
 import { buildCascadeFixture } from "../mcp-test/cascade-fixture.ts";
-import { assert, exampleProject, REPO, run, type App } from "./cdp.ts";
+import { assert, exampleProject, REPO, run, type App, evidence } from "./cdp.ts";
 
 const language = process.argv[2] === "tr" ? "tr" : "en";
 const s: Record<string, string> = language === "tr" ? tr : en;
 const project = exampleProject();
 buildCascadeFixture(project);
-const OUT = "design/220";
+const OUT = evidence("design/220");
 mkdirSync(join(REPO, OUT), { recursive: true });
 const json = (file: string) => JSON.parse(readFileSync(join(project, file), "utf8"));
 const rows = (app: App) => app.eval<string[]>(`[...document.querySelectorAll("[data-testid=delete-dependents] label[data-key]")].map((l) => l.dataset.key)`);

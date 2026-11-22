@@ -6,9 +6,9 @@
  * placed block view has no scenery. LIGHT=1 also takes the light screenshots. Screenshots go to design/162/.
  */
 import { showInApp } from "../../src/live/show.ts";
-import { assert, copyProject, run, type App } from "./cdp.ts";
+import { assert, copyProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/162";
+const OUT = evidence("design/162");
 const project = copyProject("C:/MyProjects/AI-Assisted/ETREconomy-MCEdge", "etr");
 const CANVAS = ".form .mpcanvas canvas";
 
@@ -40,15 +40,16 @@ await run(async (app) => {
   await app.setValue(".form .mpbar select", "gui");
   await app.waitFor(`document.querySelector(".form .mpcanvas").dataset.context === "gui"`);
   await app.sleep(600);
+  // The preview canvas is as wide as the form column (wide since the Dock layout), so the 3 x 3 slot grid is about a quarter of it.
   const inSlot = await colourShare(app, slot);
-  assert(inSlot > 0.3, `inventory view draws the slots: ${inSlot}`);
+  assert(inSlot > 0.15, `inventory view draws the slots: ${inSlot}`);
   await app.shot(`${OUT}/after-gui-dark.png`);
 
   await app.setValue(".form .mpbar select", "fixed");
   await app.waitFor(`document.querySelector(".form .mpcanvas").dataset.context === "fixed"`);
   await app.sleep(600);
   const inFrame = await colourShare(app, frame);
-  assert(inFrame > 0.1, `item frame view draws the frame: ${inFrame}`);
+  assert(inFrame > 0.05, `item frame view draws the frame: ${inFrame}`);
   await app.shot(`${OUT}/after-fixed-dark.png`);
   if (process.env.LIGHT) {
     await app.setTheme("light");
@@ -66,5 +67,5 @@ await run(async (app) => {
   await app.click(".form .mpscenery input");
   await app.waitFor(`!document.querySelector(".form .mpcanvas").dataset.context`);
   await app.sleep(400);
-  assert(await colourShare(app, frame) < 0.05, "no frame with the box unticked");
+  assert(await colourShare(app, frame) < 0.02, "no frame with the box unticked");
 }, { project, language: "tr", width: 1440, height: 900 });

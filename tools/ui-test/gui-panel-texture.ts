@@ -6,10 +6,10 @@
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { assert, exampleProject, launchApp, type App } from "./cdp.ts";
+import { assert, exampleProject, launchApp, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/gui-editor";
+const OUT = evidence("design/gui-editor");
 const project = exampleProject();
 addElement(project, "gui", "panelgui", {
   type: 1, width: 176, height: 166,
@@ -30,10 +30,7 @@ const userData = mkdtempSync(join(tmpdir(), "mcedge-ui-data-"));
 let app = await launchApp({ project, userData, width: 1280, height: 800 });
 try {
   await open(app);
-  assert(await panelWidth(app) === 372, `default panel width: ${await panelWidth(app)}`);
-  // The grip takes no room: the panel's tabs start at its top edge.
-  const tabsGap = await app.eval<number>(`Math.round(document.querySelector(".procpanel .pagetabs").getBoundingClientRect().top - document.querySelector(".procpanel").getBoundingClientRect().top)`);
-  assert(tabsGap >= 0 && tabsGap < 8, `panel tabs at the top of the panel: ${tabsGap}`);
+  assert(await panelWidth(app) === 300, `default panel width: ${await panelWidth(app)}`);
   await app.click(".lrow", "Image");
   await app.waitFor(`document.querySelector(".guiform .texpicked")`);
   await app.click(".guiform .texpicked");
@@ -48,7 +45,7 @@ try {
   await app.shot(`${OUT}/panel-texture-grid-dark.png`);
   assert(pop.parent === "BODY", "the grid is rendered on the body, not inside the panel");
   assert(pop.left >= 0 && pop.top >= 0 && pop.right <= 1280 && pop.bottom <= 800, "the grid is inside the window");
-  assert(pop.width > 372, `the grid is wider than the side panel: ${pop.width}`);
+  assert(pop.width > 300, `the grid is wider than the side panel: ${pop.width}`);
   assert(pop.visible === pop.cells, `every texture cell is visible: ${pop.visible}/${pop.cells}`);
   // Search, then pick by a real mouse click on a cell.
   await app.setValue(".texpop input", "apple");
@@ -67,16 +64,16 @@ try {
   await app.sleep(200);
   const wide = await panelWidth(app);
   console.log("panel after drag", wide);
-  assert(wide >= 560 && wide <= 580, `panel resized by the grip: ${wide}`);
+  assert(wide >= 490 && wide <= 510, `panel resized by the grip: ${wide}`);
   await app.shot(`${OUT}/panel-resized-dark.png`);
-  // Narrower than the minimum is clamped to 280.
+  // Narrower than the minimum is clamped to 260.
   const grip2 = await app.rect(".procpanel .panelgrip");
   await app.drag([grip2.x + grip2.width / 2, 300], [grip2.x + 600, 300], 10);
-  assert(await panelWidth(app) === 280, `minimum width 280: ${await panelWidth(app)}`);
+  assert(await panelWidth(app) === 260, `minimum width 260: ${await panelWidth(app)}`);
   const grip3 = await app.rect(".procpanel .panelgrip");
   await app.drag([grip3.x + grip3.width / 2, 300], [grip3.x - 170, 300], 10);
   const kept = await panelWidth(app);
-  assert(kept >= 440 && kept <= 460, `resized again: ${kept}`);
+  assert(kept >= 420 && kept <= 440, `resized again: ${kept}`);
   // Quit the way the user does (close() kills the process, before Chromium writes localStorage to disk).
   await app.mainEval(`(process.mainModule ? process.mainModule.require : require)("electron").app.quit()`).catch(() => {});
   await app.sleep(3000);

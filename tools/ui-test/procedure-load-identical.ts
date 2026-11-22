@@ -6,11 +6,16 @@
  *
  *   npm run build:app && node tools/ui-test/procedure-load-identical.ts [procedureId ...]
  */
+import { readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 import { assert, copyProject, run, type App } from "./cdp.ts";
 
-const ids = process.argv.slice(2).length ? process.argv.slice(2)
-  : ["kullanicigui_while_this_g_u_i_is_open_tick", "jobselect1", "industrialovenoff_update_tick", "filesearchandopen", "goldsellerleftclick"];
 const project = copyProject("C:/MyProjects/AI-Assisted/ETREconomy-MCEdge", "etr");
+// The procedures of the project change, so without arguments it takes its five biggest ones (the most blocks to compare).
+const ids = process.argv.slice(2).length ? process.argv.slice(2)
+  : readdirSync(join(project, "elements", "procedures")).filter((f) => f.endsWith(".json"))
+    .map((f) => ({ id: f.slice(0, -5), size: statSync(join(project, "elements", "procedures", f)).size }))
+    .sort((a, b) => b.size - a.size).slice(0, 5).map((p) => p.id);
 
 async function open(app: App, id: string) {
   await app.click(".rtab", "Mod elements");

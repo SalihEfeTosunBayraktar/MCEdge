@@ -5,7 +5,7 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, REPO, run, type App } from "./cdp.ts";
+import { assert, exampleProject, REPO, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
 const theme = (process.argv[2] ?? "dark") as "dark" | "light";
@@ -39,7 +39,7 @@ await run(async (app) => {
   await waitSaved(app);
   r = await label();
   assert(Math.abs(r.x + r.width / 2 - stage.x - 88 * z) <= z, "a longer text stays centred on x");
-  await app.shot(`design/183/center-${theme}-${lang}.png`);
+  await app.shot(evidence(`design/183/center-${theme}-${lang}.png`));
   await app.setField(S["gui.field.align"], "2", ".guiform");
   await waitSaved(app);
   r = await label();
@@ -49,5 +49,5 @@ await run(async (app) => {
   await app.drag(c, [c[0] + 10 * z, c[1]], 5);
   await waitSaved(app);
   assert(saved().x === 98, `dragged 10 to the right: x ${saved().x}`);
-  await app.shot(`design/183/right-${theme}-${lang}.png`);
+  await app.shot(evidence(`design/183/right-${theme}-${lang}.png`));
 }, { project, theme, language: lang });

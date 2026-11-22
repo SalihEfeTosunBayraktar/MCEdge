@@ -1,0 +1,11 @@
+@wait 5
+forceload add 0 0
+@wait 1
+fill -3 99 -3 16 99 4 minecraft:stone
+fill -3 100 -3 16 104 4 minecraft:air
+summon minecraft:pig 0.5 100 0.5
+@wait 15
+execute if entity @e[type=minecraft:pig,x=9,y=99,z=-1,dx=3,dy=3,dz=3] run say pig-at-target
+stop
+@wait 15
+@kill

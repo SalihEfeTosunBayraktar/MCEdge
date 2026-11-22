@@ -5,7 +5,7 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
 const project = exampleProject();
@@ -17,7 +17,7 @@ const rubyFile = join(project, "elements", "items", "ruby.json");
 writeFileSync(rubyFile, JSON.stringify({ ...JSON.parse(readFileSync(rubyFile, "utf8")), onRightClickedInAir: "ruby_used" }, null, 2) + "\n");
 const UNUSED = ["unused_menu", "unused_reward", "unused_tick"];
 
-const OUT = "design/references";
+const OUT = evidence("design/references");
 const tileIds = (app: App) => app.eval<string[]>(`[...document.querySelectorAll(".tile:not(.foldertile) code")].map((c) => c.textContent)`);
 const pick = (app: App, id: string) => app.eval(`document.getElementById("target")?.removeAttribute("id"); [...document.querySelectorAll(".tile")].find((t) => t.querySelector("code")?.textContent === ${JSON.stringify(id)})?.setAttribute("id", "target")`);
 

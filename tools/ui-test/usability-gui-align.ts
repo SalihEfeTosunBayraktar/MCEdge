@@ -5,11 +5,12 @@
  * to design/usability/.
  */
 import { readFileSync } from "node:fs";
+import { textWidth } from "../../src/elements/pixelFont.ts";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/usability";
+const OUT = evidence("design/usability");
 const project = exampleProject();
 addElement(project, "gui", "shop", { type: 1, width: 176, height: 166 });
 addElement(project, "procedure", "buy");
@@ -36,7 +37,7 @@ await run(async (app) => {
   await settle(app);
   w = saved();
   assert(w[1].x === 58, `button centred on the screen: ${w[1].x}`);
-  // Shift+click the label: it joins the selection and centres on the button (label "Coins" is 30 px wide).
+  // Shift+click the label: it joins the selection and centres on the button (label "Coins" is as wide as the game's font draws it).
   const label = await app.center(".gwidget.k-label");
   await app.eval(`document.querySelector(".gwidget.k-label").dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0, shiftKey: true, clientX: ${label[0]}, clientY: ${label[1]} }))`), clicks++;
   await app.sleep(150);
@@ -45,7 +46,7 @@ await run(async (app) => {
   await alignBtn(app, "center"), clicks++;
   await settle(app);
   w = saved();
-  assert(w[0].x === 58 + (60 - 30) / 2 && w[1].x === 58, `label centred on the button: ${w[0].x}, ${w[1].x}`);
+  assert(w[0].x === 58 + (60 - textWidth("Coins")) / 2 && w[1].x === 58, `label centred on the button: ${w[0].x}, ${w[1].x}`);
   await app.shot(`${OUT}/after-gui-align.png`);
   console.log(`label + button centred: ${clicks} clicks (before: measured 11 clicks and typing X by hand)`);
 

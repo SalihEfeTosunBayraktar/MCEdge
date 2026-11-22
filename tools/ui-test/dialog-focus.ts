@@ -5,7 +5,7 @@
  * end). Screenshots go to design/125/.
  */
 import { typeRegistry } from "../../src/elements/registry.ts";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
 const theme = (process.argv[2] ?? "dark") as "dark" | "light";
@@ -20,7 +20,7 @@ for (const type of typeRegistry().types) {
 }
 const failed: string[] = [];
 const check = (ok: unknown, message: string) => (suffix === "before" ? ok || failed.push(message) : assert(ok, message));
-const shot = (app: App, name: string) => app.shot(`design/125/${name}-${theme}-${suffix}.png`);
+const shot = (app: App, name: string) => app.shot(evidence(`design/125/${name}-${theme}-${suffix}.png`));
 const home = async (app: App) => {
   await app.eval(`document.querySelector(".rail .rtab").click()`);
   await app.waitFor(`document.querySelector(".tiles")`);

@@ -7,9 +7,9 @@ import { mkdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import en from "../../config/ui-strings/en.json" with { type: "json" };
 import tr from "../../config/ui-strings/tr.json" with { type: "json" };
-import { assert, exampleProject, launchApp, REPO } from "./cdp.ts";
+import { assert, exampleProject, launchApp, REPO, evidence } from "./cdp.ts";
 
-const OUT = "design/210";
+const OUT = evidence("design/210");
 mkdirSync(join(REPO, OUT), { recursive: true });
 const project = exampleProject();
 const electron = `(process.mainModule ? process.mainModule.require : require)("electron")`;

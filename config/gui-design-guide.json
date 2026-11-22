@@ -1,0 +1,51 @@
+{
+  "intro": "GUI design guide for agents building MCEdge GUIs and overlays (Q272). Read 'workflow' first. Coordinates are GUI pixels; the game multiplies them by the player's GUI scale (usually 2-4), so 1 pixel matters.",
+  "topics": {
+    "workflow": [
+      "1. Decide what the screen is for and list its parts in order of importance: the main action and the information the player needs first.",
+      "2. Size: a container GUI is usually 176 wide (the player inventory is 162 wide plus margins); 166 high fits a 3-row block inventory above the player inventory. Keep GUIs under about 256x220 so they fit small screens at GUI scale 3.",
+      "3. Lay out with the grid: slots on the 18 px pitch (arrange_gui_widgets slot_grid), 7-8 px margins to the panel edge, 4-6 px between groups, widgets of one row sharing a top edge.",
+      "4. Write the widgets (write_gui_layout), then preview_gui with numbers: true to see them and their indexes.",
+      "5. check_gui_layout and fix every finding (overlaps, text too wide, almost aligned edges, slot pitch, margins, contrast). Use arrange_gui_widgets align / distribute / center rather than nudging numbers by hand.",
+      "6. Custom art: create_panel_texture for frames and backgrounds, the pixel art tools (pixel_art_guide) for icons, progress bars and button states; preview_gui again until it reads well at a glance."
+    ],
+    "layout": [
+      "Align everything to a few shared edges: one left edge for labels, one top edge per row. check_gui_layout reports edges 1-2 px apart, which read as mistakes.",
+      "Group related controls and leave clearly more space between groups than inside a group.",
+      "Read order is top left to bottom right: inputs on the left, the result on the right (furnace style), the action button near the result.",
+      "Centre symmetric content (arrange_gui_widgets center); leave asymmetric layouts left-aligned.",
+      "Do not fill every pixel: empty panel space makes the important parts stand out."
+    ],
+    "slots": [
+      "A slot frame is 18x18; slots in a row touch (18 px pitch), like vanilla. Gaps of 19-21 px look off; use 18, or a clear gap of 4+ px between separate groups.",
+      "The player inventory sits at the bottom (GUI type with inventory): keep your own slots and buttons off it (check_gui_layout overlaps_inventory) and at least 4 px above it.",
+      "Output slots are visually separated from inputs: an arrow image between them, or a bigger frame (an inset panel 26x26 behind the 18x18 slot)."
+    ],
+    "text": [
+      "Labels on the grey panel use #404040 without shadow, like vanilla; light text needs a dark background (label background) to stay readable.",
+      "Keep 3 px between button text and the button edge; check_gui_layout reports text too wide. Short words beat small text: textScale below 1 is hard to read at GUI scale 2.",
+      "Labels that change (textProcedure) need room for their longest value; preview with the longest text.",
+      "Titles go at the top left (8, 6) like vanilla container titles."
+    ],
+    "buttons": [
+      "Vanilla buttons are 20 px high; width = text width + 8 or more. Buttons in a row share width when they are alternatives.",
+      "Custom image buttons need a hover image (and toggles an on image) so the player sees what the mouse is over; draw them with the pixel art tools: same shape, brighter or outlined for hover.",
+      "Keep at least 2 px between clickable widgets; check_gui_layout reports overlaps."
+    ],
+    "colour": [
+      "Stay close to the vanilla palette for panels (#C6C6C6 face, white top-left bevel, #555555 bottom-right bevel, black outline) so the GUI looks at home; create_panel_texture draws these.",
+      "Use one accent colour for the main action or the important number, not five.",
+      "Progress and state images: dark empty track, saturated fill, one highlight row on top of the fill."
+    ],
+    "overlays": [
+      "Overlays (HUD) are laid out on 427x240 and anchored to a screen point: pin each widget to its nearest corner or edge (anchor) so it stays there on every screen size; check with overlay_layout.",
+      "Keep out of the hotbar, health and hunger area at the bottom centre and away from the crosshair; check_gui_layout reports widgets under the HUD.",
+      "HUD text needs a background box or shadow because the world behind it changes; keep HUD elements small and at the edges."
+    ],
+    "art": [
+      "Panels and frames: create_panel_texture (vanilla, inset, dark, slot) at the exact widget size; GUI images are drawn at their widget size, so draw them at that size, not bigger.",
+      "Icons are 16x16 pixel art with the item conventions (outline, top-left light): see pixel_art_guide topic minecraft.",
+      "Animated parts (glowing arrows, progress) use an animated strip and set_texture_animation; keep the motion subtle."
+    ]
+  }
+}

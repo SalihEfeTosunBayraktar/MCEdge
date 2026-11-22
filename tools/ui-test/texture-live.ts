@@ -4,11 +4,11 @@
  * keeps their strokes or reloads. Resources previews follow too. Screenshots go to design/texture-editor/.
  */
 import { connect } from "../mcp-test/client.ts";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const project = exampleProject();
 const PATH = "textures/ruby.png";
-const OUT = "design/texture-editor";
+const OUT = evidence("design/texture-editor");
 
 /** [r,g,b,a] of a pixel of the editor's 1:1 preview canvas. */
 const shown = (app: App, x: number, y: number) =>

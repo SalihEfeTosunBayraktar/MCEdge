@@ -5,6 +5,7 @@ import { loadPreviewTexture, onAnimationTick } from "../textures/animatedTexture
 import { t } from "../strings.ts";
 import { transitionState } from "../../../../src/elements/transitions.ts";
 import { drawPart, sheetOf, sheetTick, useSheet, type Sheet } from "./BubblePreview.tsx";
+import { TabList } from "./ui.tsx";
 
 /**
  * Live preview of a radial menu (Q227), placed like the game's screen places it (src/generator/radial.ts, same values
@@ -163,13 +164,13 @@ export function RadialPreview({ snapshot, draft }: { snapshot: ProjectSnapshot; 
         data-layout={JSON.stringify(layout)} onMouseMove={onMove} onMouseLeave={() => setHover(-1)} />
       <p className="fhelp">{t("radial.hoverHint")}</p>
       {tabs.length > 1 && (
-        <div className="radialtabs" role="tablist">
+        <TabList className="radialtabs" label={t("radial.tabs")}>
           {tabs.map((row, i) => (
             <button key={i} type="button" role="tab" aria-selected={row === tab} className={row === tab ? "abtn on" : "abtn"} onClick={() => setTabIndex(i)}>
               {str(row.label) || str(row.id) || t("radial.tab", { n: i + 1 })}
             </button>
           ))}
-        </div>
+        </TabList>
       )}
       {tab?.source === "folder" && <p className="fhelp">{t("radial.folderHint", { folder: str(tab.folder) })}</p>}
       <button type="button" className="abtn" onClick={() => setOpenedAt(performance.now())}>{t("radial.replay")}</button>

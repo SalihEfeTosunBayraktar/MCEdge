@@ -6,7 +6,7 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, REPO, run, type App } from "./cdp.ts";
+import { assert, exampleProject, REPO, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
 const theme = (process.argv[2] ?? "dark") as "dark" | "light";
@@ -49,7 +49,7 @@ await run(async (app) => {
   await app.setField(width, "100", ".multiform");
   await waitSaved(app);
   assert(saved()[0].width === 100 && saved()[1].width === 100 && saved()[2].width === 16, `width set on both buttons: ${JSON.stringify(saved())}`);
-  await app.shot(`design/180/group-${theme}-${lang}.png`);
+  await app.shot(evidence(`design/180/group-${theme}-${lang}.png`));
   await app.key("z", 2);
   await waitSaved(app);
   assert(saved()[0].width === 60 && saved()[1].width === 80, "one Ctrl+Z undoes it for both");
@@ -66,5 +66,5 @@ await run(async (app) => {
   await app.eval(`document.querySelector(".multiform .check input").click()`);
   await waitSaved(app);
   assert(saved().every((w) => w.editLocked === true), "the editor lock for all three");
-  await app.shot(`design/180/mixed-${theme}-${lang}.png`);
+  await app.shot(evidence(`design/180/mixed-${theme}-${lang}.png`));
 }, { project, theme, language: lang });

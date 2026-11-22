@@ -47,7 +47,7 @@ export function QuickOpen({ snapshot, onOpen, onClose }: { snapshot: ProjectSnap
         }}>
         <input value={query} placeholder={t("quick.placeholder")} spellCheck={false} aria-label={t("quick.title")}
           onChange={(e) => (setQuery(e.target.value), setActive(0))} />
-        <div className="quicklist" role="listbox">
+        <div className="quicklist" role="listbox" aria-label={t("quick.title")}>
           {hits.map((hit, i) => (
             <button key={`${hit.kind}|${hit.target}`} type="button" role="option" aria-selected={i === at} data-kind={hit.kind} data-target={hit.target}
               className={`quickrow ${i === at ? "on" : ""}`} onMouseMove={() => i !== at && setActive(i)} onClick={() => open(hit)}>

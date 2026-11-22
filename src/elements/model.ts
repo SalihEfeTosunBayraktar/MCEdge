@@ -329,7 +329,9 @@ export type CheckCode =
   | "dependencyVersion" | "javaIdentifier" | "duplicateVariable" | "unknownVariableType" | "unknownScope" | "languageCode" | "registryIdClash"
   | "unknownGameRule" | "translatedStore" | "tagType" | "tagId" | "tagTwice" | "tagEntryId" | "tagNoElement" | "soundEventName" | "soundCategory" | "soundFile"
   // Translation keys no element, procedure or GUI uses (Q222).
-  | "unusedTranslation";
+  | "unusedTranslation"
+  // GUI images drawn at a size that blurs them, or larger than the GUI (Q275).
+  | "guiImageScale" | "guiImageTooBig";
 export type CheckValues = Record<string, string | number | undefined>;
 /** A project-level problem: an English message (MCP, CLI) and, for the app, a check code with its values (KUYRUK 157). */
 export interface ProjectIssue { path: string; message: string; code?: CheckCode; values?: CheckValues }

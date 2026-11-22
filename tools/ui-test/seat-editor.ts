@@ -8,11 +8,11 @@
  */
 import { mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, launchApp, type App } from "./cdp.ts";
+import { assert, exampleProject, launchApp, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/225";
-const OUT_MULTI = "design/226";
+const OUT = evidence("design/225");
+const OUT_MULTI = evidence("design/226");
 mkdirSync(OUT, { recursive: true });
 mkdirSync(OUT_MULTI, { recursive: true });
 const enType = JSON.parse(readFileSync("element-types/block/type.json", "utf8")) as { pages: { id: string; title: string; groups: { fields: { key: string; label: string; fields?: { key: string; label: string }[] }[] }[] }[] };

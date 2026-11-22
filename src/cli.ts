@@ -5,6 +5,7 @@ import { resolveModDependencies } from "./build/modDependencies.ts";
 import { generateTarget } from "./generator/generate.ts";
 import { listEngines, toolchainNeeds } from "./engines/registry.ts";
 import { ensureToolchains } from "./engines/toolchains.ts";
+import EXECUTION from "../config/agent-execution.json" with { type: "json" };
 import { ROOT } from "./paths.ts";
 import { isProjectDir, loadProblemSettings, loadProject } from "./ir/storage.ts";
 import { blocksBuild, classify } from "./ir/problems.ts";
@@ -21,7 +22,7 @@ async function main(args: string[]): Promise<number> {
   const [command, projectArg] = args;
   if (command === "mcp" && projectArg) {
     // stdout belongs to the MCP protocol from here on; nothing else may print to it.
-    await serveMcp(projectArg);
+    await serveMcp(projectArg, { allowHeadless: args.includes(EXECUTION.headlessFlag) });
     return 0;
   }
   if (command === "engines") {

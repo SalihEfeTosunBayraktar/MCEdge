@@ -5,20 +5,19 @@
  */
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/usability";
+const OUT = evidence("design/usability");
 const project = exampleProject();
 addElement(project, "gui", "machine", { type: 1, width: 176, height: 166 });
 addElement(project, "procedure", "on_press");
 
-const danger = (app: App) => app.eval<string[]>(`[...document.querySelectorAll(".actions .abtn.danger")].map((b) => b.textContent)`);
+const danger = (app: App) => app.eval<string[]>(`[...document.querySelectorAll(".actions .abtn.danger, .dk-rail .abtn.danger")].map((b) => b.textContent)`);
 const labels = (app: App) => app.eval<string[]>(`[...document.querySelectorAll(".actions .abtn")].map((b) => b.textContent)`);
 
 await run(async (app) => {
   await app.waitFor(`document.querySelector(".tile")`);
-  await app.eval(`window.confirm = () => true`);
   await app.click(".tile", "machine", { double: true });
   await app.waitFor(`document.querySelector(".guistage")`);
   let l = await labels(app);
@@ -33,6 +32,9 @@ await run(async (app) => {
   console.log("duplicate opened", copy);
   await app.click(".abtn", "Element");
   await app.click(".elementmenu .menulist button", "Delete");
+  // Delete asks first (DeleteElementDialog): confirm it.
+  await app.waitFor(`document.querySelector(".dialog .abtn.danger:not([disabled])")`);
+  await app.click(".dialog .abtn.danger", "Delete");
   // Closing the copy returns to the element it was made from.
   await app.waitFor(`document.querySelector(".edname")?.textContent === "machine"`);
   await app.sleep(500);
@@ -50,6 +52,9 @@ await run(async (app) => {
   await app.waitFor(`document.querySelector(".elementmenu .menulist")`);
   await app.shot(`${OUT}/after-element-menu-procedure.png`);
   await app.click(".elementmenu .menulist button", "Delete");
+  // Delete asks first (DeleteElementDialog): confirm it.
+  await app.waitFor(`document.querySelector(".dialog .abtn.danger:not([disabled])")`);
+  await app.click(".dialog .abtn.danger", "Delete");
   await app.waitFor(`document.querySelector(".tile") && !document.querySelector(".blocklyhost")`);
   await app.sleep(500);
   assert(!existsSync(join(project, "elements/procedures/on_press.json")), "Delete removed the procedure");

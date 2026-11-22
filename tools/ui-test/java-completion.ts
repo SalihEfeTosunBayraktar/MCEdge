@@ -11,13 +11,13 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { assert, copyProject, launchApp, type App } from "./cdp.ts";
+import { assert, copyProject, launchApp, type App, evidence } from "./cdp.ts";
 
 if (existsSync("C:/BrainOS/.ingame")) throw new Error("game mode is on (C:/BrainOS/.ingame); not starting the app");
 
 const project = copyProject("C:\\MyProjects\\AI-Assisted\\ETREconomy-Legacy", "ETREconomy-Legacy");
 const userData = mkdtempSync(join(tmpdir(), "mcedge-ui-data-"));
-const OUT = "design/240";
+const OUT = evidence("design/240");
 const TEXTS = {
   en: { common: "Common", ready: "Java: ready", side: "Client-only API (net.minecraft.client.Minecraft.getInstance) in common code" },
   tr: { common: "Ortak", ready: "Java: hazır", side: "Yalnız istemcide olan API (net.minecraft.client.Minecraft.getInstance) ortak kodda" },

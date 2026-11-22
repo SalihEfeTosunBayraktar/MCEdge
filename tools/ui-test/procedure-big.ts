@@ -4,11 +4,15 @@
  * block on screen keeps its texts, also after zooming in and out with the wheel. The load itself is compared with
  * Blockly's own in procedure-load-identical.ts. Screenshots (dark, light, tr) go to design/188/.
  */
-import { assert, copyProject, run, type App } from "./cdp.ts";
+import { readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
+import { assert, copyProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/188";
+const OUT = evidence("design/188");
 const project = copyProject("C:/MyProjects/AI-Assisted/ETREconomy-MCEdge", "etr");
-const BIG = "kullanicigui_while_this_g_u_i_is_open_tick";
+// The project changes, so the huge procedure is its largest one (over the 2,000-block split hint of ProcedurePage).
+const procDir = join(project, "elements", "procedures");
+const BIG = readdirSync(procDir).filter((f) => f.endsWith(".json")).map((f) => ({ id: f.slice(0, -5), size: statSync(join(procDir, f)).size })).sort((a, b) => b.size - a.size)[0].id;
 
 async function open(app: App, id: string) {
   await app.waitFor(`document.querySelector(".tile")`, 30000);

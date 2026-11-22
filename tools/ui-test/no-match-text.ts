@@ -7,10 +7,10 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { createTask } from "../../src/live/tasks.ts";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
 const project = exampleProject();
-const OUT = "design/148";
+const OUT = evidence("design/148");
 const suffix = process.argv[2] ?? "after";
 const failed: string[] = [];
 const check = (ok: unknown, message: string) => (suffix === "before" ? ok || failed.push(message) : assert(ok, message));

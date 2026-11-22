@@ -5,7 +5,8 @@ import { elementsNaming } from "../../../../src/resources/resourceUse.ts";
 import { api } from "../api.ts";
 import { allElements } from "../model.ts";
 import { t, type StringKey } from "../strings.ts";
-import { ActionBar, ActionButton, DataTable, FindBar, FormGroup, FormRow, PanelEmpty, Separator, SidePanel } from "./ui.tsx";
+import { ActionButton, DataTable, FindBar, FormGroup, FormRow } from "./ui.tsx";
+import { InspectorToggle, TabsRow, ViewShell, type DockSection } from "../dock/Dock.tsx";
 import { useRevealQuery } from "../hooks/reveal.ts";
 import { groupRows, tableSections, useFolderDrop, useResourceFolders, useSelection } from "./ResourceFolders.tsx";
 
@@ -72,23 +73,39 @@ export function SoundsPane({ snapshot, onChanged, onImport, tabs }: Props) {
   };
   const fresh: SoundEvent = { name: freeName(events), category: DEFAULT_CATEGORY, files: current ? [...current.files] : files.slice(0, 1), subtitleKey: "", defined: false };
 
+  const inspector: DockSection[] = [{ id: "sounds.details", icon: "info", title: t("files.details.sound"), body: <>
+          {sel.chosen.length > 1 ? (
+            <FormGroup title={t("resources.selected")}>
+              <p className="hint">{t("resources.selectedCount", { count: sel.chosen.length, items: t("resources.item.sounds") })}</p>
+              <ul className="plain">{sel.chosen.map((n) => <li key={n}>{n}</li>)}</ul>
+            </FormGroup>
+          ) : creating ? (
+            <EventForm key="new" snapshot={snapshot} event={fresh} files={files} isNew onSaved={(next, name) => (onChanged(next), setCreating(false), sel.select(name))} />
+          ) : current ? (
+            <>
+              <EventForm key={current.name} snapshot={snapshot} event={current} files={files} onSaved={(next, name) => (onChanged(next), sel.select(name))} />
+              {error && <p className="ferr">{error}</p>}
+            </>
+          ) : <p className="hint">{t("sounds.selectHint")}</p>}
+  </> }];
+
   return (
     <>
-      <FindBar query={query} onQuery={setQuery} placeholder={t("sounds.search")} meta={t("sounds.count", { count: events.length })} />
-      <ActionBar>
-        <ActionButton icon="import" label={t("files.import.sound")} tone="primary" onClick={() => onImport("sound")} />
-        <ActionButton icon="plus" label={t("sounds.new")} disabled={!files.length} onClick={() => (setCreating(true), sel.clear(), setError(undefined))} />
-        {res.toolbar(sel.chosen)}
-        {res.moveButton(sel.chosen)}
-        <Separator />
-        <ActionButton icon={playing ? "stop" : "play"} label={t(playing ? "files.stop" : "files.play")} disabled={!current} onClick={() => void play()} />
-        <Separator />
-        <ActionButton icon="trash" label={t("resources.delete")} tone="danger" disabled={!sel.chosen.length} title={current?.defined ? t("sounds.deleteEventHint") : undefined} onClick={() => void remove()} />
-      </ActionBar>
+      <FindBar query={query} onQuery={setQuery} placeholder={t("sounds.search")} meta={t("sounds.count", { count: events.length })}
+        actions={<>
+          <ActionButton icon="plus" label={t("sounds.new")} disabled={!files.length} onClick={() => (setCreating(true), sel.clear(), setError(undefined))} />
+          {res.toolbar(sel.chosen)}
+          <ActionButton icon="import" label={t("files.import.sound")} tone="primary" onClick={() => onImport("sound")} />
+          <InspectorToggle />
+        </>} />
       {res.hint}
-      {tabs}
+      <TabsRow tabs={tabs} actions={sel.chosen.length > 0 && <>
+        <ActionButton icon={playing ? "stop" : "play"} label={t(playing ? "files.stop" : "files.play")} disabled={!current} onClick={() => void play()} />
+        {res.moveButton(sel.chosen)}
+        <ActionButton icon="trash" label={t("resources.delete")} tone="danger" title={current?.defined ? t("sounds.deleteEventHint") : undefined} onClick={() => void remove()} />
+      </>} />
       <audio ref={audio} onEnded={() => setPlaying(false)} hidden />
-      <div className="split">
+      <ViewShell sections={inspector} inspectorLabel={t("dock.inspector")} inspectorClass="resinsp">
         <div className="scrollarea texarea" ref={sel.area} onMouseDown={sel.startBox}>
           {sel.box && <div className="selbox" style={sel.box} />}
           {res.folderError && <p className="ferr">{res.folderError}</p>}
@@ -103,22 +120,7 @@ export function SoundsPane({ snapshot, onChanged, onImport, tabs }: Props) {
             ]} />
           {res.dialogs}
         </div>
-        <SidePanel title={t("files.details.sound")}>
-          {sel.chosen.length > 1 ? (
-            <FormGroup title={t("resources.selected")}>
-              <p className="hint">{t("resources.selectedCount", { count: sel.chosen.length, items: t("resources.item.sounds") })}</p>
-              <ul className="plain">{sel.chosen.map((n) => <li key={n}>{n}</li>)}</ul>
-            </FormGroup>
-          ) : creating ? (
-            <EventForm key="new" snapshot={snapshot} event={fresh} files={files} isNew onSaved={(next, name) => (onChanged(next), setCreating(false), sel.select(name))} />
-          ) : current ? (
-            <>
-              <EventForm key={current.name} snapshot={snapshot} event={current} files={files} onSaved={(next, name) => (onChanged(next), sel.select(name))} />
-              {error && <p className="ferr">{error}</p>}
-            </>
-          ) : <PanelEmpty text={t("sounds.selectHint")} />}
-        </SidePanel>
-      </div>
+      </ViewShell>
     </>
   );
 }

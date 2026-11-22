@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import type { EngineInfo, Opened } from "../../../shared/api.ts";
+import type { EngineInfo, Opened, StarterCard } from "../../../shared/api.ts";
 import { api } from "../api.ts";
-import { t } from "../strings.ts";
+import { t, type StringKey } from "../strings.ts";
 import { Icon } from "./Icon.tsx";
+import { StarterParams, starterProblem } from "./StarterGallery.tsx";
 import { FormGroup, FormRow, useDialogFocus } from "./ui.tsx";
 
 /** "Ruby Tools" -> "ruby_tools" (src/ir/createProject.ts suggestModId; kept here so the renderer needs no Node code). */
@@ -16,7 +17,7 @@ const packageFor = (modId: string, author: string) => {
  * File > New project and the welcome screen (KUYRUK 126): name, mod id and package (suggested from the name until
  * edited), the target engines, a template and the folder the project goes in. Create makes it and opens it.
  */
-export function NewProjectDialog({ engines, onCreated, onClose }: { engines: EngineInfo[]; onCreated: (opened: Opened) => void; onClose: () => void }) {
+export function NewProjectDialog({ engines, starter, onCreated, onClose }: { engines: EngineInfo[]; /** A starter of the gallery (Q252) the project starts from. */ starter?: StarterCard; onCreated: (opened: Opened) => void; onClose: () => void }) {
   const box = useRef<HTMLFormElement>(null);
   useDialogFocus(box);
   const [name, setName] = useState("");
@@ -25,6 +26,7 @@ export function NewProjectDialog({ engines, onCreated, onClose }: { engines: Eng
   const [author, setAuthor] = useState("");
   const [parent, setParent] = useState("");
   const [template, setTemplate] = useState<"empty" | "example">("example");
+  const [starterParams, setStarterParams] = useState<Record<string, string>>(starter?.params ?? {});
   const [selected, setSelected] = useState(engines.map((e) => e.id));
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -32,12 +34,12 @@ export function NewProjectDialog({ engines, onCreated, onClose }: { engines: Eng
 
   const id = modId ?? modIdFor(name);
   const packageName = pkg ?? packageFor(id, author);
-  const canCreate = !busy && name.trim() !== "" && id !== "" && packageName !== "" && parent.trim() !== "" && selected.length > 0;
+  const canCreate = !busy && name.trim() !== "" && id !== "" && packageName !== "" && parent.trim() !== "" && selected.length > 0 && !(starter && starterProblem(starter, starterParams));
   const create = async () => {
     setBusy(true);
     setError(undefined);
     try {
-      onCreated(await api.createProject({ parent: parent.trim(), name: name.trim(), modId: id, package: packageName, engines: selected, template, ...(author.trim() ? { author: author.trim() } : {}) }));
+      onCreated(await api.createProject({ parent: parent.trim(), name: name.trim(), modId: id, package: packageName, engines: selected, template, ...(starter ? { starter: { id: starter.id, params: starterParams } } : {}), ...(author.trim() ? { author: author.trim() } : {}) }));
     } catch (e) {
       // Electron wraps the main process error: keep its own message.
       setError(String(e instanceof Error ? e.message : e).replace(/^Error invoking remote method '[^']+': (Error: )?/, ""));
@@ -72,6 +74,12 @@ export function NewProjectDialog({ engines, onCreated, onClose }: { engines: Eng
             <input name="package" className="mono" value={packageName} spellCheck={false} onChange={(e) => setPkg(e.target.value)} />
           </FormRow>
         </FormGroup>
+        {starter ? (
+          <FormGroup title={t("newProject.start")}>
+            <p className="popdesc" data-testid="new-project-starter">{t("newProject.template.starter", { name: t(`starter.${starter.id}.name` as StringKey) })}</p>
+            <StarterParams card={starter} params={starterParams} onChange={setStarterParams} />
+          </FormGroup>
+        ) : (
         <FormGroup title={t("newProject.start")}>
           <div className="check-list">
             {(["example", "empty"] as const).map((value) => (
@@ -82,6 +90,7 @@ export function NewProjectDialog({ engines, onCreated, onClose }: { engines: Eng
             ))}
           </div>
         </FormGroup>
+        )}
         <FormGroup title={t("newProject.engines")}>
           <div className="check-list">
             {engines.map((engine) => (

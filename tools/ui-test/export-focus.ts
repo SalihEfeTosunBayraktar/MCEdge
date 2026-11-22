@@ -4,7 +4,7 @@
  * The export itself is replaced in the main process by a short fake (no Gradle). After it finishes the focus is inside
  * the dialog and Escape closes it. Screenshot: design/174/after-en-dark.png.
  */
-import { assert, exampleProject, run } from "./cdp.ts";
+import { assert, exampleProject, run, evidence } from "./cdp.ts";
 
 await run(async (app) => {
   await app.mainEval(`(() => {
@@ -28,7 +28,7 @@ await run(async (app) => {
   await app.sleep(200);
   const where = await app.eval<string>(`document.activeElement === document.body ? "body" : document.querySelector(".exportdlg").contains(document.activeElement) ? "dialog" : document.activeElement.tagName`);
   assert(where === "dialog", `focus stays in the dialog after the export: ${where}`);
-  await app.shot("design/174/after-en-dark.png");
+  await app.shot(evidence("design/174/after-en-dark.png"));
   await app.key("Escape");
   await app.waitFor(`!document.querySelector(".exportdlg")`, 3000);
   assert(true, "Escape closes the dialog right after the export");

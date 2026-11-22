@@ -120,6 +120,11 @@ export interface CodeArgs {
   tag: (id: string) => string;
 }
 
+/** Whether a java_code block's optional loader field admits the target loader; empty or "any" (older projects) admits all. */
+export function javaCodeLoaderMatches(field: unknown, loader: Loader): boolean {
+  return field === undefined || field === null || field === "" || field === "any" || field === loader;
+}
+
 /** The engine-specific code of a block, or undefined when the engine does not generate it. */
 export function codeFor(def: BlockDef, gen: Gen, loader: Loader): CodeFn | undefined {
   const keys: CodeKey[] = [`${loader}-${gen}`, loader, gen, ...(gen === "1.16.5" ? [] : ["modern" as const]), "all"];

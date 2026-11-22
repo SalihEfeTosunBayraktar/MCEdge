@@ -12,9 +12,9 @@ import tr from "../../config/ui-strings/tr.json" with { type: "json" };
 import { loadProject } from "../../src/ir/storage.ts";
 import { validateProject } from "../../src/ir/validate.ts";
 import { loadTags, validateTags } from "../../src/tags/tags.ts";
-import { assert, exampleProject, run } from "./cdp.ts";
+import { assert, exampleProject, run, evidence } from "./cdp.ts";
 
-const OUT = "design/157";
+const OUT = evidence("design/157");
 const theme = process.env.LIGHT ? "light" : "dark";
 const project = exampleProject();
 const json = (file: string) => JSON.parse(readFileSync(join(project, file), "utf8"));

@@ -4,9 +4,9 @@
  * Running, Stopped (the user stopped it, whatever the exit code), Ended (exit 0) or Crashed (exited non-zero on its
  * own). The real stop flags of the main process are checked by gradle-commands.ts (heavy). Screenshots: design/154/.
  */
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/154";
+const OUT = evidence("design/154");
 type Event = { type: "start" | "line" | "done"; engineId: string; ok?: boolean; stopped?: boolean; line?: string };
 const send = (app: App, events: Event[]) => app.mainEval(`(() => {
   const { BrowserWindow } = (process.mainModule ? process.mainModule.require : require)("electron");

@@ -3,9 +3,9 @@
  * the header, and column edges can be dragged: the width is remembered when the view is shown again.
  * Screenshots go to design/localization-columns/.
  */
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/localization-columns";
+const OUT = evidence("design/localization-columns");
 const widthOf = (app: App, index: number) => app.eval<number>(`document.querySelectorAll(".grid th")[${index}].getBoundingClientRect().width`);
 
 await run(async (app) => {

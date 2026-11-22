@@ -22,6 +22,7 @@ import { RegistryPicker } from "./RegistryPicker.tsx";
 import { EmbeddedProgram } from "../procedures/EmbeddedProgram.tsx";
 import { elementName, elementsOf } from "../model.ts";
 import { t } from "../strings.ts";
+import { usePerformance } from "../preferences.ts";
 import { fieldGenerated } from "../types.ts";
 import { Icon, type IconName } from "./Icon.tsx";
 import { TabOrderInput } from "./TabOrderInput.tsx";
@@ -131,6 +132,7 @@ function CubeFacesRow({ fields, values, ctx, prefix, coveragePrefix, onChange }:
   onChange: Change;
 }) {
   const { dir, textures } = ctx.snapshot;
+  const { render3d } = usePerformance();
   const [hovered, setHovered] = useState<FaceName>();
   const [focused, setFocused] = useState<string>();
   const [requests, setRequests] = useState<Record<string, number>>({});
@@ -152,7 +154,7 @@ function CubeFacesRow({ fields, values, ctx, prefix, coveragePrefix, onChange }:
       <div className="fctl cubefaces">
         <div className="cubeside">
           <BlockFacesCube dir={dir} files={textures} textures={drawn} active={active} names={names} onPick={pick} onHover={setHovered} />
-          <p className="fhelp">{t("cubeFaces.help")}</p>
+          {render3d && <p className="fhelp">{t("cubeFaces.help")}</p>}
         </div>
         <div className="cubefields">
           {fields.map((field) => {

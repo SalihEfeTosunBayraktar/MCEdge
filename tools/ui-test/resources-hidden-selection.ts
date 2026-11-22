@@ -5,10 +5,10 @@
  */
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { assert, copyProject, REPO, run, type App } from "./cdp.ts";
+import { assert, copyProject, REPO, run, type App, evidence } from "./cdp.ts";
 import { seedTextureFolders } from "./fixtures.ts";
 
-const OUT = "design/142";
+const OUT = evidence("design/142");
 const suffix = process.argv[2] ?? "after";
 const theme = (process.argv[3] ?? "dark") as "dark" | "light";
 const etr = [resolve(REPO, "..", "ETREconomy-MCEdge"), resolve(REPO, "..", "..", "ETREconomy-MCEdge")].find(existsSync)!;
@@ -20,7 +20,8 @@ const enabled = (app: App, label: string) =>
 // The "before" run records every failed check and fails at the end, so both screenshots are taken.
 const failed: string[] = [];
 const check = (ok: unknown, message: string) => (suffix === "before" ? ok || failed.push(message) : assert(ok, message));
-const panelEmpty = (app: App) => app.eval<boolean>(`!!document.querySelector("aside.panel .panel-empty")`);
+// Q284: the selection is in the inspector; with none (or one the filter hides) its sections show only hints.
+const panelEmpty = (app: App) => app.eval<boolean>(`!!document.querySelector(".resinsp .dk-sec .hint") && !document.querySelector(".resinsp .form, .resinsp .fgroup")`);
 
 await run(async (app) => {
   await app.setTheme(theme);

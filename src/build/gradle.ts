@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { createInterface } from "node:readline";
 import type { Engine } from "../engines/registry.ts";
 import { toolchainPath } from "../engines/toolchains.ts";
+import { memoryLimits, readPerformancePrefs } from "../performance.ts";
 
 export interface BuildResult {
   ok: boolean;
@@ -87,7 +88,10 @@ const GAME_TASK = /^> Task :(?:\S+:)?run\w*/;
  * ending Java processes) is retried once; a second loss is reported with a readable note.
  */
 export function runGradle(setup: GradleSetup, task: string | string[], logFile: string, onLine: (line: string) => void): GradleRun {
-  const args = [...(Array.isArray(task) ? task : [task]), "--no-daemon", "--console=plain", `-Dorg.gradle.java.installations.paths=${setup.installations.join(",")}`];
+  const gradleMb = memoryLimits(readPerformancePrefs()).gradleMb;
+  const args = [...(Array.isArray(task) ? task : [task]), "--no-daemon", "--console=plain", `-Dorg.gradle.java.installations.paths=${setup.installations.join(",")}`,
+    // Light mode (Q250): the heap limit of the Gradle JVM; it replaces the project's org.gradle.jvmargs (no space in the value: the launcher is a .bat run through cmd.exe).
+    ...(gradleMb ? [`-Dorg.gradle.jvmargs=-Xmx${gradleMb}m`] : [])];
   const isWindows = process.platform === "win32";
   // A .bat cannot be spawned directly; run it through cmd.exe instead of shell: true (unescaped args).
   const [command, commandArgs] = isWindows ? ["cmd.exe", ["/d", "/c", setup.launcher, ...args]] : [setup.launcher, args];
@@ -101,7 +105,7 @@ export function runGradle(setup: GradleSetup, task: string | string[], logFile: 
   let stopped = false;
   const attempt = () => new Promise<{ code: number; daemonLost: boolean; gameRan: boolean }>((resolve) => {
     // No stdin: Gradle forwards it to the daemon and complains when the daemon is already gone at the end of input.
-    const proc = spawn(command, commandArgs, { cwd: setup.projectDir, stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, JAVA_HOME: setup.javaHome, GRADLE_OPTS: gradleOpts } });
+    const proc = spawn(command, commandArgs, { cwd: setup.projectDir, stdio: ["ignore", "pipe", "pipe"], windowsHide: true, env: { ...process.env, JAVA_HOME: setup.javaHome, GRADLE_OPTS: gradleOpts } });
     child = proc;
     let daemonLost = false;
     let gameRan = false;
@@ -137,7 +141,7 @@ export function runGradle(setup: GradleSetup, task: string | string[], logFile: 
       stopped = true;
       if (!child || child.exitCode !== null || !child.pid) return;
       // Gradle forks the game JVM; kill the whole tree, not just cmd.exe.
-      if (isWindows) spawnSync("taskkill", ["/pid", String(child.pid), "/T", "/F"]);
+      if (isWindows) spawnSync("taskkill", ["/pid", String(child.pid), "/T", "/F"], { windowsHide: true });
       else child.kill("SIGTERM");
     },
   };

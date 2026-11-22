@@ -12,7 +12,7 @@ import { generateTarget } from "../../src/generator/generate.ts";
 import { readPng } from "../../src/generator/png.ts";
 import { loadProject } from "../../src/ir/storage.ts";
 import { connect } from "../mcp-test/client.ts";
-import { assert, exampleProject, run } from "./cdp.ts";
+import { assert, exampleProject, run, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
 const project = exampleProject();
@@ -24,7 +24,7 @@ addElement(project, "gui", "shop", {
     { kind: "image_button", x: 60, y: 20, width: 32, height: 32, image: "textures/ruby.png", hoverImage: "textures/ruby_apple.png", procedure: "on_press" },
   ],
 });
-const OUT = "design/gui-editor";
+const OUT = evidence("design/gui-editor");
 const saved = () => JSON.parse(readFileSync(join(project, "elements", "guis", "shop.json"), "utf8")).components as Record<string, unknown>[];
 
 await run(async (app) => {

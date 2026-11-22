@@ -5,10 +5,10 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assert, exampleProject, run, type App } from "./cdp.ts";
+import { assert, exampleProject, run, type App, evidence } from "./cdp.ts";
 import { addElement } from "./fixtures.ts";
 
-const OUT = "design/gui-editor";
+const OUT = evidence("design/gui-editor");
 const project = exampleProject();
 addElement(project, "gui", "textgui", {
   type: 0, width: 176, height: 166,
@@ -24,7 +24,7 @@ const waitSaved = async (app: App) => {
   await app.sleep(500);
   await app.waitFor(`!document.querySelector(".smsg.saving")`);
 };
-const fontPx = (app: App, kind: string) => app.eval<number>(`parseFloat(getComputedStyle(document.querySelector(".gwidget.k-${kind} .gtext")).fontSize)`);
+const fontPx = (app: App, kind: string) => app.eval<number>(`document.querySelector(".gwidget.k-${kind} canvas.gpixeltext").getBoundingClientRect().height`);
 const width = (app: App, kind: string) => app.eval<number>(`document.querySelector(".gwidget.k-${kind}").getBoundingClientRect().width`);
 const CTRL = 2;
 

@@ -1,5 +1,5 @@
 {
-  "usage": "usage: mcedge build <project-dir> [--target <engine-id>|all] [--no-gradle] [--probe|--profile]\n       mcedge engines\n       mcedge mcp <project-dir>",
+  "usage": "usage: mcedge build <project-dir> [--target <engine-id>|all] [--no-gradle] [--probe|--profile]\n       mcedge engines\n       mcedge mcp <project-dir> [--allow-headless-runs]",
   "unknownTarget": "unknown target \"{target}\"; available: {available}",
   "invalidProject": "project is invalid:",
   "projectWarnings": "project has warnings (the build goes on):",

@@ -10,9 +10,9 @@ import { join } from "node:path";
 import { loadProject } from "../../src/ir/storage.ts";
 import { validateProject } from "../../src/ir/validate.ts";
 import { connect } from "../mcp-test/client.ts";
-import { assert, exampleProject, REPO, run } from "./cdp.ts";
+import { assert, exampleProject, REPO, run, evidence } from "./cdp.ts";
 
-const OUT = "design/134";
+const OUT = evidence("design/134");
 const project = exampleProject();
 const theme = process.env.LIGHT ? "light" : "dark";
 

@@ -11,7 +11,9 @@ import { generateTarget } from "../generator/generate.ts";
 import type { ProbeOptions } from "../generator/typeModule.ts";
 import { isProjectDir, loadProject, refreshSchemas } from "../ir/storage.ts";
 import { gradleModSetup, isGradleModProject, loadGradleModProject } from "../projects/gradleMod.ts";
+import { memoryLimits, readPerformancePrefs } from "../performance.ts";
 import { registerAgentTools } from "./agentTools.ts";
+import { explainGradleFailures } from "../build/explain.ts";
 import { buildDiagnostics, registerBuildErrorTools } from "./buildErrors.ts";
 import { registerDependencyTools } from "./dependencies.ts";
 import { registerLockedCodeTools } from "./lockedCode.ts";
@@ -32,6 +34,8 @@ import { registerResourceTools } from "./resources.ts";
 import { registerCreativeTabTools } from "./creativeTabs.ts";
 import { registerTagTools } from "./tags.ts";
 import { registerTextureTools } from "./textures.ts";
+import { registerPixelArtTools } from "./pixelArt.ts";
+import { registerGuiDesignTools } from "./guiDesign.ts";
 import { registerRunTools } from "./runs.ts";
 import { registerScenarioTools } from "./scenario.ts";
 import { registerObserveTools } from "./observe.ts";
@@ -49,7 +53,7 @@ const text = (value: string, isError = false): Text => ({ content: [{ type: "tex
  * MCP server for one mod project: lets an AI agent read and edit files, build and run the game
  * through the same pipeline the editor uses. Works for MCEdge projects and plain Gradle mods.
  */
-export async function serveMcp(projectDir: string): Promise<void> {
+export async function serveMcp(projectDir: string, options: { allowHeadless?: boolean } = {}): Promise<void> {
   const root = resolve(projectDir);
   const kind = isProjectDir(root) ? "mcedge" : isGradleModProject(root) ? "gradle" : undefined;
   if (!kind) throw new Error(`not an MCEdge project or Gradle mod: ${root}`);
@@ -58,7 +62,7 @@ export async function serveMcp(projectDir: string): Promise<void> {
   if (kind === "mcedge") refreshSchemas(root);
   const server = new McpServer({ name: "mcedge", version: "0.1.0" });
   trackActivity(server, root);
-  registerActivityTools(server, root);
+  registerActivityTools(server, root, options);
 
   const inside = (path: string): string => {
     const file = resolve(root, path);
@@ -94,14 +98,14 @@ export async function serveMcp(projectDir: string): Promise<void> {
   };
   const engineArg = { engine: z.string().optional().describe("Engine id; required for MCEdge projects, ignored for Gradle mods") };
 
-  server.registerTool("project_info", { description: "Describe the open mod project: kind, name, build JDK or engines." }, () =>
+  server.registerTool("project_info", { description: "Describe the open mod project: kind, name, build JDK or engines, and the memory limits (light mode) Gradle and jdtls run with: mode normal or low, jdtlsMb, gradleMb (absent: the project's own setting)." }, () =>
     guard(() => {
       if (kind === "gradle") {
         const project = loadGradleModProject(root);
-        return text(JSON.stringify({ kind, dir: root, name: project.name, jdk: project.jdk }, null, 2));
+        return text(JSON.stringify({ kind, dir: root, name: project.name, jdk: project.jdk, memory: memoryLimits(readPerformancePrefs()) }, null, 2));
       }
       const { mod } = loadProject(root);
-      return text(JSON.stringify({ kind, dir: root, mod, engines: listEngines().map((e) => e.id) }, null, 2));
+      return text(JSON.stringify({ kind, dir: root, mod, engines: listEngines().map((e) => e.id), memory: memoryLimits(readPerformancePrefs()) }, null, 2));
     }),
   );
 
@@ -192,7 +196,7 @@ export async function serveMcp(projectDir: string): Promise<void> {
 
   server.registerTool(
     "build",
-    { description: "Build the mod with Gradle; returns success, the jar path and the compiler errors or log tail. For MCEdge projects a failed build also gives `sources`: each compile error with the element, procedure block and fields it came from (see build_errors).", inputSchema: engineArg },
+    { description: "Build the mod with Gradle; returns success, the jar path and the compiler errors or log tail. For MCEdge projects a failed build also gives `sources`: each compile error with the element, procedure block and fields it came from, and `explain` (the explanation id and fix hint), plus `failures` for Gradle's own recognised failures (see build_errors).", inputSchema: engineArg },
     ({ engine }) =>
       guard(async () => {
         const lines: string[] = [];
@@ -200,7 +204,8 @@ export async function serveMcp(projectDir: string): Promise<void> {
         const errors = lines.filter((line) => /error:|FAILED|What went wrong|Exception/.test(line)).slice(0, 80);
         // Compile errors pointed at the element, procedure block and fields that made the Java (KUYRUK 145).
         const sources = kind === "mcedge" && !result.ok && engine ? buildDiagnostics(root, engine, lines).slice(0, 40) : [];
-        const summary = { ok: result.ok, exitCode: result.exitCode, jar: result.jar, log: result.logFile, ...(sources.length ? { sources } : {}) };
+        const failures = result.ok ? [] : explainGradleFailures(lines);
+        const summary = { ok: result.ok, exitCode: result.exitCode, jar: result.jar, log: result.logFile, ...(sources.length ? { sources } : {}), ...(failures.length ? { failures } : {}) };
         return text(`${JSON.stringify(summary, null, 2)}\n\n${(errors.length ? errors : lines.slice(-40)).join("\n")}`, !result.ok);
       }),
   );
@@ -213,7 +218,9 @@ export async function serveMcp(projectDir: string): Promise<void> {
     registerReferenceTools(server, root, guard);
     registerRenameTool(server, root, guard);
     registerTextureTools(server, root, guard);
+    registerPixelArtTools(server, root);
     registerGuiTools(server, root, guard);
+    registerGuiDesignTools(server, root);
     registerTagTools(server, root, guard);
     registerCreativeTabTools(server, root, guard);
     registerAgentTools(server, root, guard);

@@ -3,6 +3,7 @@ import { mkdirSync, readdirSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { ensureToolchain } from "../engines/toolchains.ts";
+import { memoryLimits, readPerformancePrefs } from "../performance.ts";
 
 /**
  * Eclipse JDT Language Server for code project mode: one process per open Gradle mod, over stdio, with a small
@@ -100,6 +101,8 @@ export class JavaServer {
       mkdirSync(join(dataDir, "config"), { recursive: true });
       mkdirSync(join(dataDir, "workspace"), { recursive: true });
       const java = join(jdk, "bin", process.platform === "win32" ? "java.exe" : "java");
+      // Heap limit of jdtls and of the Gradle import it runs (light mode, Q250).
+      const limits = memoryLimits(readPerformancePrefs());
       const args = [
         "-Declipse.application=org.eclipse.jdt.ls.core.id1", "-Dosgi.bundles.defaultStartLevel=4", "-Declipse.product=org.eclipse.jdt.ls.core.product",
         // The extracted config folder is shared and read-only; each project's OSGi state goes to its own data folder.
@@ -107,7 +110,7 @@ export class JavaServer {
         "-Djdk.xml.maxGeneralEntitySizeLimit=0", "-Djdk.xml.totalEntitySizeLimit=0", "-Dlog.level=WARNING",
         // Read by jdtls's file system bundle at startup: .project, .classpath and .settings stay in the jdtls workspace.
         "-Djava.import.generatesMetadataFilesAtProjectRoot=false", "-Dfile.encoding=UTF-8", "-Duser.language=en", "-Duser.country=US",
-        "-XX:+UseParallelGC", "-XX:GCTimeRatio=4", "-XX:AdaptiveSizePolicyWeight=90", "-Dsun.zip.disableMemoryMapping=true", "-Xms64m", "-Xmx1G",
+        "-XX:+UseParallelGC", "-XX:GCTimeRatio=4", "-XX:AdaptiveSizePolicyWeight=90", "-Dsun.zip.disableMemoryMapping=true", "-Xms64m", `-Xmx${limits.jdtlsMb}m`,
         "--add-modules=ALL-SYSTEM", "--add-opens", "java.base/java.util=ALL-UNNAMED", "--add-opens", "java.base/java.lang=ALL-UNNAMED",
         "-jar", join(jdtls, "plugins", launcher), "-configuration", join(dataDir, "config"), "-data", join(dataDir, "workspace"),
       ];
@@ -129,7 +132,8 @@ export class JavaServer {
           jdt: { ls: { java: { home: jdk } } },
           configuration: { runtimes: [{ name: javaRuntime(projectJdk), path: modJdk, default: true }], updateBuildConfiguration: "automatic" },
           import: {
-            gradle: { enabled: true, wrapper: { enabled: true }, java: { home: modJdk }, offline: { enabled: false }, annotationProcessing: { enabled: true } },
+            gradle: { enabled: true, wrapper: { enabled: true }, java: { home: modJdk }, offline: { enabled: false }, annotationProcessing: { enabled: true },
+              ...(limits.gradleMb ? { jvmArguments: `-Xmx${limits.gradleMb}m` } : {}) },
             maven: { enabled: false },
             generatesMetadataFilesAtProjectRoot: false,
             exclusions: ["**/node_modules/**", "**/.metadata/**", "**/archetype-resources/**", "**/META-INF/maven/**", "**/run/**"],

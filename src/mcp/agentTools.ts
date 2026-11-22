@@ -4,6 +4,7 @@ import { typeRegistry } from "../elements/registry.ts";
 import { applyBatch, cloneOps, listTemplates, saveTemplate, templateOps, type BatchOp } from "../ir/batch.ts";
 import { findElements, PREDICATE_OPS } from "../ir/elementSearch.ts";
 import { projectSummary } from "../ir/projectSummary.ts";
+import { applyStarter, listStarters } from "../ir/starters.ts";
 import { loadProject } from "../ir/storage.ts";
 
 /** Whole-job tools for agents (KUYRUK 145): project summary, field search, atomic batches, clones and templates. */
@@ -115,5 +116,19 @@ export function registerAgentTools(server: McpServer, root: string, guard: Guard
       inputSchema: { name: z.string(), params: z.record(z.string(), z.string().min(1)), folder: z.string().optional(), ...writeOptions },
     },
     ({ name, params, folder, dryRun, allowProblems }) => guard(() => batchAnswer(applyBatch(root, templateOps(root, name, params, folder), { dryRun, allowProblems }))),
+  );
+
+  server.registerTool("list_starters", { description: "The template gallery (Q252): starters (a sword, an ore, a mob, a machine with a GUI...) that built on every target engine and passed a dedicated-server smoke test: id, name, description, parameters with their example value, the elements it creates, and the engines it was verified on. Add one with create_from_starter; File > New project can start from one (create_project starter)." },
+    () => guard(() => json(listStarters().map((s) => ({ id: s.id, name: s.name, description: s.description, params: s.params, elements: s.elements, verifiedOn: Object.keys(s.verified) })))));
+  server.registerTool(
+    "create_from_starter",
+    {
+      description: "Add a starter of the gallery (list_starters) to this project, with its textures, as one atomic change checked like batch_elements. params: every parameter of the starter (lowercase letters, digits, _), e.g. { \"name\": \"ruby\" } makes ruby_sword. Textures are copied to textures/; an existing texture file is never replaced.",
+      inputSchema: { id: z.string(), params: z.record(z.string(), z.string().min(1)), folder: z.string().optional(), ...writeOptions },
+    },
+    ({ id, params, folder, dryRun, allowProblems }) => guard(() => {
+      if (!listStarters().some((s) => s.id === id)) throw new Error(`no starter "${id}" in the gallery; see list_starters`);
+      return batchAnswer(applyStarter(root, id, params, { folder, dryRun, allowProblems }));
+    }),
   );
 }

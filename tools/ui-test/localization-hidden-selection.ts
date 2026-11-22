@@ -5,9 +5,9 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { assert, copyProject, REPO, run, type App } from "./cdp.ts";
+import { assert, copyProject, REPO, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/localization";
+const OUT = evidence("design/localization");
 const suffix = process.argv[2] ?? "after";
 // The ETR project sits next to the MCEdge checkout (one level higher from a worktree).
 const etr = [resolve(REPO, "..", "ETREconomy-MCEdge"), resolve(REPO, "..", "..", "ETREconomy-MCEdge")].find(existsSync)!;

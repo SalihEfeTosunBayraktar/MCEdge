@@ -7,12 +7,12 @@
  * repainted texture) comes back into the project, with slot 0 still the model's own. Resources > Models offers the
  * same action on the selected JSON model. BEFORE=1 only takes the before screenshot. Screenshots go to design/171/.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { showInApp } from "../../src/live/show.ts";
-import { assert, copyProject, run, type App } from "./cdp.ts";
+import { assert, copyProject, run, type App, evidence } from "./cdp.ts";
 
-const OUT = "design/171";
+const OUT = evidence("design/171");
 const project = copyProject("C:/MyProjects/AI-Assisted/ETREconomy-MCEdge", "etr");
 const STAND_IN = "C:\\Windows\\System32\\where.exe";
 const projectModel = () => JSON.parse(readFileSync(join(project, "models/industrialovenon.json"), "utf8"));
@@ -32,7 +32,7 @@ const preferences = async (app: App) => {
 
 for (const language of ["en", "tr"]) {
   await run(async (app) => {
-    await app.waitFor(`document.querySelector(".tile")`, 60000);
+    await app.waitFor(`document.querySelector(".tile, .edhead")`, 60000);
     if (process.env.BEFORE) {
       await showInApp(project, "block/industrialovenon", 20000);
       await app.waitFor(`document.querySelector(".form .modelpreview")`, 15000);
@@ -73,17 +73,22 @@ for (const language of ["en", "tr"]) {
     if (language !== "en") return;
     // A "Blockbench" save comes back.
     const cubes = projectModel().elements.length;
+    const ownSlot0 = projectModel().textures["0"] as string;
     work.elements.push({ from: [0, 14, 0], to: [16, 16, 16], faces: { up: { uv: [0, 0, 16, 16], texture: "#all" } } });
     writeFileSync(file, JSON.stringify(work));
-    const painted = readFileSync(join(project, "textures/blocks/basicsandik.png"));
-    writeFileSync(join(file, "..", "..", "..", "etreco", "textures", "blocks", "furnice.png"), painted);
+    // The model's own texture in slot 0 must survive the round trip; another slot's texture is repainted in the work folder
+    // (names come from the project, which changes: slot "particle" and any other PNG as the paint).
+    const repainted = (projectModel().textures.particle as string).replace(/^[a-z_]+:/, "");
+    const repaintedFile = join(project, "textures", `${repainted}.png`);
+    const painted = readFileSync(join(project, "textures", "blocks", readdirSync(join(project, "textures", "blocks")).find((f) => f.endsWith(".png") && join(project, "textures", "blocks", f) !== repaintedFile)!));
+    writeFileSync(join(file, "..", "..", "..", "etreco", "textures", `${repainted}.png`), painted);
     let back = false;
     for (let i = 0; i < 40 && !back; i++) {
       await app.sleep(250);
-      back = projectModel().elements.length === cubes + 1 && readFileSync(join(project, "textures/blocks/furnice.png")).equals(painted);
+      back = projectModel().elements.length === cubes + 1 && readFileSync(repaintedFile).equals(painted);
     }
     assert(back, "the save is back in the project");
-    assert(projectModel().textures["0"] === "etreco:blocks/fruniceoncoal", `slot 0 is the model's own again: ${JSON.stringify(projectModel().textures)}`);
+    assert(projectModel().textures["0"] === ownSlot0, `slot 0 is the model's own again: ${JSON.stringify(projectModel().textures)}`);
     await app.sleep(1500);
     await app.shot(`${OUT}/synced-en-dark.png`);
 
